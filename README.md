@@ -1,8 +1,6 @@
-## My Project
+## Amazon DocumentDB (with MongoDB compatibility) samples
 
-TODO: Fill this README out!
-
-Be sure to:
+This GitHub repository contains code samples that demonstrate how to use Amazon DocumentDB. Each sample includes a README file that explains how to run and use the sample.
 
 * Change the title in this README
 * Edit your repository description on GitHub
