@@ -17,10 +17,12 @@ $data =  '[
 
 $arraydata = json_decode($data);
 
+//Reading credentials from environment variables
 $username = getenv("username");
 $password = getenv("password");
 $clusterendpoint = getenv("clusterendpoint");
 //Create a MongoDB client and open connection to Amazon DocumentDB
+//Sample connection string format - mongodb://myusername:mypassword@testcluster.us-east-2.docdb.amazonaws.com:27017
 
 $client = new MongoDB\Client("mongodb://".$username.":".$password."@".$clusterendpoint, array("ssl" => true), array("context" => $ctx));
 
