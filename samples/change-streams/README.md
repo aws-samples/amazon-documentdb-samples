@@ -70,3 +70,14 @@ All events in the different collections will go to this topic. If you want other
 - For each DocumentDB cluster, just one collection will be used to keep resume tokens. 
 - SNS does not support ordering. If ordering is a must, do not use it as target. 
 - Make sure message size limits on targets will support your documents size. 
+
+## Security
+
+See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more information.
+
+## License
+
+This library is licensed under the MIT-0 License. See the LICENSE file.
+
+## Questions/feature requests?
+Email questions to: documentdb-feature-request@amazon.com
