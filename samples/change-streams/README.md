@@ -40,13 +40,14 @@ For target, there must be environment varibles in the lambda and permissions for
 * secretsmanager:GetSecretValue: this action is required for the lambda to use the cluster credentials.
 
 Additionally, the replication function needs the permissions required to publish events to each target. 
-8. Within Cloud9, setup the solution variables
+
+9. Within Cloud9, setup the solution variables
     1. Create a config file `touch change-streams-project/config.ini`
     2. Copy the contents of the cdk/config.ini in the newly created file. 
     3. Replace the contents of the change_streams_project_stack.py with the file in this repo in cdk/change_streams_project_stack.py
     4. In the change_streams_project_stack.py file uncomment the targets where events will be replicated
     5. Fill the config.ini file with the variables of your environment
-9. Execute `cd change-streams-project/`
+10. Execute `cd change-streams-project/`
 11. Execute `source .env/bin/activate`
 12. Execute `cdk synth` to validate there are not errors
 13. Execute `cdk deploy`. Accept the changes that will be deploy. You can change the name of the CloudFormation Stack, in docdb-replication-builder/app.py    
