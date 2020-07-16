@@ -39,7 +39,7 @@ For target, there must be environment varibles in the lambda and permissions for
 * sns:Publish: this action is required for the lambda to publish exceptions to the topic.
 * secretsmanager:GetSecretValue: this action is required for the lambda to use the cluster credentials.
 
-Additionally, the replication function needs the permissions required to publish events to each target. 
+    Additionally, the replication function needs the permissions required to publish events to each target. 
 
 9. Within Cloud9, setup the solution variables
     1. Create a config file `touch change-streams-project/config.ini`
