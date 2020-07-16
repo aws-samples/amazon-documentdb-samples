@@ -35,9 +35,9 @@ For target, there must be environment varibles in the lambda and permissions for
     2. Triggering lambda functions
 7. Create a AWS EventBridge rule and configure the SNS topic, that will trigger the lambda functions, as target. Also set the scheduler for it accordingly. 
 8. Create role for the Lambda. The lambda needs the following base permissions:
-* AWSLambdaVPCAccessExecutionRole: this managed policy allows the lambda to run within a VPC.  
-* sns:Publish: this action is required for the lambda to publish exceptions to the topic.
-* secretsmanager:GetSecretValue: this action is required for the lambda to use the cluster credentials.
+    * AWSLambdaVPCAccessExecutionRole: this managed policy allows the lambda to run within a VPC.  
+    * sns:Publish: this action is required for the lambda to publish exceptions to the topic.
+    * secretsmanager:GetSecretValue: this action is required for the lambda to use the cluster credentials.
 
     Additionally, the replication function needs the permissions required to publish events to each target. 
 
