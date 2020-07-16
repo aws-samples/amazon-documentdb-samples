@@ -38,6 +38,7 @@ For target, there must be environment varibles in the lambda and permissions for
 * AWSLambdaVPCAccessExecutionRole: this managed policy allows the lambda to run within a VPC.  
 * sns:Publish: this action is required for the lambda to publish exceptions to the topic.
 * secretsmanager:GetSecretValue: this action is required for the lambda to use the cluster credentials.
+
 Additionally, the replication function needs the permissions required to publish events to each target. 
 8. Within Cloud9, setup the solution variables
     1. Create a config file `touch change-streams-project/config.ini`
