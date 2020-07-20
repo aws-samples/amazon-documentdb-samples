@@ -1,0 +1,22 @@
+{
+    "DomainName": "aws-es-documendb-change-streams",
+    "ElasticsearchVersion": "7.4",
+    "ElasticsearchClusterConfig": {
+        "InstanceType": "r5.large.elasticsearch",
+        "InstanceCount": 1
+    },
+    "AccessPolicies": "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Principal\":{\"AWS\":\"*\"},\"Action\":\"es:*\",\"Resource\":\"arn:aws:es:[REGION]:[ACCOUNT]:domain/aws-es-documendb-change-streams/*\"}]}",
+    "EBSOptions": {
+        "EBSEnabled": true,
+        "VolumeType": "gp2",
+        "VolumeSize": 10
+    },
+    "VPCOptions": {
+        "SubnetIds": [
+            ""
+        ],
+        "SecurityGroupIds": [
+            ""
+        ]
+    }
+}
