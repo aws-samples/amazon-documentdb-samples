@@ -12,7 +12,7 @@ Replication functions must be deployed in a private subnet to reach DocumentDB c
 If Amazon ElasticSearch is a target, replication functions must be deployed in a private subnet that can reach Internet to get an Amazon certificate required to publish to ElasticSearch. Otherwise, replication code has to be modified and the certificate must be included in the Lambda package.
 
 Each lambda function uses 3 variables to control how many events replicates; customers are encourage to tune this variables according to the throughput of each collection. This variables are: 
-- The lambda function timeout which is set to 90 seconds
+- The lambda function timeout which is set to 120 seconds
 - MAX_LOOP is a control variable to avoid that the lambda times out in an inconsistent state. This is set to 45. 
 - STATE_SYNC_COUNT is a control varible that determines how many iteration should the lambda wait before syncing the resume token (resume token is used to track the events processed in the change stream). It is meant to reduce IO operations on Amazon DocumentDB. This is set to 15.
 
