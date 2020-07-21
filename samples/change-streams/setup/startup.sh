@@ -50,9 +50,9 @@ pip install aws-cdk.aws-lambda-event-sources
 cd ../app/
 python -m venv repLambda
 source repLambda/bin/activate
-mv lambda_function.py repLambda/lib/python3.6/site-packages/
-mv requirements.txt repLambda/lib/python3.6/site-packages/
-cd repLambda/lib/python3.6/site-packages/
+mv lambda_function.py repLambda/lib/python*/site-packages/
+mv requirements.txt repLambda/lib/python*/site-packages/
+cd repLambda/lib/python*/site-packages/
 pip install -r requirements.txt 
 deactivate
 mv ../dist-packages/* .

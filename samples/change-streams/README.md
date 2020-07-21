@@ -1,17 +1,17 @@
-# A solution to replicate AWS DocumentDB change stream events to different targets
+# A solution to stream AWS DocumentDB change stream events to different targets
 
-This solution allows to replicate AWS DocumentDB change streams events to ElasticSearch, Amazon Managed Stream for Kafka (or any other Apache Kafka distro), AWS Kinesis Streams, AWS SQS, and/or S3. S3 replication is done in micro-batches and the rest of the integration are near real-time.  
+This solution allows to stream AWS DocumentDB change streams events to ElasticSearch, Amazon Managed Stream for Kafka (or any other Apache Kafka distro), AWS Kinesis Streams, AWS SQS, and/or S3. S3 streaming is done in micro-batches and the rest of the integration are near real-time.  
 
 This solution is composed of:
 - One Amazon EventBridge rule in charge of triggering an SNS topic
 - One Amazon SNS topic which publishes the event to one or more lambda functions
-- One or more lambda functions, one per Amazon DocumentDB collection, in charge of replicating events to the different targets. Everytime the function is triggered it queries the DocumentDB change stream for a specific collection and publishes the events to the targets
+- One or more lambda functions, one per Amazon DocumentDB collection, in charge of streaming events to the different targets. Everytime the function is triggered it queries the DocumentDB change stream for a specific collection and publishes the events to the targets
 
-Replication functions must be deployed in a private subnet to reach DocumentDB cluster. 
+Streaming functions must be deployed in a private subnet to reach DocumentDB cluster. 
 
-If Amazon ElasticSearch is a target, replication functions must be deployed in a private subnet that can reach Internet to get an Amazon certificate required to publish to ElasticSearch. Otherwise, replication code has to be modified and the certificate must be included in the Lambda package.
+If Amazon ElasticSearch is a target, streaming functions must be deployed in a private subnet that can reach Internet to get an Amazon certificate required to publish to ElasticSearch. Otherwise, streaming code has to be modified and the certificate must be included in the Lambda package.
 
-Each lambda function uses 3 variables to control how many events replicates; customers are encourage to tune this variables according to the throughput of each collection. This variables are: 
+Each lambda function uses 3 variables to control how many events streaming; customers are encourage to tune this variables according to the throughput of each collection. This variables are: 
 - The lambda function timeout which is set to 120 seconds
 - MAX_LOOP is a control variable to avoid that the lambda times out in an inconsistent state. This is set to 45. 
 - STATE_SYNC_COUNT is a control varible that determines how many iteration should the lambda wait before syncing the resume token (resume token is used to track the events processed in the change stream). It is meant to reduce IO operations on Amazon DocumentDB. This is set to 15.
@@ -21,7 +21,7 @@ For target, there must be environment varibles in the lambda and permissions for
 # How to install
 1. Enable change streams. Follow instructions given here: https://docs.aws.amazon.com/documentdb/latest/developerguide/change-streams.html
 2. Deploy a Cloud9 environment
-3. Execute `export S3_BUCKET=s3://[Bucket Name]` where [Bucket Name] is the bucket that will host the lambda code used to replicate change stream events. 
+3. Execute `export S3_BUCKET=s3://[Bucket Name]` where [Bucket Name] is the bucket that will host the lambda code used to stream change stream events. 
 4. Setup the Cloud9 environment
     1. Create an app directory `mkdir app` and two files `touch app/requirements.txt & touch app/lambda_funtion.py`
     2. Copy the contents of the files in the app folder in this repo into the newly created ones 
@@ -39,20 +39,20 @@ For target, there must be environment varibles in the lambda and permissions for
     * sns:Publish: this action is required for the lambda to publish exceptions to the topic.
     * secretsmanager:GetSecretValue: this action is required for the lambda to use the cluster credentials.
 
-    Additionally, the replication function needs the permissions required to publish events to each target. 
+    Additionally, the streaming function needs the permissions required to publish events to each target. 
 
 9. Within Cloud9, setup the solution variables
     1. Create a config file `touch change-streams-project/config.ini`
     2. Copy the contents of the cdk/config.ini in the newly created file. 
     3. Replace the contents of the change_streams_project_stack.py with the file in this repo in cdk/change_streams_project_stack.py
-    4. In the change_streams_project_stack.py file uncomment the targets where events will be replicated
+    4. In the change_streams_project_stack.py file uncomment the targets where events will be streamed
     5. Fill the config.ini file with the variables of your environment
 10. Execute `cd change-streams-project/`
 11. Execute `source .env/bin/activate`
 12. Execute `cdk synth` to validate there are not errors
 13. Execute `cdk deploy`. Accept the changes that will be deploy. You can change the name of the CloudFormation Stack, in docdb-replication-builder/app.py    
 
-Once deployed, replication functions will be run with the frequency set in the scheduling components. 
+Once deployed, streaming functions will be run with the frequency set in the scheduling components. 
 
 # Environment Varibles for targets
 When you set up a target, make sure Lambda can reach it and the role associated to the lambda has proper permissions (e.g. s3:PutObject). 
