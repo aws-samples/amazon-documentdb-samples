@@ -1,5 +1,3 @@
-![](../media/logo.png)
-
 # Sample Categories
 
 __[Connect and query](https://github.com/aws-samples/amazon-documentdb-samples/tree/master/samples/connect-and-query)__
