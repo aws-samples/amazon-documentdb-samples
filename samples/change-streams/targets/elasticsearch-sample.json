@@ -1,5 +1,5 @@
 {
-    "DomainName": "aws-es-documentdb-change-streams",
+    "DomainName": "aws-es-documentdb",
     "ElasticsearchVersion": "7.4",
     "ElasticsearchClusterConfig": {
         "InstanceType": "r5.large.elasticsearch",
