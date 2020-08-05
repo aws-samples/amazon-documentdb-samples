@@ -56,7 +56,8 @@ es_client = None                        # ElasticSearch client - used as target
 kinesis_client = None                   # Kinesis client - used as target 
 s3_client = None                        # S3 client - used as target        
 sqs_client = None                       # SQS client - used as target                                                   
-sns_client = boto3.client('sns')        # SNS client - used as target and for exception alerting purposes
+sns_client = boto3.client('sns')        # SNS client - for exception alerting purposes
+clientS3 = boto3.resource('s3')         # S3 client - used to get the DocumentDB certificates
                                   
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
@@ -104,7 +105,7 @@ def get_db_client():
         try:
             cluster_uri = os.environ['DOCUMENTDB_URI']
             (username, password) = get_credentials()
-            db_client = MongoClient(cluster_uri)
+            db_client = MongoClient(cluster_uri, ssl=True, ssl_ca_certs='/tmp/rds-combined-ca-bundle.pem')
             # force the client to connect
             db_client.admin.command('ismaster')
             db_client["admin"].authenticate(name=username, password=password)
@@ -318,6 +319,16 @@ def publish_kinesis_event(pkey,message):
         raise
 
 
+def getDocDbCertificate():
+    """download the current docdb certificate"""
+    try:
+        print('Certificate')
+        clientS3.Bucket('rds-downloads').download_file('rds-combined-ca-bundle.pem', '/tmp/rds-combined-ca-bundle.pem')
+    except Exception as ex:
+        logger.error('Exception in publishing message to Kinesis: {}'.format(ex))
+        send_sns_alert(str(ex))
+        raise
+
 def publish_sqs_event(pkey,message):
     """send event to SQS"""
     # Use a global variable so Lambda can reuse the persisted client on future invocations
@@ -344,7 +355,7 @@ def publish_sqs_event(pkey,message):
 def lambda_handler(event, context):
     """Read any new events from DocumentDB and apply them to an streaming/datastore endpoint."""
     events_processed = 0
-
+    getDocDbCertificate()
     try:
         
         # S3 client set up   
