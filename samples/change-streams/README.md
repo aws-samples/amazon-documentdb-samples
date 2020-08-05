@@ -69,11 +69,11 @@ Once deployed, streaming functions will be run with the frequency set in the sch
 # Environment Varibles for targets
 When you set up a target, make sure Lambda can reach it and the role associated to the lambda has proper permissions (e.g. s3:PutObject). 
 
-### ElasticSearch
+### Elasticsearch
 One index will be automatically created per database and collection. 
 - ELASTICSEARCH_URI: The URI of the Elasticsearch domain where data should be streamed.
 
-If Amazon ElasticSearch is a target, streaming functions must be deployed in a private subnet that can reach Internet to get an Amazon certificate required to publish to ElasticSearch. Otherwise, streaming code has to be modified and the certificate must be included in the Lambda package.
+If Amazon Elasticsearch is a target, streaming functions must be deployed in a private subnet that can reach Internet to get an Amazon certificate required to publish to Elasticsearch. Otherwise, streaming code has to be modified and the certificate must be included in the Lambda package.
 
 ### Kinesis
 All events in the different collections will go to this stream. If you want otherwise, you need to update the environment variable for each lambda. 
