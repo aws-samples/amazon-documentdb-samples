@@ -56,7 +56,7 @@ class ChangeStreamsProjectStack(core.Stack):
                     description = 'Lambda used to replicate changes on database: ' + str(x['db']) + ' collection: ' + str(y),
                     environment = dict(
                         DOCUMENTDB_SECRET=config['endpoints']['docdb_secret_name'],
-                        DOCUMENTDB_URI=config['endpoints']['docdb_uri'],
+                        DOCUMENTDB_URI=config['endpoints']['docdb_uri']+':27017',
                         MAX_LOOP=config['control']['maxloop'],
                         SNS_TOPIC_ARN_ALERT=config['control']['sns_alert'],
                         STATE_COLLECTION=config['endpoints']['statecol'],
@@ -64,7 +64,7 @@ class ChangeStreamsProjectStack(core.Stack):
                         STATE_SYNC_COUNT=config['control']['sync'],
                         WATCHED_COLLECTION_NAME=str(y),
                         WATCHED_DB_NAME=str(x['db']),
-                        #ELASTICSEARCH_URI=config['endpoints']['elasticsearch_uri'],
+                        #ELASTICSEARCH_URI='https://'+config['endpoints']['elasticsearch_uri'],
                         #BUCKET_NAME=config['endpoints']['bucket'],
                         #BUCKET_PATH=config['endpoints']['path'],
                         #MSK_BOOTSTRAP_SRV=config['endpoints']['kafka_boostrap'],

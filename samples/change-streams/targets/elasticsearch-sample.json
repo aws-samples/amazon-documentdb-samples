@@ -5,7 +5,7 @@
         "InstanceType": "r5.large.elasticsearch",
         "InstanceCount": 1
     },
-    "AccessPolicies": "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Principal\":{\"AWS\":\"*\"},\"Action\":\"es:*\",\"Resource\":\"arn:aws:es:[REGION]:[ACCOUNT]:domain/aws-es-documendb-change-streams/*\"}]}",
+    "AccessPolicies": "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Principal\":{\"AWS\":\"*\"},\"Action\":\"es:*\",\"Resource\":\"arn:aws:es:[REGION]:[ACCOUNT]:domain/aws-es-documentdb/*\"}]}",
     "EBSOptions": {
         "EBSEnabled": true,
         "VolumeType": "gp2",
