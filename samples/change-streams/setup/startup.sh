@@ -47,7 +47,10 @@ pip install aws-cdk.aws-sns
 pip install aws-cdk.aws-lambda-event-sources
 
 # Upload Lambda Code
-cd ../app/
+mkdir app
+cd ../app
+wget https://raw.githubusercontent.com/aws-samples/amazon-documentdb-samples/master/samples/change-streams/app/lambda_function.py
+wget https://raw.githubusercontent.com/aws-samples/amazon-documentdb-samples/master/samples/change-streams/app/requirements.txt
 python -m venv repLambda
 source repLambda/bin/activate
 mv lambda_function.py repLambda/lib/python*/site-packages/
