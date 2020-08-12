@@ -52,11 +52,11 @@ export SNS_TRIGGER=$(aws sns create-topic --name sns_changestreams_trigger | jq 
 export SNS_ALERT=$(aws sns create-topic --name sns_changestreams_alert | jq -r .'TopicArn')
 
 # Download Lambda rol template, replace variables, and create role
-wget 
+wget https://raw.githubusercontent.com/aws-samples/amazon-documentdb-samples/master/samples/change-streams/app/lambdaRole.json
 replace [SecretARN] "$DOCDB_CREDENTIALS" -- lambdaRole.json
 replace [TopicARN] "$SNS_TRIGGER" -- lambdaRole.json   
 export CS_POLICY=$(aws iam create-policy --policy-name policy-change-streams --policy-document file://lambdaRole.json | jq -r .'Policy'.'Arn')
-wget 
+wget https://raw.githubusercontent.com/aws-samples/amazon-documentdb-samples/master/samples/change-streams/app/trustPolicy.json
 export ROLE=$(aws iam create-role --role-name role-change-streams --assume-role-policy-document file://trustPolicy.json | jq -r .'Role'.'Arn') 
 aws iam attach-role-policy --policy-arn $CS_POLICY --role-name role-change-streams
 
