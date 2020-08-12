@@ -46,10 +46,12 @@ pip install aws-cdk.aws-lambda
 pip install aws-cdk.aws-sns
 pip install aws-cdk.aws-lambda-event-sources
 
-# Create SNS topics to be used in the solution
+# Create SNS topics and EventBridge rule to be used in the solution
 cd ..
 export SNS_TRIGGER=$(aws sns create-topic --name sns_changestreams_trigger | jq -r .'TopicArn')
 export SNS_ALERT=$(aws sns create-topic --name sns_changestreams_alert | jq -r .'TopicArn')
+aws events put-rule --name rule-change-streams --schedule-expression "rate(2 minutes)" --state DISABLED
+aws events put-targets --rule rule-change-streams --targets "Id"="1","Arn"=$SNS_ALERT
 
 # Download Lambda rol template, replace variables, and create role
 wget https://raw.githubusercontent.com/aws-samples/amazon-documentdb-samples/master/samples/change-streams/app/lambdaRole.json
