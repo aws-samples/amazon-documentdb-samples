@@ -1,0 +1,23 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+    {
+    "Sid": "secretsManagerPolicy",
+    "Effect": "Allow",
+    "Action": "secretsmanager:GetSecretValue",
+    "Resource": "[SecretARN]"
+    },
+    {
+    "Sid": "snsPolicy",
+    "Effect": "Allow",
+    "Action": "sns:Publish",
+    "Resource": "[TopicARN]"
+    },
+    {
+            "Sid": "VisualEditor0",
+            "Effect": "Allow",
+            "Action": "s3:GetObject",
+            "Resource": "arn:aws:s3:::rds-downloads/rds-combined-ca-bundle.pem"
+    }
+    ]
+}
