@@ -53,7 +53,7 @@ export SNS_ALERT=$(aws sns create-topic --name sns_changestreams_alert | jq -r .
 
 # Download Lambda rol template, replace variables, and create role
 wget https://raw.githubusercontent.com/aws-samples/amazon-documentdb-samples/master/samples/change-streams/app/lambdaRole.json
-replace [SecretARN] "$DOCDB_CREDENTIALS" -- lambdaRole.json
+replace [SecretARN] "$DOCDB_CREDENTIALS_ARN" -- lambdaRole.json
 replace [TopicARN] "$SNS_TRIGGER" -- lambdaRole.json   
 export CS_POLICY=$(aws iam create-policy --policy-name policy-change-streams --policy-document file://lambdaRole.json | jq -r .'Policy'.'Arn')
 wget https://raw.githubusercontent.com/aws-samples/amazon-documentdb-samples/master/samples/change-streams/app/trustPolicy.json
@@ -66,6 +66,7 @@ wget https://raw.githubusercontent.com/aws-samples/amazon-documentdb-samples/mas
 replace [TopicARNAlert] "$SNS_ALERT" -- config.ini
 replace [TopicARNTrigger] "$SNS_TRIGGER" -- config.ini
 replace [ARNRole] "$ROLE" -- config.ini
+replace [SecretName] "$DOCDB_CREDENTIALS_NAME" -- config.ini
 
 # Replace code of template CDK project with the one in GitHub
 wget https://raw.githubusercontent.com/aws-samples/amazon-documentdb-samples/master/samples/change-streams/cdk/change_streams_project_stack.py -O change_streams_project/change_streams_project_stack.py
