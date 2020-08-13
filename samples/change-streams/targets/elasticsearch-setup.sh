@@ -15,5 +15,5 @@ export AWS_REGION=$(curl -s 169.254.169.254/latest/dynamic/instance-identity/doc
   grep region | cut -d\" -f4)
 
 # Replace region and account
-replace awsregion "'$AWS_REGION'" -- elasticsearch-sample.json
-replace accountid "'$ACCOUNT_ID'" -- elasticsearch-sample.json 
+replace awsregion "$AWS_REGION" -- elasticsearch-sample.json
+replace accountid "$ACCOUNT_ID" -- elasticsearch-sample.json 
