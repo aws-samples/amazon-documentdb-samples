@@ -27,9 +27,9 @@ SEED_DATA = [
 ]
 
 #Get Amazon DocumentDB ceredentials from enviornment variables
-username = os.environ.get("username")
-password = os.environ.get("password")
-clusterendpoint = os.environ.get("clusterendpoint")
+username = os.environ.get("USERNAME")
+password = os.environ.get("PASSWORD")
+clusterendpoint = os.environ.get("DOCDB_ENDPOINT")
 
 
 def main(args):
