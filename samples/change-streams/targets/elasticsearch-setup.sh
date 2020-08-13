@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Update instance and install packages
+sudo yum update -y
+sudo yum install -y jq moreutils
+
 # Create target dir and download AES sample template
 mkdir target
 cd target

@@ -51,16 +51,17 @@ cd ..
 export SNS_TRIGGER=$(aws sns create-topic --name sns_changestreams_trigger | jq -r .'TopicArn')
 export SNS_ALERT=$(aws sns create-topic --name sns_changestreams_alert | jq -r .'TopicArn')
 aws events put-rule --name rule-change-streams --schedule-expression "rate(2 minutes)" --state DISABLED
-aws events put-targets --rule rule-change-streams --targets "Id"="1","Arn"=$SNS_ALERT
+aws events put-targets --rule rule-change-streams --targets "Id"="1","Arn"=$SNS_TRIGGER
 
 # Download Lambda rol template, replace variables, and create role
 wget https://raw.githubusercontent.com/aws-samples/amazon-documentdb-samples/master/samples/change-streams/app/lambdaRole.json
 replace [SecretARN] "$DOCDB_CREDENTIALS_ARN" -- lambdaRole.json
-replace [TopicARN] "$SNS_TRIGGER" -- lambdaRole.json   
+replace [TopicARN] "$SNS_ALERT" -- lambdaRole.json   
 export CS_POLICY=$(aws iam create-policy --policy-name policy-change-streams --policy-document file://lambdaRole.json | jq -r .'Policy'.'Arn')
 wget https://raw.githubusercontent.com/aws-samples/amazon-documentdb-samples/master/samples/change-streams/app/trustPolicy.json
 export ROLE=$(aws iam create-role --role-name role-change-streams --assume-role-policy-document file://trustPolicy.json | jq -r .'Role'.'Arn') 
 aws iam attach-role-policy --policy-arn $CS_POLICY --role-name role-change-streams
+aws iam attach-role-policy --policy-arn arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole --role-name role-change-streams
 
 # Download config file for the CDK project
 cd change-streams-project
@@ -69,6 +70,7 @@ replace [TopicARNAlert] "$SNS_ALERT" -- config.ini
 replace [TopicARNTrigger] "$SNS_TRIGGER" -- config.ini
 replace [ARNRole] "$ROLE" -- config.ini
 replace [SecretName] "$DOCDB_CREDENTIALS_NAME" -- config.ini
+replace [BucketName] "$S3_BUCKET" -- config.ini
 
 # Replace code of template CDK project with the one in GitHub
 wget https://raw.githubusercontent.com/aws-samples/amazon-documentdb-samples/master/samples/change-streams/cdk/change_streams_project_stack.py -O change_streams_project/change_streams_project_stack.py
