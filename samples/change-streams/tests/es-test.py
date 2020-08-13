@@ -34,7 +34,7 @@ clusterendpoint = os.environ.get("DOCDB_ENDPOINT")
 
 def main(args):
     #Establish DocumentDB connection
-    client = pymongo.MongoClient(clusterendpoint, username=username, password=password)
+    client = pymongo.MongoClient(clusterendpoint, username=username, password=password, ssl='true', ssl_ca_certs='../rds-combined-ca-bundle.pem')
     db = client.media
     profiles = db['movie']
     

@@ -80,8 +80,8 @@ replace [BucketName] "$S3_BUCKET" -- config.ini
 wget https://raw.githubusercontent.com/aws-samples/amazon-documentdb-samples/master/samples/change-streams/cdk/change_streams_project_stack.py -O change_streams_project/change_streams_project_stack.py
 
 # Upload Lambda Code
-mkdir app
-cd ../app
+cd..
+mkdir app && cd app
 wget https://raw.githubusercontent.com/aws-samples/amazon-documentdb-samples/master/samples/change-streams/app/lambda_function.py
 wget https://raw.githubusercontent.com/aws-samples/amazon-documentdb-samples/master/samples/change-streams/app/requirements.txt
 python -m venv repLambda
