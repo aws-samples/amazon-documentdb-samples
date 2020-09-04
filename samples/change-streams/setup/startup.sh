@@ -5,7 +5,7 @@ echo -e "[mongodb-org-3.6] \nname=MongoDB Repository\nbaseurl=https://repo.mongo
 sudo yum update -y
 sudo yum install -y jq moreutils
 sudo yum install -y mongodb-org-shell
-pip install pymongo
+sudo python -m pip install pymongo
 wget https://s3.amazonaws.com/rds-downloads/rds-combined-ca-bundle.pem
 
 # Upgrade pip
