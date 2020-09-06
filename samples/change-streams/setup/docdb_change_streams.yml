@@ -14,6 +14,10 @@ Parameters:
     NoEcho: true
     MinLength: 8
 
+  #S3BucketName:
+  #  Description: The S3 Bucket that holds the streaming code use by AWS Lambda
+  #  Type: String
+
 Mappings:
 
   SubnetConfig:
@@ -277,14 +281,14 @@ Resources:
     Properties:
       Name: DocDBSecret
       Description: This secret has the credentials for the documentDB cluster
-      SecretString: '{"username":"MasterUsername","password":"secret-password"}'
-      #  !Join
-      #    - '' 
-      #    - - '{"username":'
-      #      - !Ref DocDBUsername
-      #      - ',"password":'
-      #      - !Ref DocDBPassword
-      #      - ', "ssl": true}'
+      SecretString:
+        !Join
+          - '' 
+          - - '{"username":"'
+            - !Ref DocDBUsername
+            - '","password":"'
+            - !Ref DocDBPassword
+            - '", "ssl": true}'
   
   SecretDocDBClusterAttachment:
     Type: AWS::SecretsManager::SecretTargetAttachment
@@ -381,24 +385,6 @@ Resources:
         - Key: Name
           Value: !Sub DocumentDBInstance-${AWS::StackName}
 
-  DocumentDBInstanceReader1: 
-    Type: AWS::DocDB::DBInstance
-    Properties: 
-      DBClusterIdentifier: !Ref DocumentDBCluster
-      DBInstanceClass: db.r5.large
-      Tags: 
-        - Key: Name
-          Value: !Sub DocumentDBInstance-${AWS::StackName}
-
-  DocumentDBInstanceReader2: 
-    Type: AWS::DocDB::DBInstance
-    Properties: 
-      DBClusterIdentifier: !Ref DocumentDBCluster
-      DBInstanceClass: db.r5.large
-      Tags: 
-        - Key: Name
-          Value: !Sub DocumentDBInstance-${AWS::StackName}
-
   Cloud9env:
     Type: AWS::Cloud9::EnvironmentEC2
     Properties: 
@@ -425,23 +411,24 @@ Resources:
       DomainName: "aws-es-documentdb"
       ElasticsearchVersion: "7.4"
       ElasticsearchClusterConfig:
-        DedicatedMasterEnabled: "true"
-        InstanceCount: "3"
-        ZoneAwarenessEnabled: "true"
+        InstanceCount: "1"
         InstanceType: "r5.large.elasticsearch"
-        DedicatedMasterType: "r5.large.elasticsearch"
-        DedicatedMasterCount: "3"
       EBSOptions:
         EBSEnabled: true
         Iops: 0
         VolumeSize: 20
         VolumeType: "gp2"
-      AccessPolicies: "{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"AWS":"*"},"Action":"es:*","Resource":"arn:aws:es:us-east-2:826604414441:domain/aws-es-documentdb/*\"}]}"
+      AccessPolicies:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: '*'
+            Action: 'es:*'
+            Resource: 'arn:aws:es:us-east-2:826604414441:domain/aws-es-documentdb/*\' # ***************** #
       VPCOptions:
         SubnetIds:
-          - !Ref PrivateSubnetOne
-          - !Ref PrivateSubnetTwo
-          - !Ref PrivateSubnetThree
+          - Ref: PrivateSubnetOne
         SecurityGroupIds:
           - Ref: ElasticSearchSecurityGroup
 
@@ -456,15 +443,21 @@ Outputs:
     Value: !Ref PrivateSubnetThree
   StackName:
     Value: !Sub ${AWS::StackName}
-  DocumentDB:
+  DocumentDBIdentifier:
     Value: !Ref DocumentDBCluster
+  DocumentDBEndpoint:
+    Value: !GetAtt DocumentDBCluster.Endpoint
   DocumentDBSecurityGroup:
     Value: !Ref DocumentDBSecurityGroup
   SNSTopicTrigger:
     Value: !Ref SNSTopicTrigger
   SNSTopicAlert:
     Value: !Ref SNSTopicAlert
-  DocDBSecret:
+  DocDBSecretArn:
     Value: !Ref DocDBSecret
-  ElasticsearchDomain:
+  DocDBSecretName:
+    Value: DocDBSecret
+  ElasticsearchDomainArn:
     Value: !GetAtt ElasticsearchDomain.Arn
+  ElasticsearchDomainEndpoint:
+    Value: !GetAtt ElasticsearchDomain.DomainEndpoint
