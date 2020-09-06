@@ -1,0 +1,470 @@
+---
+AWSTemplateFormatVersion: "2010-09-09"
+Description: This stack deploys the baseline infrastructure to be used for AmazonDocumentDB
+
+Parameters:
+
+  DocDBUsername:
+    Type: String
+    Description: Username for the Amazon DocumentDB cluster
+
+  DocDBPassword:
+    Type: String
+    Description: Password for the Amazon DocumentDB cluster
+    NoEcho: true
+    MinLength: 8
+
+Mappings:
+
+  SubnetConfig:
+    VPC:
+      CIDR: '10.0.0.0/16'
+    PublicOne:
+      CIDR: '10.0.0.0/24'
+    PublicTwo:
+      CIDR: '10.0.1.0/24'
+    PublicThree:
+      CIDR: '10.0.2.0/24'
+    PrivateOne:
+      CIDR: '10.0.100.0/24'
+    PrivateTwo:
+      CIDR: '10.0.101.0/24'
+    PrivateThree:
+      CIDR: '10.0.102.0/24'
+
+Resources:
+ 
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      CidrBlock: !FindInMap ['SubnetConfig', 'VPC', 'CIDR']
+      Tags:
+        - Key: Name
+          Value: !Sub VPC-${AWS::StackName}
+
+  PublicSubnetOne:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone:
+         Fn::Select:
+         - 0
+         - Fn::GetAZs: {Ref: 'AWS::Region'}
+      VpcId: !Ref VPC
+      CidrBlock: !FindInMap ['SubnetConfig', 'PublicOne', 'CIDR']
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub PublicOne-${AWS::StackName}
+
+  PublicSubnetTwo:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone:
+         Fn::Select:
+         - 1
+         - Fn::GetAZs: {Ref: 'AWS::Region'}
+      VpcId: !Ref VPC
+      CidrBlock: !FindInMap ['SubnetConfig', 'PublicTwo', 'CIDR']
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub PublicTwo-${AWS::StackName}
+
+  PublicSubnetThree:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone:
+         Fn::Select:
+         - 2
+         - Fn::GetAZs: {Ref: 'AWS::Region'}
+      VpcId: !Ref VPC
+      CidrBlock: !FindInMap ['SubnetConfig', 'PublicThree', 'CIDR']
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub PublicThree-${AWS::StackName}
+
+  PrivateSubnetOne:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone:
+         Fn::Select:
+         - 0
+         - Fn::GetAZs: {Ref: 'AWS::Region'}
+      VpcId: !Ref VPC
+      CidrBlock: !FindInMap ['SubnetConfig', 'PrivateOne', 'CIDR']
+      Tags:
+        - Key: Name
+          Value: !Sub PrivateOne-${AWS::StackName}
+
+  PrivateSubnetTwo:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone:
+         Fn::Select:
+         - 1
+         - Fn::GetAZs: {Ref: 'AWS::Region'}
+      VpcId: !Ref VPC
+      CidrBlock: !FindInMap ['SubnetConfig', 'PrivateTwo', 'CIDR']
+      Tags:
+        - Key: Name
+          Value: !Sub PrivateTwo-${AWS::StackName}
+
+  PrivateSubnetThree:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone:
+         Fn::Select:
+         - 2
+         - Fn::GetAZs: {Ref: 'AWS::Region'}
+      VpcId: !Ref VPC
+      CidrBlock: !FindInMap ['SubnetConfig', 'PrivateThree', 'CIDR']
+      Tags:
+        - Key: Name
+          Value: !Sub PrivateThree-${AWS::StackName}
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+  GatewayAttachement:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: GatewayAttachement
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+  PublicSubnetOneRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnetOne
+      RouteTableId: !Ref PublicRouteTable
+  PublicSubnetTwoRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnetTwo
+      RouteTableId: !Ref PublicRouteTable
+  PublicSubnetThreeRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnetThree
+      RouteTableId: !Ref PublicRouteTable
+
+  NatGatewayOneAttachment:
+    Type: AWS::EC2::EIP
+    DependsOn: GatewayAttachement
+    Properties:
+        Domain: vpc
+  NatGatewayTwoAttachment:
+    Type: AWS::EC2::EIP
+    DependsOn: GatewayAttachement
+    Properties:
+        Domain: vpc
+  NatGatewayThreeAttachment:
+    Type: AWS::EC2::EIP
+    DependsOn: GatewayAttachement
+    Properties:
+        Domain: vpc
+  NatGatewayOne:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt NatGatewayOneAttachment.AllocationId
+      SubnetId: !Ref PublicSubnetOne
+  NatGatewayTwo:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt NatGatewayTwoAttachment.AllocationId
+      SubnetId: !Ref PublicSubnetTwo
+  NatGatewayThree:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt NatGatewayThreeAttachment.AllocationId
+      SubnetId: !Ref PublicSubnetThree
+  PrivateRouteTableOne:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+  PrivateRouteOne:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivateRouteTableOne
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGatewayOne
+  PrivateRouteTableOneAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateRouteTableOne
+      SubnetId: !Ref PrivateSubnetOne
+  PrivateRouteTableTwo:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+  PrivateRouteTwo:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivateRouteTableTwo
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGatewayTwo
+  PrivateRouteTableTwoAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateRouteTableTwo
+      SubnetId: !Ref PrivateSubnetTwo
+  PrivateRouteTableThree:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+  PrivateRouteThree:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivateRouteTableThree
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGatewayThree
+  PrivateRouteTableThreeAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateRouteTableThree
+      SubnetId: !Ref PrivateSubnetThree
+
+  SNSTopicTrigger:
+    Type: AWS::SNS::Topic
+    Properties: 
+      TopicName: sns_changestreams_trigger
+
+  SNSTopicAlert:
+    Type: AWS::SNS::Topic
+    Properties: 
+      TopicName: sns_changestreams_alert
+
+  ScheduledRule: 
+    Type: AWS::Events::Rule
+    Properties: 
+      Name: "rule-change-streams"
+      Description: "Rule to trigger change stream Lambda functions"
+      ScheduleExpression: "rate(2 minutes)"
+      State: "DISABLED"
+      Targets: 
+        - 
+          Arn: 
+            Ref: "SNSTopicTrigger"
+          Id: "TargetSNS"
+    DependsOn: SNSTopicAlert
+  
+  EventTopicPolicy:
+    Type: 'AWS::SNS::TopicPolicy'
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: events.amazonaws.com
+            Action: 'sns:Publish'
+            Resource: '*'
+      Topics:
+        - !Ref SNSTopicTrigger
+
+  DocDBSecret:
+    Type: 'AWS::SecretsManager::Secret'
+    Properties:
+      Name: DocDBSecret
+      Description: This secret has the credentials for the documentDB cluster
+      SecretString: '{"username":"MasterUsername","password":"secret-password"}'
+      #  !Join
+      #    - '' 
+      #    - - '{"username":'
+      #      - !Ref DocDBUsername
+      #      - ',"password":'
+      #      - !Ref DocDBPassword
+      #      - ', "ssl": true}'
+  
+  SecretDocDBClusterAttachment:
+    Type: AWS::SecretsManager::SecretTargetAttachment
+    Properties:
+      SecretId: !Ref DocDBSecret
+      TargetId: !Ref DocumentDBCluster
+      TargetType: AWS::DocDB::DBCluster
+
+  LambdaChangeStreamsRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
+      Policies:
+        - PolicyName: PublishSNS
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - sns:Publish
+                Resource: !Ref SNSTopicAlert
+        - PolicyName: SecretsManager
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - secretsmanager:GetSecretValue
+                Resource: !Ref DocDBSecret
+        - PolicyName: S3Access
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                Resource: 'arn:aws:s3:::rds-downloads/rds-combined-ca-bundle.pem'
+      RoleName: !Sub "DocumentDB-${AWS::StackName}"
+      Path:
+        Fn::Sub: /
+
+  DocumentDBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties: 
+      GroupDescription: Amazon DocumentDB Security Group
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+         - IpProtocol: tcp
+           CidrIp: 10.0.0.0/16
+           FromPort: 27017
+           ToPort: 27017
+  
+  DocumentDBSubnetGroup:
+    Type: AWS::DocDB::DBSubnetGroup
+    Properties: 
+      DBSubnetGroupDescription: Subnet Group for DocumentDB
+      SubnetIds: 
+         - !Ref PrivateSubnetOne
+         - !Ref PrivateSubnetTwo
+         - !Ref PrivateSubnetThree
+
+  DocumentDBCluster:  
+    Type: AWS::DocDB::DBCluster
+    Properties: 
+      DBClusterIdentifier: documentdb-base
+      MasterUsername: !Ref DocDBUsername
+      MasterUserPassword: !Ref DocDBPassword
+      DBSubnetGroupName : !Ref DocumentDBSubnetGroup
+      StorageEncrypted: yes
+      Tags: 
+        - Key: Name
+          Value: !Sub DocumentDB-${AWS::StackName}
+      VpcSecurityGroupIds: 
+        - !Ref DocumentDBSecurityGroup
+    DependsOn: VPC
+
+  DocumentDBInstanceWriter: 
+    Type: AWS::DocDB::DBInstance
+    Properties: 
+      DBClusterIdentifier: !Ref DocumentDBCluster
+      DBInstanceClass: db.r5.large
+      Tags: 
+        - Key: Name
+          Value: !Sub DocumentDBInstance-${AWS::StackName}
+
+  DocumentDBInstanceReader1: 
+    Type: AWS::DocDB::DBInstance
+    Properties: 
+      DBClusterIdentifier: !Ref DocumentDBCluster
+      DBInstanceClass: db.r5.large
+      Tags: 
+        - Key: Name
+          Value: !Sub DocumentDBInstance-${AWS::StackName}
+
+  DocumentDBInstanceReader2: 
+    Type: AWS::DocDB::DBInstance
+    Properties: 
+      DBClusterIdentifier: !Ref DocumentDBCluster
+      DBInstanceClass: db.r5.large
+      Tags: 
+        - Key: Name
+          Value: !Sub DocumentDBInstance-${AWS::StackName}
+
+  Cloud9env:
+    Type: AWS::Cloud9::EnvironmentEC2
+    Properties: 
+      ConnectionType: CONNECT_SSM 
+      Description: Cloud9 instance to access Cloud9
+      InstanceType: t3.small
+      Name: DocumentDBCloud9
+      SubnetId: !Ref PrivateSubnetOne
+
+  ElasticSearchSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties: 
+      GroupDescription: Amazon DocumentDB Security Group
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+         - IpProtocol: tcp
+           CidrIp: 10.0.0.0/16
+           FromPort: 443
+           ToPort: 443
+
+  ElasticsearchDomain:
+    Type: AWS::Elasticsearch::Domain
+    Properties:
+      DomainName: "aws-es-documentdb"
+      ElasticsearchVersion: "7.4"
+      ElasticsearchClusterConfig:
+        DedicatedMasterEnabled: "true"
+        InstanceCount: "3"
+        ZoneAwarenessEnabled: "true"
+        InstanceType: "r5.large.elasticsearch"
+        DedicatedMasterType: "r5.large.elasticsearch"
+        DedicatedMasterCount: "3"
+      EBSOptions:
+        EBSEnabled: true
+        Iops: 0
+        VolumeSize: 20
+        VolumeType: "gp2"
+      AccessPolicies: "{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"AWS":"*"},"Action":"es:*","Resource":"arn:aws:es:us-east-2:826604414441:domain/aws-es-documentdb/*\"}]}"
+      VPCOptions:
+        SubnetIds:
+          - !Ref PrivateSubnetOne
+          - !Ref PrivateSubnetTwo
+          - !Ref PrivateSubnetThree
+        SecurityGroupIds:
+          - Ref: ElasticSearchSecurityGroup
+
+Outputs:
+  VpcId:
+    Value: !Ref VPC
+  PrivateSubnetOne:
+    Value: !Ref PrivateSubnetOne
+  PrivateSubnetTwo:
+    Value: !Ref PrivateSubnetTwo
+  PrivateSubnetThree:
+    Value: !Ref PrivateSubnetThree
+  StackName:
+    Value: !Sub ${AWS::StackName}
+  DocumentDB:
+    Value: !Ref DocumentDBCluster
+  DocumentDBSecurityGroup:
+    Value: !Ref DocumentDBSecurityGroup
+  SNSTopicTrigger:
+    Value: !Ref SNSTopicTrigger
+  SNSTopicAlert:
+    Value: !Ref SNSTopicAlert
+  DocDBSecret:
+    Value: !Ref DocDBSecret
+  ElasticsearchDomain:
+    Value: !GetAtt ElasticsearchDomain.Arn
