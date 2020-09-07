@@ -17,6 +17,9 @@ source ~/.bash_profile
 pip3 install awscli --upgrade --user
 source ~/.bash_profile
 
+# Get the AWS CloudFormation solution
+wget https://raw.githubusercontent.com/aws-samples/amazon-documentdb-samples/master/samples/change-streams/app/change_streams_stack.yml
+
 # Upload Lambda Code
 cd..
 mkdir app && cd app
