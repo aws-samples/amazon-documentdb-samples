@@ -6,17 +6,16 @@ Parameters:
 
   DocDBUsername:
     Type: String
-    Description: Username for the Amazon DocumentDB cluster
+    Description: Username for the Amazon DocumentDB cluster (the first character must be a letter. Cannot be a reserved word for the chosen database engine.)
+    MinLength: 1
+    MaxLength: 63
 
   DocDBPassword:
     Type: String
-    Description: Password for the Amazon DocumentDB cluster
+    Description: Password for the Amazon DocumentDB cluster (this password can contain any printable ASCII character except forward slash (/), double quote ("), or the "at" symbol (@).)
     NoEcho: true
     MinLength: 8
-
-  #S3BucketName:
-  #  Description: The S3 Bucket that holds the streaming code use by AWS Lambda
-  #  Type: String
+    MaxLength: 100
 
 Mappings:
 
@@ -337,7 +336,26 @@ Resources:
                 Action:
                   - s3:GetObject
                 Resource: 'arn:aws:s3:::rds-downloads/rds-combined-ca-bundle.pem'
-      RoleName: !Sub "DocumentDB-${AWS::StackName}"
+      RoleName: !Sub "DocDB-Lambda-${AWS::StackName}"
+      Path:
+        Fn::Sub: /
+
+  Cloud9ChangeStreamsRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AdministratorAccess
+      RoleName: Cloud9-Admin-Role
       Path:
         Fn::Sub: /
 
@@ -425,7 +443,14 @@ Resources:
             Principal:
               AWS: '*'
             Action: 'es:*'
-            Resource: 'arn:aws:es:us-east-2:826604414441:domain/aws-es-documentdb/*\' # ***************** #
+            Resource: 
+              !Join
+                - '' 
+                - - 'arn:aws:es:'
+                  - !Ref "AWS::Region"
+                  - ':'
+                  - !Ref "AWS::AccountId"
+                  - ':domain/aws-es-documentdb/*'
       VPCOptions:
         SubnetIds:
           - Ref: PrivateSubnetOne
@@ -461,3 +486,7 @@ Outputs:
     Value: !GetAtt ElasticsearchDomain.Arn
   ElasticsearchDomainEndpoint:
     Value: !GetAtt ElasticsearchDomain.DomainEndpoint
+  ElasticsearchSecurityGroup:
+    Value: !Ref ElasticSearchSecurityGroup
+  RoleArn:
+    Value: !GetAtt LambdaChangeStreamsRole.Arn

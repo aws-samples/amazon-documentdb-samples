@@ -53,11 +53,6 @@ pip install aws-cdk.aws-lambda-event-sources
 # Download config file for the CDK project   ************************************************
 cd change-streams-project
 wget https://raw.githubusercontent.com/aws-samples/amazon-documentdb-samples/master/samples/change-streams/cdk/config.ini
-replace [TopicARNAlert] "$SNS_ALERT" -- config.ini
-replace [TopicARNTrigger] "$SNS_TRIGGER" -- config.ini
-replace [ARNRole] "$ROLE" -- config.ini
-replace [SecretName] "$DOCDB_CREDENTIALS_NAME" -- config.ini
-replace [BucketName] "$S3_BUCKET" -- config.ini
 
 # Replace code of template CDK project with the one in GitHub
 wget https://raw.githubusercontent.com/aws-samples/amazon-documentdb-samples/master/samples/change-streams/cdk/change_streams_project_stack.py -O change_streams_project/change_streams_project_stack.py
@@ -76,4 +71,4 @@ pip install -r requirements.txt
 deactivate
 mv ../dist-packages/* .
 zip -r9 repLambdaFunction.zip .
-aws s3 cp repLambdaFunction.zip s3://$S3_BUCKET  # ********************************
+aws s3 cp repLambdaFunction.zip s3://$S3_BUCKET

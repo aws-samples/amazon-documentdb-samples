@@ -1,0 +1,54 @@
+Resources:
+  replicatormediamusic6507F932:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket: yet-another-attempt
+        S3Key: repLambdaFunction.zip
+      Handler: lambda_function.lambda_handler
+      Role: arn:aws:iam::826604414441:role/DocumentDB-change-streams
+      Runtime: python3.7
+      Description: "Lambda used to replicate changes on database: media collection: music"
+      Environment:
+        Variables:
+          DOCUMENTDB_SECRET: DocDBSecret
+          DOCUMENTDB_URI: documentdb-base.cluster-cbqfzmehfn9q.us-east-2.docdb.amazonaws.com:27017
+          MAX_LOOP: "60"
+          SNS_TOPIC_ARN_ALERT: arn:aws:sns:us-east-2:826604414441:sns_changestreams_alert
+          STATE_COLLECTION: statecol
+          STATE_DB: statedb
+          STATE_SYNC_COUNT: "15"
+          WATCHED_COLLECTION_NAME: music
+          WATCHED_DB_NAME: media
+          ELASTICSEARCH_URI: https://vpc-aws-es-documentdb-4a7pddbfxb3d3yxnixv4xofckq.us-east-2.es.amazonaws.com
+      FunctionName: docdb-cdc-media-music
+      MemorySize: 256
+      Timeout: 120
+      VpcConfig:
+        SecurityGroupIds:
+          - sg-062ccc87034124488
+          - sg-06f8032a2def039f3
+        SubnetIds:
+          - subnet-04b80a159a06fa231
+          - subnet-0f0df261aa5475d01
+          - subnet-0fd43f14ef43dcd2a
+  replicatormediamusicAllowInvokechangestreamsprojectsnstopic0DAD78327F81B64D:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName:
+        Fn::GetAtt:
+          - replicatormediamusic6507F932
+          - Arn
+      Principal: sns.amazonaws.com
+      SourceArn: arn:aws:sns:us-east-2:826604414441:sns_changestreams_trigger
+  replicatormediamusicsnstopic7EE9F99A:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Protocol: lambda
+      TopicArn: arn:aws:sns:us-east-2:826604414441:sns_changestreams_trigger
+      Endpoint:
+        Fn::GetAtt:
+          - replicatormediamusic6507F932
+          - Arn
+      Region: us-east-2
