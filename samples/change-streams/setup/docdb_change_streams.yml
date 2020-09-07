@@ -359,6 +359,14 @@ Resources:
       Path:
         Fn::Sub: /
 
+  RootInstanceProfile: 
+    Type: "AWS::IAM::InstanceProfile"
+    Properties: 
+      Path: "/"
+      Roles: 
+        - 
+          Ref: "Cloud9ChangeStreamsRole"
+
   DocumentDBSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties: 
