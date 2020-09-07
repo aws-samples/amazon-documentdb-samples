@@ -17,46 +17,6 @@ source ~/.bash_profile
 pip3 install awscli --upgrade --user
 source ~/.bash_profile
 
-# Update node
-nvm install node
-source ~/.bash_profile
-
-# Install CDK
-npm install -g aws-cdk --force
-source ~/.bash_profile
-
-# creates a project folder
-mkdir change-streams-project && cd change-streams-project
-
-# Create cdk project
-cdk init app --language python
-
-# Activate Python virtual environment
-source .env/bin/activate
-
-# Set ACCOUNT_ID and AWS_REGION
-export ACCOUNT_ID=$(aws sts get-caller-identity --output text --query Account)
-export AWS_REGION=$(curl -s 169.254.169.254/latest/dynamic/instance-identity/document | \
-  grep region | cut -d\" -f4)
-
-# Replace values in app.py
-sed -i 's/streams-project"/streams-project",env={"region": awsregion,"account":accountid}/' app.py
-replace awsregion "'$AWS_REGION'" -- app.py
-replace accountid "'$ACCOUNT_ID'" -- app.py  
-
-# Install dependencies 
-pip install -r requirements.txt
-pip install aws-cdk.aws-lambda
-pip install aws-cdk.aws-sns
-pip install aws-cdk.aws-lambda-event-sources
-
-# Download config file for the CDK project   ************************************************
-cd change-streams-project
-wget https://raw.githubusercontent.com/aws-samples/amazon-documentdb-samples/master/samples/change-streams/cdk/config.ini
-
-# Replace code of template CDK project with the one in GitHub
-wget https://raw.githubusercontent.com/aws-samples/amazon-documentdb-samples/master/samples/change-streams/cdk/change_streams_project_stack.py -O change_streams_project/change_streams_project_stack.py
-
 # Upload Lambda Code
 cd..
 mkdir app && cd app
