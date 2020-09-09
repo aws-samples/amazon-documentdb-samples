@@ -34,4 +34,4 @@ pip install -r requirements.txt
 deactivate
 mv ../dist-packages/* .
 zip -r9 repLambdaFunction.zip .
-aws s3 cp repLambdaFunction.zip s3://$(aws cloudformation describe-stacks --stack-name change-streams | jq -r '[.Stacks[0].Outputs[] | {key: .OutputKey, value: .OutputValue}] | from_entries'.S3BucketName)
+aws s3 cp repLambdaFunction.zip s3://$(aws cloudformation describe-stacks --stack-name $STACK | jq -r '[.Stacks[0].Outputs[] | {key: .OutputKey, value: .OutputValue}] | from_entries'.S3BucketName)

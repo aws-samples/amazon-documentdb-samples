@@ -4,6 +4,10 @@ Description: This stack deploys the baseline infrastructure to be used for Amazo
 
 Parameters:
 
+  DocDBIdentifier:
+    Type: String
+    Description: The cluster identifier. This parameter is stored as a lowercase string. (the first character must be a letter. Cannot end with a hyphen or contain two consecutive hyphens.)
+
   DocDBUsername:
     Type: String
     Description: Username for the Amazon DocumentDB cluster (the first character must be a letter. Cannot be a reserved word for the chosen database engine.)
@@ -390,7 +394,7 @@ Resources:
   DocumentDBCluster:  
     Type: AWS::DocDB::DBCluster
     Properties: 
-      DBClusterIdentifier: documentdb-base
+      DBClusterIdentifier: !Ref DocDBIdentifier
       MasterUsername: !Ref DocDBUsername
       MasterUserPassword: !Ref DocDBPassword
       DBSubnetGroupName : !Ref DocumentDBSubnetGroup
