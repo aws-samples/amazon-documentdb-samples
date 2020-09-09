@@ -244,18 +244,13 @@ Resources:
 
   SNSTopicTrigger:
     Type: AWS::SNS::Topic
-    Properties: 
-      TopicName: sns_changestreams_trigger
 
   SNSTopicAlert:
     Type: AWS::SNS::Topic
-    Properties: 
-      TopicName: sns_changestreams_alert
 
   ScheduledRule: 
     Type: AWS::Events::Rule
     Properties: 
-      Name: "rule-change-streams"
       Description: "Rule to trigger change stream Lambda functions"
       ScheduleExpression: "rate(2 minutes)"
       State: "DISABLED"
@@ -282,7 +277,7 @@ Resources:
   DocDBSecret:
     Type: 'AWS::SecretsManager::Secret'
     Properties:
-      Name: DocDBSecret
+      Name: !Sub "DocDBSecret-${AWS::StackName}"
       Description: This secret has the credentials for the documentDB cluster
       SecretString:
         !Join
@@ -340,7 +335,6 @@ Resources:
                 Action:
                   - s3:GetObject
                 Resource: 'arn:aws:s3:::rds-downloads/rds-combined-ca-bundle.pem'
-      RoleName: !Sub "DocDB-Lambda-${AWS::StackName}"
       Path:
         Fn::Sub: /
 
@@ -359,7 +353,7 @@ Resources:
               - sts:AssumeRole
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/AdministratorAccess
-      RoleName: Cloud9-Admin-Role
+      RoleName: !Sub "Cloud9-Role-${AWS::StackName}"
       Path:
         Fn::Sub: /
 
@@ -497,7 +491,7 @@ Outputs:
   DocDBSecretArn:
     Value: !Ref DocDBSecret
   DocDBSecretName:
-    Value: DocDBSecret
+    Value: !Sub "DocDBSecret-${AWS::StackName}"
   ElasticsearchDomainArn:
     Value: !GetAtt ElasticsearchDomain.Arn
   ElasticsearchDomainEndpoint:
@@ -508,3 +502,5 @@ Outputs:
     Value: !GetAtt LambdaChangeStreamsRole.Arn
   S3BucketName:
     Value: !Ref S3BucketFunctionCode
+  EventBridgeRule:
+    Value: !Ref ScheduledRule
