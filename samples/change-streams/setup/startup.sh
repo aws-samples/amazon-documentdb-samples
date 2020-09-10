@@ -24,6 +24,10 @@ then
     # Get the AWS CloudFormation solution
     wget https://raw.githubusercontent.com/aws-samples/amazon-documentdb-samples/master/samples/change-streams/app/change_streams_stack.yml
 
+    echo 'Copy output from CloudFormation to your workspace into file cfn-output.json'
+    # Upload Lambda Code
+    aws cloudformation describe-stacks --stack-name $STACK | jq -r '[.Stacks[0].Outputs[] | {key: .OutputKey, value: .OutputValue}] | from_entries' > cfn-output.json
+
     echo 'Packaging and uploading streaming code to S3'
     # Upload Lambda Code
     cd..
@@ -41,9 +45,6 @@ then
     zip -r9 repLambdaFunction.zip .
     aws s3 cp repLambdaFunction.zip s3://$(aws cloudformation describe-stacks --stack-name $STACK | jq -r '[.Stacks[0].Outputs[] | {key: .OutputKey, value: .OutputValue}] | from_entries'.S3BucketName)
 
-    echo 'Copy output from CloudFormation to your workspace into file cfn-output.json'
-    # Upload Lambda Code
-    aws cloudformation describe-stacks --stack-name $STACK | jq -r '[.Stacks[0].Outputs[] | {key: .OutputKey, value: .OutputValue}] | from_entries' > cfn-output.json
 else
   echo "Remind to create an environment variable for your stack name. It is done in a step above."
 fi
