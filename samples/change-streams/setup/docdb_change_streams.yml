@@ -357,13 +357,43 @@ Resources:
       Path:
         Fn::Sub: /
 
-  RootInstanceProfile: 
+  Cloud9ChangeStreamsInstanceProfile: 
     Type: "AWS::IAM::InstanceProfile"
     Properties: 
       Path: "/"
       Roles: 
         - 
           Ref: "Cloud9ChangeStreamsRole"
+
+  AWSCloud9SSMAccessRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+                - cloud9.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AWSCloud9SSMInstanceProfile
+        - arn:aws:iam::aws:policy/AdministratorAccess
+      RoleName: AWSCloud9SSMAccessRole
+      Path: /service-role/
+
+  AWSCloud9SSMInstanceProfile: 
+    Type: "AWS::IAM::InstanceProfile"
+    DependsOn: AWSCloud9SSMAccessRole
+    Properties: 
+      InstanceProfileName: AWSCloud9SSMInstanceProfile 
+      Path: /cloud9/
+      Roles: 
+        - 
+          Ref: AWSCloud9SSMAccessRole
 
   DocumentDBSecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -408,14 +438,15 @@ Resources:
       Tags: 
         - Key: Name
           Value: !Sub DocumentDBInstance-${AWS::StackName}
-
+  
   Cloud9env:
     Type: AWS::Cloud9::EnvironmentEC2
+    DependsOn: ElasticsearchDomain
     Properties: 
       ConnectionType: CONNECT_SSM 
       Description: Cloud9 instance to access Cloud9
-      InstanceType: t3.small
-      Name: DocumentDBCloud9
+      InstanceType: m5.large
+      Name: ChangeStreamsCloud9
       SubnetId: !Ref PrivateSubnetOne
 
   ElasticSearchSecurityGroup:
@@ -429,8 +460,14 @@ Resources:
            FromPort: 443
            ToPort: 443
 
+  ElasticsearchSLR:
+    Type: 'AWS::IAM::ServiceLinkedRole'
+    Properties:
+      AWSServiceName: es.amazonaws.com
+
   ElasticsearchDomain:
     Type: AWS::Elasticsearch::Domain
+    DependsOn: ElasticsearchSLR
     Properties:
       DomainName: "aws-es-documentdb"
       ElasticsearchVersion: "7.4"

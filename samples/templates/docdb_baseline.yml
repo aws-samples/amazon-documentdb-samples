@@ -296,9 +296,39 @@ Resources:
       Tags: 
         - Key: Name
           Value: !Sub DocumentDBInstance-${AWS::StackName}
+   AWSCloud9SSMAccessRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+                - cloud9.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AWSCloud9SSMInstanceProfile
+        - arn:aws:iam::aws:policy/AdministratorAccess
+      RoleName: AWSCloud9SSMAccessRole
+      Path: /service-role/
+
+  AWSCloud9SSMInstanceProfile: 
+    Type: "AWS::IAM::InstanceProfile"
+    DependsOn: AWSCloud9SSMAccessRole
+    Properties: 
+      InstanceProfileName: AWSCloud9SSMInstanceProfile 
+      Path: /cloud9/
+      Roles: 
+        - 
+          Ref: AWSCloud9SSMAccessRole
 
   Cloud9env:
     Type: AWS::Cloud9::EnvironmentEC2
+    DependsOn: DocumentDBCluster
     Properties: 
       ConnectionType: CONNECT_SSM 
       Description: Cloud9 instance to access Cloud9
