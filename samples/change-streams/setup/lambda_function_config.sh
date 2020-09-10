@@ -1,5 +1,6 @@
 #!/bin/bash
 
+echo 'Replace values in the CloudFormation for the Lambda streaming function with output values from setup CloudFormation'
 # Replace values from the baseline CloudFormation 
 replace [S3BUCKET_CFN] $(jq < cfn-output.json -r '.S3BucketName') -- change_streams_stack.yml 
 replace [ARN_ROLE_CFN] $(jq < cfn-output.json -r '.RoleArn') -- change_streams_stack.yml 
@@ -13,3 +14,7 @@ replace [SUBNET_ONE_CFN] $(jq < cfn-output.json -r '.PrivateSubnetOne') -- chang
 replace [SUBNET_TWO_CFN] $(jq < cfn-output.json -r '.PrivateSubnetTwo') -- change_streams_stack.yml 
 replace [SUBNET_THREE_CFN] $(jq < cfn-output.json -r '.PrivateSubnetThree') -- change_streams_stack.yml 
 replace [SNS_TOPIC_ARN_TRIGGER_CNF] $(jq < cfn-output.json -r '.SNSTopicTrigger') -- change_streams_stack.yml 
+
+echo 'Deploy CloudFormation for the Lambda streaming function'
+# Deploy CloudFormation with Lambda streaming function
+aws cloudformation deploy --template-file change_streams_stack.yml --stack-name change-streams-function
