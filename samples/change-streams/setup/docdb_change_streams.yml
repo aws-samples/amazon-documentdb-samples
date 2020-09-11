@@ -338,33 +338,6 @@ Resources:
       Path:
         Fn::Sub: /
 
-  Cloud9ChangeStreamsRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          -
-            Effect: Allow
-            Principal:
-              Service:
-                - ec2.amazonaws.com
-            Action:
-              - sts:AssumeRole
-      ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/AdministratorAccess
-      RoleName: !Sub "Cloud9-Role-${AWS::StackName}"
-      Path:
-        Fn::Sub: /
-
-  Cloud9ChangeStreamsInstanceProfile: 
-    Type: "AWS::IAM::InstanceProfile"
-    Properties: 
-      Path: "/"
-      Roles: 
-        - 
-          Ref: "Cloud9ChangeStreamsRole"
-
   AWSCloud9SSMAccessRole:
     Type: AWS::IAM::Role
     Properties:
@@ -441,7 +414,6 @@ Resources:
   
   Cloud9env:
     Type: AWS::Cloud9::EnvironmentEC2
-    DependsOn: ElasticsearchDomain
     Properties: 
       ConnectionType: CONNECT_SSM 
       Description: Cloud9 instance to access Cloud9

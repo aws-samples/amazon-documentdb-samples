@@ -66,7 +66,6 @@ logger.setLevel(logging.DEBUG)
 TOKEN_DATA_DELETED_CODE = 136
 
 
-
 def get_credentials():
     """Retrieve credentials from the Secrets Manager service."""
     boto_session = boto3.session.Session()
