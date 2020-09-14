@@ -1,6 +1,6 @@
 # A sample solution to stream AWS DocumentDB events to different targets
 
-This sample solution allows to stream AWS DocumentDB events to ElasticSearch, Amazon Managed Stream for Kafka (or any other Apache Kafka distro), AWS Kinesis Streams, AWS SQS, and/or S3. S3 streaming is done in micro-batches and the rest of the integration are near real-time.  
+This sample solution allows to stream AWS DocumentDB events to Amazon Elasticsearch Service, Amazon Managed Stream for Kafka (or any other Apache Kafka distro), AWS Kinesis Streams, AWS SQS, and/or S3. S3 streaming is done in micro-batches and the rest of the integration are near real-time.  
 
 This sample solution is composed of:
 

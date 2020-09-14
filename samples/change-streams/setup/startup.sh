@@ -22,7 +22,6 @@ then
 
     echo 'Setting up the AWS REGION'
     # Setting up the AWS REGION
-    export AWS_REGION=$(curl -s 169.254.169.254/latest/dynamic/instance-identity/document | grep region | cut -d\" -f4)
     echo "export AWS_REGION=${AWS_REGION}" >> ~/.bash_profile
     aws configure set default.region ${AWS_REGION}
 
