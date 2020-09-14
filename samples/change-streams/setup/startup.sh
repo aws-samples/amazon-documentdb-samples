@@ -20,6 +20,12 @@ then
     pip3 install awscli --upgrade --user
     source ~/.bash_profile
 
+    echo 'Setting up the AWS REGION'
+    # Setting up the AWS REGION
+    export AWS_REGION=$(curl -s 169.254.169.254/latest/dynamic/instance-identity/document | grep region | cut -d\" -f4)
+    echo "export AWS_REGION=${AWS_REGION}" >> ~/.bash_profile
+    aws configure set default.region ${AWS_REGION}
+
     echo 'Getting the CloudFormation template for the Lambda streaming function'
     # Get the AWS CloudFormation solution
     wget https://raw.githubusercontent.com/aws-samples/amazon-documentdb-samples/master/samples/change-streams/app/change_streams_stack.yml

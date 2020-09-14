@@ -18,3 +18,9 @@ replace [SNS_TOPIC_ARN_TRIGGER_CNF] $(jq < cfn-output.json -r '.SNSTopicTrigger'
 echo 'Deploy CloudFormation for the Lambda streaming function'
 # Deploy CloudFormation with Lambda streaming function
 aws cloudformation deploy --template-file change_streams_stack.yml --stack-name change-streams-function
+
+echo 'Setup testware'
+# Setup testware
+aws events enable-rule --name $(jq < cfn-output.json -r '.EventBridgeRule')
+mkdir test && cd test
+wget https://raw.githubusercontent.com/aws-samples/amazon-documentdb-samples/master/samples/change-streams/test/es-test.py

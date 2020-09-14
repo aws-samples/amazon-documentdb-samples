@@ -21,6 +21,26 @@ Parameters:
     MinLength: 8
     MaxLength: 100
 
+  ExistingCloud9Role:
+    Type: String
+    Default: NO
+    Description: Indicate whether AWSCloud9SSMAccessRole is already created or not. 
+    AllowedValues: 
+      - YES
+      - NO
+
+  ExistingCloud9InstanceProfile:
+    Type: String
+    Default: NO
+    Description: Indicate whether AWSCloud9SSMInstanceProfile is already created or not. 
+    AllowedValues: 
+      - YES
+      - NO
+  
+Conditions: 
+  CreateCloud9Role: !Equals [!Ref ExistingCloud9Role, NO]
+  CreateCloud9InstanceProfile: !Equals [!Ref ExistingCloud9InstanceProfile, NO]
+
 Mappings:
 
   SubnetConfig:
@@ -340,6 +360,7 @@ Resources:
 
   AWSCloud9SSMAccessRole:
     Type: AWS::IAM::Role
+    Condition: CreateCloud9Role
     Properties:
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
@@ -354,19 +375,31 @@ Resources:
               - sts:AssumeRole
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/AWSCloud9SSMInstanceProfile
-        - arn:aws:iam::aws:policy/AdministratorAccess
       RoleName: AWSCloud9SSMAccessRole
       Path: /service-role/
 
+  AWSCloud9RolePolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties: 
+      Description: Policy for Cloud9 Environments used in Change Stream
+      Path: /service-role/
+      PolicyDocument: 
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action: '*'
+            Resource: '*' 
+      Roles: 
+        - AWSCloud9SSMAccessRole
+
   AWSCloud9SSMInstanceProfile: 
-    Type: "AWS::IAM::InstanceProfile"
-    DependsOn: AWSCloud9SSMAccessRole
+    Type: AWS::IAM::InstanceProfile
+    Condition: CreateCloud9InstanceProfile
     Properties: 
       InstanceProfileName: AWSCloud9SSMInstanceProfile 
       Path: /cloud9/
       Roles: 
-        - 
-          Ref: AWSCloud9SSMAccessRole
+        - AWSCloud9SSMAccessRole
 
   DocumentDBSecurityGroup:
     Type: AWS::EC2::SecurityGroup
