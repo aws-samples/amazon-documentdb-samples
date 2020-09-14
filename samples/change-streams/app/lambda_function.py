@@ -328,6 +328,46 @@ def getDocDbCertificate():
         send_sns_alert(str(ex))
         raise
 
+
+def insertCanary():
+    """Inserts a canary event for change stream activation"""
+    
+    try:
+        print('Inserting canary')
+        db_client = get_db_client()
+        watched_db = os.environ['WATCHED_DB_NAME']
+        watched_collection = os.environ['WATCHED_COLLECTION_NAME']
+        collection_client = db_client[watched_db][watched_collection]
+
+        canary_record = collection_client.insert_one({ "op_canary": "canary" })
+        print('Canary inserted.')
+    except Exception as ex:
+        logger.error('Exception in inserting canary: {}'.format(ex))
+        send_sns_alert(str(ex))
+        raise
+
+    return canary_record
+
+
+def deleteCanary():
+    """Deletes a canary event for change stream activation"""
+    
+    try:
+        print('Deleting canary')
+        db_client = get_db_client()
+        watched_db = os.environ['WATCHED_DB_NAME']
+        watched_collection = os.environ['WATCHED_COLLECTION_NAME']
+        collection_client = db_client[watched_db][watched_collection]
+
+        collection_client.delete_one({ "op_canary": "canary" })
+        print('Canary deleted.')
+    
+    except Exception as ex:
+        logger.error('Exception in deleting canary: {}'.format(ex))
+        send_sns_alert(str(ex))
+        raise
+
+
 def publish_sqs_event(pkey,message):
     """send event to SQS"""
     # Use a global variable so Lambda can reuse the persisted client on future invocations
@@ -354,6 +394,7 @@ def publish_sqs_event(pkey,message):
 def lambda_handler(event, context):
     """Read any new events from DocumentDB and apply them to an streaming/datastore endpoint."""
     events_processed = 0
+    canary_record = None
     getDocDbCertificate()
     try:
         
@@ -390,6 +431,10 @@ def lambda_handler(event, context):
         with collection_client.watch(full_document='updateLookup', resume_after=last_processed_id) as change_stream:
             i = 0
 
+            if last_processed_id is None:
+                canary_record = insertCanary()
+                deleteCanary()
+
             while change_stream.alive and i < int(os.environ['MAX_LOOP']):
                 print(i)
             
@@ -397,13 +442,14 @@ def lambda_handler(event, context):
                 change_event = change_stream.try_next()
                 logger.debug('Event: {}'.format(change_event))
 
+                
+                if last_processed_id is None:
+                    if change_event['operationType'] == 'delete':
+                        store_last_processed_id(change_stream.resume_token)
+                        last_processed_id = change_event['_id']['_data']
+                    continue
+                
                 if change_event is None:
-                    # On the first function invocation, we must sleep until the first event is processed,
-                    # or processing will be trapped in a empty loop having never processed a first event
-                    if last_processed_id is None:
-                        time.sleep(1)
-                        continue
-                    else:
                         break
                 else:
                     op_type = change_event['operationType']
@@ -515,12 +561,19 @@ def lambda_handler(event, context):
                 'description': 'Success',
                 'detail': json.dumps(str(events_processed)+ ' records processed successfully.')
             }
-        else: 
-            return{
-                'statusCode': 201,
-                'description': 'Success',
-                'detail': json.dumps('No records to process.')
-            }
+        else:
+            if canary_record is not None:
+                return{
+                    'statusCode': 202,
+                    'description': 'Success',
+                    'detail': json.dumps('Canary applied. No records to process.')
+                }
+            else:
+                return{
+                    'statusCode': 201,
+                    'description': 'Success',
+                    'detail': json.dumps('No records to process.')
+                }
 
     finally:
 
