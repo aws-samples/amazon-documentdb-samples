@@ -1,6 +1,6 @@
 # A sample solution to stream AWS DocumentDB events to different targets
 
-This sample solution allows to stream AWS DocumentDB events to Amazon Elasticsearch Service, Amazon Managed Stream for Kafka (or any other Apache Kafka distro), AWS Kinesis Streams, AWS SQS, and/or S3. S3 streaming is done in micro-batches and the rest of the integration are near real-time.  
+This sample solution allows to stream AWS DocumentDB events to Amazon Elasticsearch Service, Amazon Managed Stream for Kafka (or any other Apache Kafka distro), AWS Kinesis Streams, AWS SQS, and S3. S3 streaming is done in micro-batches and the rest of the integration are near real-time.  
 
 This sample solution is composed of:
 
@@ -12,7 +12,7 @@ The Lambda will read N change events from the Change Stream and stream them to e
 
 The Lambda function also retrieve a certificate from Amazon S3 to connect via TLS to DocumentDB. 
 
-This sample solution deploys one Lambda function per DocumentDB collection. 
+This sample solution deploys one Lambda function that can be set via environment variables to stream changes in one collection or an entire database. 
 
 Streaming functions must be deployed in a private subnet to reach DocumentDB cluster. 
 
@@ -23,46 +23,47 @@ Each lambda function uses 3 variables to control how many events streaming; cust
 
 For target, there must be environment varibles in the lambda and permissions for the lambda role and/or network accordingly. 
 
+Change Stream resumability was built around the resume token used within the watch api in options resumeAfter or startAfter. If there are not events when this Lambda function runs for the first time, it uses a canary to established a resume token for further executions.  
+
 ## SNS and EventBridge Rule
 
 The sample solution will poll for changes every 120 seconds. It uses Amazon EventBridge to trigger a message to Amazon SNS, which will in turn invoke the AWS Lambda functions which does the bulk of the work.
 
 # How to install
-1. Enable change streams. Follow instructions given here: https://docs.aws.amazon.com/documentdb/latest/developerguide/change-streams.html
-2. Deploy a Cloud9 environment. Follow instructions given here: https://aws.amazon.com/blogs/database/part-2-getting-started-with-amazon-documentdb-using-aws-cloud9/
-3. Create an S3 Bucket. In Cloud9 environment, execute `export S3_BUCKET=s3://[Bucket Name]` where [Bucket Name] is the bucket that will host the lambda code used to stream events. 
-4. Setup the Cloud9 environment
-    1. Create an app directory `mkdir app` and two files `touch app/requirements.txt & touch app/lambda_funtion.py`
-    2. Copy the contents of the files in the app folder in this repo into the newly created ones 
-    3. Create a setup file `touch startup.sh`
-    4. Copy the contents of the cdk/startup.sh file in this repo into the newly created one
-    5. Execute `chmod 700 startup.sh`
-    6. Execute `./startup.sh`
-5. Create a new secret in AWS Secrets Manager for the DocumentDB cluster
-6. Create two AWS SNS topics:
-    1. One for alerting exceptions `aws sns create-topic --name [sns_alert]`
-    2. Triggering lambda functions `aws sns create-topic --name [sns_trigger]`
-7. Create a AWS EventBridge rule and configure the SNS topic, that will trigger the lambda functions, as target. Also set the scheduler for it accordingly. 
-    1. Execute `aws events put-rule --name [rule name] --schedule-expression "rate(2 minutes)" --state DISABLED`. This rule is set to run every 2 minutes and it is disabled. 
-    2. Execute `aws events put-targets --rule [rule name] —targets "Id"="1","Arn"="[sns_trigger ARN]"`
-8. Create role for the Lambda. The lambda needs the following base permissions:
-    * AWSLambdaVPCAccessExecutionRole: this managed policy allows the lambda to run within a VPC.  
-    * sns:Publish: this action is required for the lambda to publish exceptions to the topic.
-    * secretsmanager:GetSecretValue: this action is required for the lambda to use the cluster credentials.
-    * s3:GetObject: this action is required for the Lambda to get the certificate for TLS access to DocumentDB. 
-
-    Additionally, the streaming function needs the permissions required to publish events to each target. 
-9. Within Cloud9, setup the solution variables
-    1. Create a config file `touch change-streams-project/config.ini`
-    2. Copy the contents of the cdk/config.ini in the newly created file. 
-    3. Replace the contents of the change_streams_project_stack.py with the file in this repo in cdk/change_streams_project_stack.py
-    4. In the change_streams_project_stack.py file uncomment the targets where events will be streamed
-    5. Fill the config.ini file with the variables of your environment
-10. Execute `cd change-streams-project/`
-11. Execute `source .env/bin/activate`
-12. Execute `cdk synth` to validate there are not errors
-13. Execute `cdk deploy`. Accept the changes that will be deploy. You can change the name of the CloudFormation Stack, in docdb-replication-builder/app.py 
-14. Enable the EventBridge rule when everything is set   
+1. Enable __[change streams](https://docs.aws.amazon.com/documentdb/latest/developerguide/change-streams.html)__
+2. Deploy a the baseline environment. 
+    1. Go to AWS CloudFormation in AWS console and select *Create stack*. 
+    2. Check the *Upload a template file* option, select *Choose file *option and upload the __[change stream stack](https://raw.githubusercontent.com/aws-samples/amazon-documentdb-samples/master/samples/change-streams/setup/docdb_change_streams.yml)__ yaml file, and select *Next.*
+    3. Give your stack a name, and input username, password, the identifier for your Amazon DocumentDB cluster, select *Next*. 
+    4. SWS Cloud9 uses a Role and an Instance profile. If you have used Cloud9 before, those have been created automatically for you; therefore, select *true* in the options for *ExistingCloud9Role* and *ExistingCloud9InstanceProfile*. Otherwise, leave it as *false*. 
+    5. Leave everything as default and select *Next*. Check the box to allow the stack create a role on behalf of you and select *Create stack*. The stack should complete provisioning in a few minutes. 
+3. Setup the Cloud9 environment
+    1. From your AWS Cloud9 environment, launch a new tab to open the Preferences tab
+    2. Select *AWS SETTINGS *from the left navigation pane
+    3. Turn off *AWS managed temporary credentials. *This enables us to simplify the developer experience later in the walkthrough
+    4. Close the Preferences tab 
+    5. In a terminal window, execute `rm -vf ${HOME}/.aws/credentials`
+    6. Create an environment variable for the CloudFormation stack by executing: 
+        ```
+        export STACK=<Name of your CloudFormation stack> 
+        echo "export STACK=${STACK}" >> ~/.bash_profile
+        ```
+    7. Configure AWS cli to use the current region as the default: `export AWS_REGION=$(curl -s 169.254.169.254/latest/dynamic/instance-identity/document | grep region | cut -d\" -f4)`
+    8. Execute the code below to update the environment libraries, upload streaming code to S3, and copy output from previous CloudFormation.
+        ```
+        wget https://raw.githubusercontent.com/aws-samples/amazon-documentdb-samples/master/samples/change-streams/setup/startup.sh
+        chmod 700 startup.sh
+        ./startup.sh
+        ```
+7. Execute the commands below to create and deploy the AWS CloudFormation stack that will be populated with the required environment variables - Amazon DocumentDB URI, Amazon Elasticsearch service domain URI, watched database name, collection name, state database name, state collection name , networking configuration, SNS topics ARN, Lambda role ARN, and the Secrets Manager ARN.
+    ```
+    wget https://raw.githubusercontent.com/aws-samples/amazon-documentdb-samples/master/samples/change-streams/setup/lambda_function_config.sh
+    chmod 700 lambda_function_config.sh
+    ./lambda_function_config.sh
+    ```
+8. Streaming code is set. You can test it by running `python test/es-test.py``
+9. You can verify it by executing the following commmands:
+   `curl https://$(jq < cfn-output.json -r '.ElasticsearchDomainEndpoint')/_cat/indices?v`
 
 Once deployed, streaming functions will be run with the frequency set in the scheduling components. 
 
@@ -70,30 +71,29 @@ Once deployed, streaming functions will be run with the frequency set in the sch
 When you set up a target, make sure Lambda can reach it and the role associated to the lambda has proper permissions (e.g. s3:PutObject). 
 
 ### Elasticsearch
-One index will be automatically created per database and collection. 
+One index will be automatically created per database or collection. 
 - ELASTICSEARCH_URI: The URI of the Elasticsearch domain where data should be streamed.
 
 If Amazon Elasticsearch is a target, streaming functions must be deployed in a private subnet that can reach Internet to get an Amazon certificate required to publish to Elasticsearch. Otherwise, streaming code has to be modified and the certificate must be included in the Lambda package.
 
 ### Kinesis
-All events in the different collections will go to this stream. If you want otherwise, you need to update the environment variable for each lambda. 
+All events will go to this stream.  
 - KINESIS_STREAM : The Kinesis Stream name to publish DocumentDB events.
 
 ### SQS
-All events in the different collections will go to this queue. If you want otherwise, you need to update the environment variable for each lambda. 
+All events will go to this queue. 
 - SQS_QUERY_URL: The URL of the Amazon SQS queue to which a message is sent.
 
 ### Kafka
-One topic will be automatically created per database and collection. Make sure auto.create.topics.enable is set to true for the cluster configuration.   
+One topic will be automatically created per database or collection. Make sure auto.create.topics.enable is set to true for the cluster configuration.   
 - MSK_BOOTSTRAP_SRV: The URIs of the MSK cluster to publish messages. 
 
 ### S3
-One folder will be automatically created per database and collection, and for each of them, folders for year, month, and day will be used to allocate micro-batches. 
+One folder will be automatically created per database or collection, and for each of them, folders for year, month, and day will be used to allocate micro-batches. 
 - BUCKET_NAME: The name of the bucket that will save streamed data. 
 - BUCKET_PATH: The path of the bucket that will save streamed data.    
 
 # Keep in mind
-- For each DocumentDB cluster, just one collection will be used to keep resume tokens. 
 - Make sure message size limits on targets will support your documents size. 
 
 ## Security
