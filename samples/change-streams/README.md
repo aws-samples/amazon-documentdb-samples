@@ -42,13 +42,19 @@ The sample solution will poll for changes every 120 seconds. It uses Amazon Even
     2. Select *AWS SETTINGS *from the left navigation pane
     3. Turn off *AWS managed temporary credentials. *This enables us to simplify the developer experience later in the walkthrough
     4. Close the Preferences tab 
-    5. In a terminal window, execute `rm -vf ${HOME}/.aws/credentials`
+    5. In a terminal window, execute 
+        ```
+        rm -vf ${HOME}/.aws/credentials
+        ```
     6. Create an environment variable for the CloudFormation stack by executing: 
         ```
         export STACK=<Name of your CloudFormation stack> 
         echo "export STACK=${STACK}" >> ~/.bash_profile
         ```
-    7. Configure AWS cli to use the current region as the default: `export AWS_REGION=$(curl -s 169.254.169.254/latest/dynamic/instance-identity/document | grep region | cut -d\" -f4)`
+    7. Configure AWS cli to use the current region as the default: 
+        ```
+        export AWS_REGION=$(curl -s 169.254.169.254/latest/dynamic/instance-identity/document | grep region | cut -d\" -f4)
+        ```
     8. Execute the code below to update the environment libraries, upload streaming code to S3, and copy output from previous CloudFormation.
         ```
         wget https://raw.githubusercontent.com/aws-samples/amazon-documentdb-samples/master/samples/change-streams/setup/startup.sh
@@ -61,9 +67,11 @@ The sample solution will poll for changes every 120 seconds. It uses Amazon Even
     chmod 700 lambda_function_config.sh
     ./lambda_function_config.sh
     ```
-8. Streaming code is set. You can test it by running `python test/es-test.py``
-9. You can verify it by executing the following commmands:
-   `curl https://$(jq < cfn-output.json -r '.ElasticsearchDomainEndpoint')/_cat/indices?v`
+8. Streaming code is set. You can test it by running
+    ```
+    python test/es-test.py
+    curl https://$(jq < cfn-output.json -r '.ElasticsearchDomainEndpoint')/_cat/indices?v
+    ```
 
 Once deployed, streaming functions will be run with the frequency set in the scheduling components. 
 
