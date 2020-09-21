@@ -380,6 +380,7 @@ Resources:
 
   AWSCloud9RolePolicy:
     Type: AWS::IAM::ManagedPolicy
+    DependsOn: AWSCloud9SSMAccessRole
     Properties: 
       Description: Policy for Cloud9 Environments used in Change Stream
       Path: /service-role/
