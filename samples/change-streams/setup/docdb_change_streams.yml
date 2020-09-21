@@ -475,7 +475,6 @@ Resources:
     Type: AWS::Elasticsearch::Domain
     DependsOn: ElasticsearchSLR
     Properties:
-      DomainName: "aws-es-documentdb"
       ElasticsearchVersion: "7.4"
       ElasticsearchClusterConfig:
         InstanceCount: "1"
