@@ -42,12 +42,11 @@ def main(args):
     ids = 0
 
     #Insert data
-    while True:
-        for i in SEED_DATA:
-            ids += 1
-            i.update({"_id":ids})
-            profiles.insert(i)
-            print("Record inserted data")
+    for i in SEED_DATA:
+        ids += 1
+        i.update({"_id":ids})
+        profiles.insert(i)
+        print("Record inserted data")
 
     client.close()
     
