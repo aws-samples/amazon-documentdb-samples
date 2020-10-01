@@ -24,22 +24,14 @@ Parameters:
   ExistingCloud9Role:
     Type: String
     Default: NO
-    Description: Indicate whether AWSCloud9SSMAccessRole is already created or not. 
-    AllowedValues: 
-      - YES
-      - NO
-
-  ExistingCloud9InstanceProfile:
-    Type: String
-    Default: NO
-    Description: Indicate whether AWSCloud9SSMInstanceProfile is already created or not. 
+    Description: Indicate whether AWSCloud9SSMAccessRole is already created or not (you can verify this in IAM > Roles). 
     AllowedValues: 
       - YES
       - NO
   
 Conditions: 
   CreateCloud9Role: !Equals [!Ref ExistingCloud9Role, NO]
-  CreateCloud9InstanceProfile: !Equals [!Ref ExistingCloud9InstanceProfile, NO]
+  CreateCloud9InstanceProfile: !Equals [!Ref ExistingCloud9Role, NO]
   CreateCloud9Policy: !Equals [!Ref ExistingCloud9Role, YES]
 
 Mappings:
