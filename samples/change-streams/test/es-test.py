@@ -14,15 +14,13 @@ with open('tweets.json') as f:
 username = os.environ.get("USERNAME")
 password = os.environ.get("PASSWORD")
 clusterendpoint = os.environ.get("DOCDB_ENDPOINT")
-print(username)
 
 def main(args):
     #Establish DocumentDB connection
     client = pymongo.MongoClient(clusterendpoint, username=username, password=password, ssl='true', ssl_ca_certs='rds-combined-ca-bundle.pem')
-    db = client.media
-    profiles = db['movie']
-    
-    profiles.insert_many(SEED_DATA)
+    db = client.sampledb
+    tweets = db['tweets']
+    tweets.insert_many(SEED_DATA)
 
     client.close()
     
