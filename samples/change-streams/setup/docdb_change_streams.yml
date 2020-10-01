@@ -395,6 +395,7 @@ Resources:
 
   AWSCloud9SSMInstanceProfile: 
     Type: AWS::IAM::InstanceProfile
+    DependsOn: AWSCloud9SSMAccessRole
     Condition: CreateCloud9InstanceProfile
     Properties: 
       InstanceProfileName: AWSCloud9SSMInstanceProfile 
