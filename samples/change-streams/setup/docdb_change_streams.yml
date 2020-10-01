@@ -40,6 +40,7 @@ Parameters:
 Conditions: 
   CreateCloud9Role: !Equals [!Ref ExistingCloud9Role, NO]
   CreateCloud9InstanceProfile: !Equals [!Ref ExistingCloud9InstanceProfile, NO]
+  CreateCloud9Policy: !Equals [!Ref ExistingCloud9Role, YES]
 
 Mappings:
 
@@ -378,9 +379,25 @@ Resources:
       RoleName: AWSCloud9SSMAccessRole
       Path: /service-role/
 
-  AWSCloud9RolePolicy:
+  AWSCloud9RolePolicyNew:
     Type: AWS::IAM::ManagedPolicy
-    #DependsOn: AWSCloud9SSMAccessRole
+    Condition: CreateCloud9Role
+    DependsOn: AWSCloud9SSMAccessRole
+    Properties: 
+      Description: Policy for Cloud9 Environments used in Change Stream
+      Path: /service-role/
+      PolicyDocument: 
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action: '*'
+            Resource: '*' 
+      Roles: 
+        - AWSCloud9SSMAccessRole
+
+  AWSCloud9RolePolicyOld:
+    Type: AWS::IAM::ManagedPolicy
+    Condition: CreateCloud9Policy
     Properties: 
       Description: Policy for Cloud9 Environments used in Change Stream
       Path: /service-role/
@@ -395,8 +412,8 @@ Resources:
 
   AWSCloud9SSMInstanceProfile: 
     Type: AWS::IAM::InstanceProfile
-    #DependsOn: AWSCloud9SSMAccessRole
     Condition: CreateCloud9InstanceProfile
+    DependsOn: AWSCloud9SSMAccessRole
     Properties: 
       InstanceProfileName: AWSCloud9SSMInstanceProfile 
       Path: /cloud9/
