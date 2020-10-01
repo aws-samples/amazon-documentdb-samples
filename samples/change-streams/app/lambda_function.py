@@ -527,7 +527,7 @@ def lambda_handler(event, context):
 
                     if events_processed >= state_sync_count and "BUCKET_NAME" not in os.environ:
                         # To reduce DocumentDB IO, only persist the stream state every N events
-                        print('events processed wtf')
+                        print('events processed')
                         store_last_processed_id(change_stream.resume_token)
                         logger.debug('Synced token {} to state collection'.format(change_stream.resume_token))
 
