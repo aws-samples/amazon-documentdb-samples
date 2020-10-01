@@ -8,20 +8,20 @@ Resources:
       Handler: lambda_function.lambda_handler
       Role: [ARN_ROLE_CFN]
       Runtime: python3.7
-      Description: "Lambda used to stream changes on DocumentDB"
+      Description: "AWS Lambda used to replicate change events from Amazon DocumentDB to Amazon Elasticsearch service"
       Environment:
         Variables:
           DOCUMENTDB_SECRET: [DOCDB_SECRETSMAN_NAME_CFN]
           DOCUMENTDB_URI: [DOCDB_URI_CFN]:27017
-          MAX_LOOP: "60"
+          MAX_LOOP: "1000"
           SNS_TOPIC_ARN_ALERT: [SNS_TOPIC_ARN_ALERT_CNF]
           STATE_COLLECTION: statecol
           STATE_DB: statedb
           STATE_SYNC_COUNT: "15"
-          WATCHED_COLLECTION_NAME: movie
-          WATCHED_DB_NAME: media
+          WATCHED_COLLECTION_NAME: tweets
+          WATCHED_DB_NAME: sampledb
           ELASTICSEARCH_URI: https://[ELASTICSEARCH_URI_CFN]
-      FunctionName: docdb-cdc-media-movie
+      FunctionName: docdb-elasticsearch-replicator
       MemorySize: 256
       Timeout: 120
       VpcConfig:
