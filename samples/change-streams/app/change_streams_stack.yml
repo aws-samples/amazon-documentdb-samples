@@ -13,7 +13,7 @@ Resources:
         Variables:
           DOCUMENTDB_SECRET: [DOCDB_SECRETSMAN_NAME_CFN]
           DOCUMENTDB_URI: [DOCDB_URI_CFN]:27017
-          MAX_LOOP: "60"
+          MAX_LOOP: "1000"
           SNS_TOPIC_ARN_ALERT: [SNS_TOPIC_ARN_ALERT_CNF]
           STATE_COLLECTION: statecol
           STATE_DB: statedb
