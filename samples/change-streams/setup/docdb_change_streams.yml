@@ -516,7 +516,7 @@ Resources:
                   - !Ref "AWS::Region"
                   - ':'
                   - !Ref "AWS::AccountId"
-                  - ':domain/aws-es-documentdb/*'
+                  - ':domain/*/*'
       VPCOptions:
         SubnetIds:
           - Ref: PrivateSubnetOne

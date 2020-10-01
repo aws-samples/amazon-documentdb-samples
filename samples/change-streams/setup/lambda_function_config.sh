@@ -23,3 +23,4 @@ echo 'Setup testware'
 # Setup testware
 aws events enable-rule --name $(jq < cfn-output.json -r '.EventBridgeRule')
 wget https://raw.githubusercontent.com/aws-samples/amazon-documentdb-samples/master/datasets/tweets.json
+wget https://raw.githubusercontent.com/aws-samples/amazon-documentdb-samples/master/samples/change-streams/test/es-test.py
