@@ -321,7 +321,6 @@ def publish_kinesis_event(pkey,message):
 def getDocDbCertificate():
     """download the current docdb certificate"""
     try:
-        print('Certificate')
         clientS3.Bucket('rds-downloads').download_file('rds-combined-ca-bundle.pem', '/tmp/rds-combined-ca-bundle.pem')
     except Exception as ex:
         logger.error('Exception in publishing message to Kinesis: {}'.format(ex))
@@ -333,14 +332,12 @@ def insertCanary():
     """Inserts a canary event for change stream activation"""
     
     try:
-        print('Inserting canary')
         db_client = get_db_client()
         watched_db = os.environ['WATCHED_DB_NAME']
         watched_collection = os.environ['WATCHED_COLLECTION_NAME']
         collection_client = db_client[watched_db][watched_collection]
 
         canary_record = collection_client.insert_one({ "op_canary": "canary" })
-        print('Canary inserted.')
     except Exception as ex:
         logger.error('Exception in inserting canary: {}'.format(ex))
         send_sns_alert(str(ex))
@@ -353,15 +350,12 @@ def deleteCanary():
     """Deletes a canary event for change stream activation"""
     
     try:
-        print('Deleting canary')
         db_client = get_db_client()
         watched_db = os.environ['WATCHED_DB_NAME']
         watched_collection = os.environ['WATCHED_COLLECTION_NAME']
         collection_client = db_client[watched_db][watched_collection]
 
         collection_client.delete_one({ "op_canary": "canary" })
-        print('Canary deleted.')
-    
     except Exception as ex:
         logger.error('Exception in deleting canary: {}'.format(ex))
         send_sns_alert(str(ex))
@@ -436,7 +430,6 @@ def lambda_handler(event, context):
                 deleteCanary()
 
             while change_stream.alive and i < int(os.environ['MAX_LOOP']):
-                print(i)
             
                 i += 1
                 change_event = change_stream.try_next()
@@ -527,7 +520,6 @@ def lambda_handler(event, context):
 
                     if events_processed >= state_sync_count and "BUCKET_NAME" not in os.environ:
                         # To reduce DocumentDB IO, only persist the stream state every N events
-                        print('events processed')
                         store_last_processed_id(change_stream.resume_token)
                         logger.debug('Synced token {} to state collection'.format(change_stream.resume_token))
 
