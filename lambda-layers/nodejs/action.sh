@@ -10,38 +10,52 @@ PACKAGES="mongodb mongoose"
 WORKDIR=/tmp/nodejs
 PEMFILE="https://s3.amazonaws.com/rds-downloads/rds-combined-ca-bundle.pem"
 
-# CA file will be in /opt/nodejs
-#var ca = [fs.readFileSync("/opt/nodejs/rds-combined-ca-bundle.pem")];
-
-#var MongoClient = require('mongodb').MongoClient,
-#  f = require('util').format,
-#  fs = require('fs');
+#exports.handler = async function (event, context, callback) {
+#    try {
 #
-#var ca = [fs.readFileSync("/opt/nodejs/rds-combined-ca-bundle.pem")];
+#        var MongoClient = require('mongodb').MongoClient;
 #
-#var client = MongoClient.connect(
-#'mongodb://<sample-user>:<password>@sample-cluster.node.us-east-1.docdb.amazonaws.com:27017/sample-database?ssl=true&replicaSet=rs0&readPreference=secondaryPreferred', 
-#{ 
-#  sslValidate: true,
-#  sslCA:ca,
-#  useNewUrlParser: true
-#},
-#function(err, client) {
-#    if(err)
-#        throw err;
-#        
-#    db = client.db('sample-database');
+#        var f = require('util').format;
+#        var fs = require('fs');
+#
+#        //Specify the Amazon DocumentDB cert
+#        var ca = [fs.readFileSync("/opt/nodejs/rds-combined-ca-bundle.pem")];
+#
+#        //Create a MongoDB client, open a connection to Amazon DocumentDB as a replica set, 
+#        //  and specify the read preference as secondary preferred
+#
+#        var client = await MongoClient.connect(
+#        'mongodb://username:password@sample-cluster.node.us-east-1.docdb.amazonaws.com:27017/sample-database?ssl=true&replicaSet=rs0&readPreference=secondaryPreferred', 
+#        { 
+#          sslValidate: true,
+#          sslCA:ca,
+#          useNewUrlParser: true
+#        });
 #    
-#    col = db.collection('sample-collection');
-#
-#    col.insertOne({'hello':'Amazon DocumentDB'}, function(err, result){
-#      col.findOne({'hello':'Amazon DocumentDB'}, function(err, result){
+#        //Specify the database to be used
+#        var db = client.db('sample-database');
+#            
+#        //Specify the collection to be used
+#        var col = db.collection('sample-collection');
+#    
+#        var result = await col.findOne({});
+#    
+#        //Print the result to the screen
 #        console.log(result);
-#        
+#                
+#        //Close the connection
 #        client.close()
-#      });
-#   });
-#});
+#        const response = {
+#            statusCode: 200,
+#            body: JSON.stringify(result),
+#        };
+#        return callback(null, response);
+#    } catch (err) {
+#        console.error("Error " + err);
+#        console.error(err.stack);    
+#        return callback(err);
+#    }
+#};
 
 case $1 in
     "deploy") 
