@@ -1,4 +1,4 @@
-# Project Title
+# AWS Lambda Layers for Amazon DocumentDB
 
 Amazon DocumentDB Lambda Layers has sample scripts for building and deploying custom [Lambda Layers](https://docs.aws.amazon.com/lambda/latest/dg/configuration-layers.html) containing prerequisite language libraries and the [RDS CA Certificate](https://docs.aws.amazon.com/documentdb/latest/developerguide/connect_programmatically.html#connect_programmatically-tls_enabled) used for connecting to DocumentDB.
 
