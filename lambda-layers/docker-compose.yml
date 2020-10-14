@@ -1,0 +1,62 @@
+version: '2'
+services:
+  run_shell_documentdb_lambda_layers_python:
+    build:
+      context: python
+    image: run-shell-documentdb-lambda-layers-python
+    container_name: run_shell_documentdb_lambda_layers_python
+    command: shell
+    environment:
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}
+  deploy_documentdb_lambda_layers_python:
+    build:
+      context: python
+    image: deploy-documentdb-lambda-layers-python
+    container_name: deploy-documentdb-lambda-layers-python
+    command: deploy
+    environment:
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}
+  undeploy_documentdb_lambda_layers_python:
+    build:
+      context: python
+    image: undeploy-documentdb-lambda-layers-python
+    container_name: undeploy-documentdb-lambda-layers-python
+    command: undeploy
+    environment:
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}
+  run_shell_documentdb_lambda_layers_nodejs:
+    build:
+      context: nodejs
+    image: run-shell-documentdb-lambda-layers-nodejs
+    container_name: run_shell_documentdb_lambda_layers_nodejs
+    command: shell
+    environment:
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}
+  deploy_documentdb_lambda_layers_nodejs:
+    build:
+      context: nodejs
+    image: deploy-documentdb-lambda-layers-nodejs
+    container_name: deploy-documentdb-lambda-layers-nodejs
+    command: deploy
+    environment:
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}
+  undeploy_documentdb_lambda_layers_nodejs:
+    build:
+      context: nodejs
+    image: undeploy-documentdb-lambda-layers-nodejs
+    container_name: undeploy-documentdb-lambda-layers-nodejs
+    command: undeploy
+    environment:
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}

@@ -19,6 +19,10 @@ This repository includes end-to-end samples for -
 
   Sample AWS CloudFormation stacks
 
+- [Lambda Layers](https://github.com/aws-samples/amazon-documentdb-samples/tree/master/lambda-layers)
+
+  Sample AWS Lambda Layers
+
 ## Security
 
 See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more information.
