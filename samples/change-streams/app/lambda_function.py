@@ -137,10 +137,9 @@ def get_state_collection_client():
 
 def get_last_processed_id():
     """Return the resume token corresponding to the last successfully processed change event."""
-
+    last_processed_id = None
     logger.debug('Returning last processed id.')
     try:
-        last_processed_id = None
         state_collection = get_state_collection_client()
         state_doc = state_collection.find_one({'currentState': True, 'dbWatched': str(os.environ['WATCHED_DB_NAME']), 
             'collectionWatched': str(os.environ['WATCHED_COLLECTION_NAME'])})

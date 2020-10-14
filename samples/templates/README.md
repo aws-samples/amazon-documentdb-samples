@@ -21,12 +21,11 @@ This Cloudformation template deploys:
 
 Once the template is deployed, access the Cloud9 workspace. Open a terminal within the workspace and run the following commands:
 
-´´´
+```
 echo -e "[mongodb-org-3.6] \nname=MongoDB Repository\nbaseurl=https://repo.mongodb.org/yum/amazon/2013.03/mongodb-org/3.6/x86_64/\ngpgcheck=1 \nenabled=1 \ngpgkey=https://www.mongodb.org/static/pgp/server-3.6.asc" | sudo tee /etc/yum.repos.d/mongodb-org-3.6.repo
 sudo yum install -y mongodb-org-shell
 wget https://s3.amazonaws.com/rds-downloads/rds-combined-ca-bundle.pem
-
-´´´
+```
 
 To get the connection string, go the Amazon DocumentDB console. Then under Clusters, select the cluster you deployed. It will show detail information of you cluster, under the 'Connect' section you can copy the connnection string. Paste it in the workspace, include the cluster password and connect to your DocumentDB cluster. 
 
