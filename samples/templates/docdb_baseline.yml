@@ -1,6 +1,6 @@
 ---
 AWSTemplateFormatVersion: "2010-09-09"
-Description: This stack deploys the baseline infrastructure to be used for AmazonDocumentDB
+Description: This stack deploys the resources required to replicate change events from Amazon DocumentDB (with MongoDB compatibility) to Amazon Elasticsearch service
 
 Parameters:
 
