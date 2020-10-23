@@ -25,8 +25,8 @@ STATE_COLLECTION: The name of the collection in which to store sync state.
 STATE_DB: The name of the database in which to store sync state.
 WATCHED_COLLECTION_NAME: The name of the collection to watch for changes.
 WATCHED_DB_NAME: The name of the database to watch for changes.
-STATE_SYNC_COUNT: How many events to process before syncing state.
-MAX_LOOP: The max for the iterator loop. 
+Iterations_per_sync: How many events to process before syncing state.
+Documents_per_run: The variable that controls how many documents to scan from the change stream with every function run. The default is set to 1000. 
 SNS_TOPIC_ARN_ALERT: The topic to send exceptions.   
 
 Kafka target environment variables:
