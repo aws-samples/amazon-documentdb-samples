@@ -417,7 +417,7 @@ def lambda_handler(event, context):
         logger.debug('Watching collection {}'.format(collection_client))
 
         # DocumentDB sync set up
-        state_sync_count = int(os.environ['STATE_SYNC_COUNT'])
+        state_sync_count = int(os.environ['Iterations_per_sync'])
         last_processed_id = get_last_processed_id()
         logger.debug("last_processed_id: {}".format(last_processed_id))
 
@@ -428,7 +428,7 @@ def lambda_handler(event, context):
                 canary_record = insertCanary()
                 deleteCanary()
 
-            while change_stream.alive and i < int(os.environ['MAX_LOOP']):
+            while change_stream.alive and i < int(os.environ['Documents_per_run']):
             
                 i += 1
                 change_event = change_stream.try_next()
