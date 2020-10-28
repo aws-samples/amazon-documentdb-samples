@@ -25,7 +25,7 @@ STATE_COLLECTION: The name of the collection in which to store sync state.
 STATE_DB: The name of the database in which to store sync state.
 WATCHED_COLLECTION_NAME: The name of the collection to watch for changes.
 WATCHED_DB_NAME: The name of the database to watch for changes.
-STATE_SYNC_COUNT: How many events to process before syncing state.
+Iterations_per_sync: How many events to process before syncing state.
 Documents_per_run: The max for the iterator loop. 
 SNS_TOPIC_ARN_ALERT: The topic to send exceptions.   
 
@@ -463,7 +463,7 @@ def lambda_handler(event, context):
         logger.debug('Watching collection {}'.format(watcher))
 
         # DocumentDB sync set up
-        state_sync_count = int(os.environ['STATE_SYNC_COUNT'])
+        state_sync_count = int(os.environ['Iterations_per_sync'])
         last_processed_id = get_last_processed_id()
         logger.debug("last_processed_id: {}".format(last_processed_id))
 
