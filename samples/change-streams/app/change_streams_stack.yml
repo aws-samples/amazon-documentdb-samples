@@ -13,11 +13,11 @@ Resources:
         Variables:
           DOCUMENTDB_SECRET: [DOCDB_SECRETSMAN_NAME_CFN]
           DOCUMENTDB_URI: [DOCDB_URI_CFN]:27017
-          Documents_per_run: "1000"
+          Documents_per_run: 1000
           SNS_TOPIC_ARN_ALERT: [SNS_TOPIC_ARN_ALERT_CNF]
           STATE_COLLECTION: statecol
           STATE_DB: statedb
-          Iterations_per_sync: "15"
+          Iterations_per_sync: 15
           WATCHED_COLLECTION_NAME: tweets
           WATCHED_DB_NAME: sampledb
           ELASTICSEARCH_URI: https://[ELASTICSEARCH_URI_CFN]

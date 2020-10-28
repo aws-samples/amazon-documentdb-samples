@@ -25,8 +25,8 @@ STATE_COLLECTION: The name of the collection in which to store sync state.
 STATE_DB: The name of the database in which to store sync state.
 WATCHED_COLLECTION_NAME: The name of the collection to watch for changes.
 WATCHED_DB_NAME: The name of the database to watch for changes.
-Iterations_per_sync: How many events to process before syncing state.
-Documents_per_run: The variable that controls how many documents to scan from the change stream with every function run. The default is set to 1000. 
+STATE_SYNC_COUNT: How many events to process before syncing state.
+Documents_per_run: The max for the iterator loop. 
 SNS_TOPIC_ARN_ALERT: The topic to send exceptions.   
 
 Kafka target environment variables:
@@ -103,8 +103,8 @@ def get_db_client():
 
         try:
             cluster_uri = os.environ['DOCUMENTDB_URI']
-            (username, password) = get_credentials()
-            db_client = MongoClient(cluster_uri, ssl=True, ssl_ca_certs='/tmp/rds-combined-ca-bundle.pem')
+            (username, password) = get_credentials()                   
+            db_client = MongoClient(cluster_uri, ssl=True, retryWrites=False, ssl_ca_certs='/tmp/rds-combined-ca-bundle.pem')
             # force the client to connect
             db_client.admin.command('ismaster')
             db_client["admin"].authenticate(name=username, password=password)
@@ -141,14 +141,24 @@ def get_last_processed_id():
     logger.debug('Returning last processed id.')
     try:
         state_collection = get_state_collection_client()
-        state_doc = state_collection.find_one({'currentState': True, 'dbWatched': str(os.environ['WATCHED_DB_NAME']), 
-            'collectionWatched': str(os.environ['WATCHED_COLLECTION_NAME'])})
+        if "WATCHED_COLLECTION_NAME" in os.environ:
+            state_doc = state_collection.find_one({'currentState': True, 'dbWatched': str(os.environ['WATCHED_DB_NAME']), 
+                'collectionWatched': str(os.environ['WATCHED_COLLECTION_NAME']), 'db_level': False})
+        else:
+            state_doc = state_collection.find_one({'currentState': True, 'db_level': True, 
+                'dbWatched': str(os.environ['WATCHED_DB_NAME'])})
+           
         if state_doc is not None:
             if 'lastProcessed' in state_doc: 
                 last_processed_id = state_doc['lastProcessed']
         else:
-            state_collection.insert({'dbWatched': str(os.environ['WATCHED_DB_NAME']), 
-                'collectionWatched': str(os.environ['WATCHED_COLLECTION_NAME']), 'currentState': True})
+            if "WATCHED_COLLECTION_NAME" in os.environ:
+                state_collection.insert_one({'dbWatched': str(os.environ['WATCHED_DB_NAME']),
+                    'collectionWatched': str(os.environ['WATCHED_COLLECTION_NAME']), 'currentState': True, 'db_level': False})
+            else:
+                state_collection.insert_one({'dbWatched': str(os.environ['WATCHED_DB_NAME']), 'currentState': True, 
+                    'db_level': True})
+
     except Exception as ex:
         logger.error('Failed to return last processed id: {}'.format(ex))
         send_sns_alert(str(ex))
@@ -163,8 +173,13 @@ def store_last_processed_id(resume_token):
     logger.debug('Storing last processed id.')
     try:
         state_collection = get_state_collection_client()
-        state_collection.update_one({'dbWatched': str(os.environ['WATCHED_DB_NAME']), 'collectionWatched': str(os.environ['WATCHED_COLLECTION_NAME'])},
-            {'$set': {'lastProcessed': resume_token}})
+        if "WATCHED_COLLECTION_NAME" in os.environ:
+            state_collection.update_one({'dbWatched': str(os.environ['WATCHED_DB_NAME']), 
+                'collectionWatched': str(os.environ['WATCHED_COLLECTION_NAME'])},{'$set': {'lastProcessed': resume_token}})
+        else:
+            state_collection.update_one({'dbWatched': str(os.environ['WATCHED_DB_NAME']), 'db_level': True, },
+                {'$set': {'lastProcessed': resume_token}})
+
     except Exception as ex:
         logger.error('Failed to store last processed id: {}'.format(ex))
         send_sns_alert(str(ex))
@@ -184,14 +199,14 @@ def connect_kafka_producer():
         except Exception as ex:
             logger.error('Failed to create new Kafka client: {}'.format(ex))
             send_sns_alert(str(ex))
-        raise
+            raise
     
     return kafka_client
 
 
 def publish_message(producer_instance, topic_name, key, value):
     """Publish documentdb changes to MSK."""
-    # size of the messages  #######################################################
+    
     try:
         logger.debug('Publishing message ' + key + ' to Kafka.')
         key_bytes = bytes(key, encoding='utf-8')
@@ -206,7 +221,7 @@ def publish_message(producer_instance, topic_name, key, value):
 
 def get_es_client():
     """Return an Elasticsearch client."""
-    # Use a global variable so Lambda can reuse the persisted client on future invocations
+    
     global es_client
     
     if es_client is None:
@@ -215,8 +230,10 @@ def get_es_client():
             Important:
             Use the following method if you Lambda has access to the Internet, 
             otherwise include the certificate within the package. 
+
+            Comment following line if certificate is loaded it as part of the function. 
         """
-        get_es_certificate()                                ### Comment this line if certificate is loaded it as part of the function. 
+        get_es_certificate()                                 
 
         try:
             es_uri = os.environ['ELASTICSEARCH_URI']
@@ -243,9 +260,9 @@ def get_es_certificate():
         raise
 
 
-def load_data_s3(filename):
+def load_data_s3(filename, folder):
     """Load data into S3."""
-    # Use a global variable so Lambda can reuse the persisted client on future invocations
+    
     global s3_client
 
     if s3_client is None:
@@ -254,9 +271,8 @@ def load_data_s3(filename):
 
     try:
         logger.debug('Loading batch to S3.')
-        response = s3_client.upload_file('/tmp/'+filename, os.environ['BUCKET_NAME'], str(os.environ['BUCKET_PATH']) +
-            str(os.environ['WATCHED_DB_NAME']) + '/' + str(os.environ['WATCHED_COLLECTION_NAME']) + '/' + 
-            datetime.datetime.now().strftime('%Y/%m/%d/') + filename)
+        response = s3_client.upload_file('/tmp/'+filename, os.environ['BUCKET_NAME'], str(os.environ['BUCKET_PATH']) + '/' +
+            folder + '/' + datetime.datetime.now().strftime('%Y/%m/%d/') + filename)
     except Exception as ex:
         logger.error('Exception in loading data to s3 message: {}'.format(ex))
         send_sns_alert(str(ex))
@@ -303,7 +319,6 @@ def publish_kinesis_event(pkey,message):
         kinesis_client = boto3.client('kinesis')  
 
     try:
-        # size of the messages  #######################################################
         logger.debug('Publishing message' + pkey + 'to Kinesis.')
         message_bytes = bytes(message, encoding='utf-8')
         response = kinesis_client.put_record(
@@ -320,6 +335,7 @@ def publish_kinesis_event(pkey,message):
 def getDocDbCertificate():
     """download the current docdb certificate"""
     try:
+        logger.debug('Getting DocumentDB certificate from S3.')
         clientS3.Bucket('rds-downloads').download_file('rds-combined-ca-bundle.pem', '/tmp/rds-combined-ca-bundle.pem')
     except Exception as ex:
         logger.error('Exception in publishing message to Kinesis: {}'.format(ex))
@@ -330,13 +346,23 @@ def getDocDbCertificate():
 def insertCanary():
     """Inserts a canary event for change stream activation"""
     
+    canary_record = None
+
     try:
+        logger.debug('Inserting canary.')
         db_client = get_db_client()
         watched_db = os.environ['WATCHED_DB_NAME']
-        watched_collection = os.environ['WATCHED_COLLECTION_NAME']
+
+        if "WATCHED_COLLECTION_NAME" in os.environ:
+            watched_collection = os.environ['WATCHED_COLLECTION_NAME']
+        else:
+            watched_collection = 'canary-collection'
+
         collection_client = db_client[watched_db][watched_collection]
 
         canary_record = collection_client.insert_one({ "op_canary": "canary" })
+        logger.debug('Canary inserted.')
+
     except Exception as ex:
         logger.error('Exception in inserting canary: {}'.format(ex))
         send_sns_alert(str(ex))
@@ -349,19 +375,26 @@ def deleteCanary():
     """Deletes a canary event for change stream activation"""
     
     try:
+        logger.debug('Deleting canary.')
         db_client = get_db_client()
         watched_db = os.environ['WATCHED_DB_NAME']
-        watched_collection = os.environ['WATCHED_COLLECTION_NAME']
-        collection_client = db_client[watched_db][watched_collection]
 
+        if "WATCHED_COLLECTION_NAME" in os.environ:
+            watched_collection = os.environ['WATCHED_COLLECTION_NAME']
+        else:
+            watched_collection = 'canary-collection'
+
+        collection_client = db_client[watched_db][watched_collection]
         collection_client.delete_one({ "op_canary": "canary" })
+        logger.debug('Canary deleted.')
+    
     except Exception as ex:
         logger.error('Exception in deleting canary: {}'.format(ex))
         send_sns_alert(str(ex))
         raise
 
 
-def publish_sqs_event(pkey,message):
+def publish_sqs_event(pkey,message,order):
     """send event to SQS"""
     # Use a global variable so Lambda can reuse the persisted client on future invocations
     global sqs_client
@@ -376,7 +409,7 @@ def publish_sqs_event(pkey,message):
             QueueUrl=os.environ['SQS_QUERY_URL'],
             MessageBody=message,
             MessageDeduplicationId=pkey,
-            MessageGroupId=str(os.environ['WATCHED_COLLECTION_NAME'])
+            MessageGroupId=order
         )
     except Exception as ex:
         logger.error('Exception in publishing message to SQS: {}'.format(ex))
@@ -384,44 +417,57 @@ def publish_sqs_event(pkey,message):
         raise
 
 
-def lambda_handler(event, context):
+def lambda_handler():#event, context):
     """Read any new events from DocumentDB and apply them to an streaming/datastore endpoint."""
+    
     events_processed = 0
     canary_record = None
+    watcher = None
+    folder = None
+    filename = None
+    fobj = None
+    kafka_client = None
     getDocDbCertificate()
+
     try:
         
         # S3 client set up   
         if "BUCKET_NAME" in os.environ:
-            filename = str(os.environ['WATCHED_COLLECTION_NAME']) + datetime.datetime.now().strftime("%s") 
+            if "WATCHED_COLLECTION_NAME" in os.environ:
+                folder = str(os.environ['WATCHED_DB_NAME']) + '-' + str(os.environ['WATCHED_COLLECTION_NAME'])
+            else: 
+                folder = str(os.environ['WATCHED_DB_NAME'])
+            
+            filename = folder + '-' + datetime.datetime.now().strftime("%s")
             fobj = open('/tmp/'+filename, 'w')
             logger.debug('S3 client set up.')
 
         # Kafka client set up    
         if "MSK_BOOTSTRAP_SRV" in os.environ:
             kafka_client = connect_kafka_producer()  
-            kafka_topic = str(os.environ['WATCHED_DB_NAME']) + '-' + str(os.environ['WATCHED_COLLECTION_NAME'])
             logger.debug('Kafka client set up.')    
 
         # ElasticSearch target indext set up
         if "ELASTICSEARCH_URI" in os.environ:
             es_client = get_es_client()
-            es_index = str(os.environ['WATCHED_DB_NAME']) + '-' + str(os.environ['WATCHED_COLLECTION_NAME'])
             logger.debug('ES client set up.')
 
         # DocumentDB watched collection set up
         db_client = get_db_client()
         watched_db = os.environ['WATCHED_DB_NAME']
-        watched_collection = os.environ['WATCHED_COLLECTION_NAME']
-        collection_client = db_client[watched_db][watched_collection]
-        logger.debug('Watching collection {}'.format(collection_client))
+        if "WATCHED_COLLECTION_NAME" in os.environ:
+            watched_collection = os.environ['WATCHED_COLLECTION_NAME']
+            watcher = db_client[watched_db][watched_collection]
+        else: 
+            watcher = db_client[watched_db]
+        logger.debug('Watching collection {}'.format(watcher))
 
         # DocumentDB sync set up
-        state_sync_count = int(os.environ['Iterations_per_sync'])
+        state_sync_count = int(os.environ['STATE_SYNC_COUNT'])
         last_processed_id = get_last_processed_id()
         logger.debug("last_processed_id: {}".format(last_processed_id))
 
-        with collection_client.watch(full_document='updateLookup', resume_after=last_processed_id) as change_stream:
+        with watcher.watch(full_document='updateLookup', resume_after=last_processed_id) as change_stream:
             i = 0
 
             if last_processed_id is None:
@@ -433,7 +479,6 @@ def lambda_handler(event, context):
                 i += 1
                 change_event = change_stream.try_next()
                 logger.debug('Event: {}'.format(change_event))
-
                 
                 if last_processed_id is None:
                     if change_event['operationType'] == 'delete':
@@ -451,12 +496,16 @@ def lambda_handler(event, context):
                         doc_body = change_event['fullDocument']
                         doc_id = str(doc_body.pop("_id", None))
                         readable = datetime.datetime.fromtimestamp(change_event['clusterTime'].time).isoformat()
-                        doc_body.update({'operation':op_type,'timestamp':str(change_event['clusterTime'].time),'timestampReadable':str(readable)})
+                        ######## Uncomment the following line if you want to add operation metadata fields to the document event. 
+                        #doc_body.update({'operation':op_type,'timestamp':str(change_event['clusterTime'].time),'timestampReadable':str(readable)})
+                        ######## Uncomment the following line if you want to add db and coll metadata fields to the document event. 
+                        #doc_body.update({'db':str(change_event['ns']['db']),'coll':str(change_event['ns']['coll'])})
                         payload = {'_id':doc_id}
                         payload.update(doc_body)
 
-                        # Publish event to ES   ################## evaluate if re-indexing the whole document is the best approach for updates #####################
+                        # Publish event to ES 
                         if "ELASTICSEARCH_URI" in os.environ:
+                            es_index = str(change_event['ns']['db']) + '-' + str(change_event['ns']['coll'])
                             es_client.index(index=es_index,id=doc_id,body=json_util.dumps(doc_body))   
 
                         # Append event for S3 micro-batch
@@ -470,26 +519,32 @@ def lambda_handler(event, context):
 
                         # Publish event to MSK
                         if "MSK_BOOTSTRAP_SRV" in os.environ:
+                            kafka_topic = str(change_event['ns']['db']) + '-' + str(change_event['ns']['coll'])
                             publish_message(kafka_client, kafka_topic, op_id, json_util.dumps(payload))
 
-                        # Publish event to SNS
-                        if "SNS_TOPIC_ARN_EVENT" in os.environ:
-                            publish_sns_event(json_util.dumps(payload))
+                        # Publish event to SNS                      # It should be used for FIFO SNS
+                        #if "SNS_TOPIC_ARN_EVENT" in os.environ:
+                        #    publish_sns_event(json_util.dumps(payload))
 
                         # Publish event to SQS
                         if "SQS_QUERY_URL" in os.environ:
-                            publish_sqs_event(str(op_id),json_util.dumps(payload))
+                            order = str(change_event['ns']['db']) + '-' + str(change_event['ns']['coll'])
+                            publish_sqs_event(str(op_id),json_util.dumps(payload),order)
 
                         logger.debug('Processed event ID {}'.format(op_id))
 
                     if op_type == 'delete':
-                        #try:
                         doc_id = str(change_event['documentKey']['_id'])
                         readable = datetime.datetime.fromtimestamp(change_event['clusterTime'].time).isoformat()
-                        payload = {'_id':doc_id,'operation':op_type,'timestamp':str(change_event['clusterTime'].time),'timestampReadable':str(readable)}
+                        payload = {'_id':doc_id}
+                        ######## Uncomment the following line if you want to add operation metadata fields to the document event. 
+                        #payload.update({'operation':op_type,'timestamp':str(change_event['clusterTime'].time),'timestampReadable':str(readable)})
+                        ######## Uncomment the following line if you want to add db and coll metadata fields to the document event. 
+                        #payload.update({'db':str(change_event['ns']['db']),'coll':str(change_event['ns']['coll'])})
 
                         # Delete event from ES
                         if "ELASTICSEARCH_URI" in os.environ:
+                            es_index = str(change_event['ns']['db']) + '-' + str(change_event['ns']['coll'])
                             es_client.delete(es_index, doc_id)
 
                         # Append event for S3 micro-batch
@@ -503,15 +558,17 @@ def lambda_handler(event, context):
 
                         # Publish event to MSK
                         if "MSK_BOOTSTRAP_SRV" in os.environ:
+                            kafka_topic = str(change_event['ns']['db']) + '-' + str(change_event['ns']['coll'])
                             publish_message(kafka_client, kafka_topic, op_id, json_util.dumps(payload))   
 
-                        # Publish event to SNS
-                        if "SNS_TOPIC_ARN_EVENT" in os.environ:
-                            publish_sns_event(json_util.dumps(payload))
+                        # Publish event to SNS                          # It should be used for FIFO SNS
+                        #if "SNS_TOPIC_ARN_EVENT" in os.environ:
+                        #    publish_sns_event(json_util.dumps(payload))
 
-                        # Publish event to SQS
+                        # Publish event to FIFO SQS                            
                         if "SQS_QUERY_URL" in os.environ:
-                            publish_sqs_event(str(op_id),json_util.dumps(payload))
+                            order = str(change_event['ns']['db']) + '-' + str(change_event['ns']['coll'])
+                            publish_sqs_event(str(op_id),json_util.dumps(payload),order)
 
                         logger.debug('Processed event ID {}'.format(op_id))
 
@@ -543,7 +600,7 @@ def lambda_handler(event, context):
             # S3 - close temp object and load data
             if "BUCKET_NAME" in os.environ:
                 fobj.close()
-                load_data_s3(filename)
+                load_data_s3(filename, folder)
 
             store_last_processed_id(change_stream.resume_token)
             logger.debug('Synced token {} to state collection'.format(change_stream.resume_token))
@@ -575,3 +632,6 @@ def lambda_handler(event, context):
         # Close Kafka client
         if "MSK_BOOTSTRAP_SRV" in os.environ:                                                 
             kafka_client.close()
+
+if __name__ == '__main__':
+    lambda_handler()
