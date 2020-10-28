@@ -417,7 +417,7 @@ def publish_sqs_event(pkey,message,order):
         raise
 
 
-def lambda_handler():#event, context):
+def lambda_handler(event, context):
     """Read any new events from DocumentDB and apply them to an streaming/datastore endpoint."""
     
     events_processed = 0
@@ -632,6 +632,3 @@ def lambda_handler():#event, context):
         # Close Kafka client
         if "MSK_BOOTSTRAP_SRV" in os.environ:                                                 
             kafka_client.close()
-
-if __name__ == '__main__':
-    lambda_handler()

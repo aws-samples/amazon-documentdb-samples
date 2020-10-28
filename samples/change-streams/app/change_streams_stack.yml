@@ -18,7 +18,6 @@ Resources:
           STATE_COLLECTION: statecol
           STATE_DB: statedb
           Iterations_per_sync: 15
-          WATCHED_COLLECTION_NAME: tweets
           WATCHED_DB_NAME: sampledb
           ELASTICSEARCH_URI: https://[ELASTICSEARCH_URI_CFN]
       FunctionName: docdb-elasticsearch-replicator
