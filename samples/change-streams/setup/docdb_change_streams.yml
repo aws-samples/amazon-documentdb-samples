@@ -53,7 +53,11 @@ Mappings:
       CIDR: '10.0.102.0/24'
 
 Resources:
- 
+
+  S3BucketFunctionCode:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+
   VPC:
     Type: AWS::EC2::VPC
     Properties:
@@ -382,8 +386,59 @@ Resources:
         Version: "2012-10-17"
         Statement:
           - Effect: Allow
-            Action: '*'
+            Action: 
+              - s3:PutObject
+              - s3:GetObject
+            Resource: 
+              !Join
+                - '' 
+                - - !GetAtt S3BucketFunctionCode.Arn
+                  - '/*'
+          - Effect: Allow
+            Action: 'events:EnableRule'
+            Resource: !GetAtt ScheduledRule.Arn
+          - Effect: Allow
+            Action: 
+              - ec2:DescribeSubnets
+              - ec2:DescribeVpcs
+              - ec2:DescribeNetworkInterfaces
+              - ec2:DescribeSecurityGroups
+              - lambda:GetFunctionConfiguration
+              - lambda:GetFunction
+              - cloudformation:DescribeChangeSet
+              - cloudformation:DescribeStacks
+              - cloudformation:ListChangeSets
             Resource: '*' 
+          - Effect: Allow
+            Action: 
+              - cloudformation:CreateStack
+              - cloudformation:CreateChangeSet
+              - cloudformation:ExecuteChangeSet
+            Resource: 
+              !Join
+                - '' 
+                - - 'arn:aws:cloudformation:'
+                  - !Ref "AWS::Region"
+                  - ':'
+                  - !Ref "AWS::AccountId"
+                  - ':stack/change-streams-function/*'
+          - Effect: Allow
+            Action: 
+              - lambda:CreateFunction
+              - lambda:AddPermission
+            Resource: 
+              !Join
+                - '' 
+                - - 'arn:aws:lambda:'
+                  - !Ref "AWS::Region"
+                  - ':'
+                  - !Ref "AWS::AccountId"
+                  - ':function:docdb-elasticsearch-replicator'
+          - Effect: Allow
+            Action: 
+              - sns:Subscribe
+              - iam:PassRole
+            Resource: '*'
       Roles: 
         - AWSCloud9SSMAccessRole
 
@@ -397,8 +452,59 @@ Resources:
         Version: "2012-10-17"
         Statement:
           - Effect: Allow
-            Action: '*'
+            Action: 
+              - s3:PutObject
+              - s3:GetObject
+            Resource: 
+              !Join
+                - '' 
+                - - !GetAtt S3BucketFunctionCode.Arn
+                  - '/*'
+          - Effect: Allow
+            Action: 'events:EnableRule'
+            Resource: !GetAtt ScheduledRule.Arn
+          - Effect: Allow
+            Action: 
+              - ec2:DescribeSubnets
+              - ec2:DescribeVpcs
+              - ec2:DescribeNetworkInterfaces
+              - ec2:DescribeSecurityGroups
+              - lambda:GetFunctionConfiguration
+              - lambda:GetFunction
+              - cloudformation:DescribeChangeSet
+              - cloudformation:DescribeStacks
+              - cloudformation:ListChangeSets
             Resource: '*' 
+          - Effect: Allow
+            Action: 
+              - cloudformation:CreateStack
+              - cloudformation:CreateChangeSet
+              - cloudformation:ExecuteChangeSet
+            Resource: 
+              !Join
+                - '' 
+                - - 'arn:aws:cloudformation:'
+                  - !Ref "AWS::Region"
+                  - ':'
+                  - !Ref "AWS::AccountId"
+                  - ':stack/change-streams-function/*'
+          - Effect: Allow
+            Action: 
+              - lambda:CreateFunction
+              - lambda:AddPermission
+            Resource: 
+              !Join
+                - '' 
+                - - 'arn:aws:lambda:'
+                  - !Ref "AWS::Region"
+                  - ':'
+                  - !Ref "AWS::AccountId"
+                  - ':function:docdb-elasticsearch-replicator'
+          - Effect: Allow
+            Action: 
+              - sns:Subscribe
+              - iam:PassRole
+            Resource: '*'
       Roles: 
         - AWSCloud9SSMAccessRole
 
@@ -514,10 +620,6 @@ Resources:
           - Ref: PrivateSubnetOne
         SecurityGroupIds:
           - Ref: ElasticSearchSecurityGroup
-
-  S3BucketFunctionCode:
-    Type: AWS::S3::Bucket
-    DeletionPolicy: Retain
 
 Outputs:
   VpcId:
