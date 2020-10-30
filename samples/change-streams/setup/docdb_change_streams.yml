@@ -54,10 +54,6 @@ Mappings:
 
 Resources:
 
-  S3BucketFunctionCode:
-    Type: AWS::S3::Bucket
-    DeletionPolicy: Retain
-
   VPC:
     Type: AWS::EC2::VPC
     Properties:
@@ -620,7 +616,11 @@ Resources:
           - Ref: PrivateSubnetOne
         SecurityGroupIds:
           - Ref: ElasticSearchSecurityGroup
-
+  
+  S3BucketFunctionCode:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    
 Outputs:
   VpcId:
     Value: !Ref VPC
