@@ -422,6 +422,8 @@ Resources:
             Action: 
               - lambda:CreateFunction
               - lambda:AddPermission
+              - lambda:DeleteFunction
+              - lambda:RemovePermission
             Resource: 
               !Join
                 - '' 
@@ -431,10 +433,11 @@ Resources:
                   - !Ref "AWS::AccountId"
                   - ':function:docdb-elasticsearch-replicator'
           - Effect: Allow
-            Action: 
-              - sns:Subscribe
-              - iam:PassRole
-            Resource: '*'
+            Action: sns:Subscribe
+            Resource: !Ref SNSTopicTrigger
+          - Effect: Allow
+            Action: iam:PassRole
+            Resource: !GetAtt LambdaChangeStreamsRole.Arn
       Roles: 
         - AWSCloud9SSMAccessRole
 
@@ -488,6 +491,8 @@ Resources:
             Action: 
               - lambda:CreateFunction
               - lambda:AddPermission
+              - lambda:DeleteFunction
+              - lambda:RemovePermission
             Resource: 
               !Join
                 - '' 
@@ -497,10 +502,11 @@ Resources:
                   - !Ref "AWS::AccountId"
                   - ':function:docdb-elasticsearch-replicator'
           - Effect: Allow
-            Action: 
-              - sns:Subscribe
-              - iam:PassRole
-            Resource: '*'
+            Action: sns:Subscribe
+            Resource: !Ref SNSTopicTrigger
+          - Effect: Allow
+            Action: iam:PassRole
+            Resource: !GetAtt LambdaChangeStreamsRole.Arn
       Roles: 
         - AWSCloud9SSMAccessRole
 
@@ -560,6 +566,7 @@ Resources:
   
   Cloud9env:
     Type: AWS::Cloud9::EnvironmentEC2
+    DependsOn: AWSCloud9SSMInstanceProfile
     Properties: 
       ConnectionType: CONNECT_SSM 
       Description: Cloud9 instance to access Cloud9
