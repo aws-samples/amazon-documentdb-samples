@@ -22,7 +22,7 @@ Resources:
           ELASTICSEARCH_URI: https://[ELASTICSEARCH_URI_CFN]
       FunctionName: docdb-elasticsearch-replicator
       MemorySize: 256
-      Timeout: 120
+      Timeout: 60
       VpcConfig:
         SecurityGroupIds:
           - [DOCDB_SG_CFN]

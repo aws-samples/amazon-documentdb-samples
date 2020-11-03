@@ -564,9 +564,20 @@ Resources:
         - Key: Name
           Value: !Sub DocumentDBInstance-${AWS::StackName}
   
-  Cloud9env:
+  Cloud9envNew:
     Type: AWS::Cloud9::EnvironmentEC2
+    Condition: CreateCloud9InstanceProfile
     DependsOn: AWSCloud9SSMInstanceProfile
+    Properties: 
+      ConnectionType: CONNECT_SSM 
+      Description: Cloud9 instance to access Cloud9
+      InstanceType: m5.large
+      Name: ChangeStreamsCloud9
+      SubnetId: !Ref PrivateSubnetOne
+
+  Cloud9envOld:
+    Type: AWS::Cloud9::EnvironmentEC2
+    Condition: CreateCloud9Policy
     Properties: 
       ConnectionType: CONNECT_SSM 
       Description: Cloud9 instance to access Cloud9
