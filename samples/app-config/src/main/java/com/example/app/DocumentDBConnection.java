@@ -36,7 +36,7 @@ public class DocumentDBConnection {
         configureSSL();
         String username = "<userName>"; //TODO Update user name for DocumentDB
         String password = "password"; // TODO Update password for DocumentDB
-        String clusterEndpoint = "<clusterEndpPoint>";// TODO Update Cluster End Point for DocumentDB
+        String clusterEndpoint = "<clusterEndPoint>";// TODO Update Cluster End Point for DocumentDB
 
         // Uncomment below for connecting use Connection String
 //         String template = "mongodb://%s:%s@%s/sample-database?ssl=true&replicaSet=rs0&readpreference=%s";
