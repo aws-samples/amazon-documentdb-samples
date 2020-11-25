@@ -67,7 +67,7 @@ public class DocumentDBConnection {
                         .applyToConnectionPoolSettings(builder ->
                                 builder.maxWaitTime(2, TimeUnit.MINUTES))
                         .applyToClusterSettings(builder ->
-                                builder.serverSelectionTimeout(10, TimeUnit.SECONDS))
+                                builder.serverSelectionTimeout(30, TimeUnit.SECONDS))
                         .applyToSocketSettings(builder ->
                                 builder.connectTimeout(10, TimeUnit.SECONDS))
                         .applyToSocketSettings(builder ->
