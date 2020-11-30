@@ -1,6 +1,6 @@
 # Run full text search queries on Amazon DocumentDB (with MongoDB compatibility) data with Amazon Elasticsearch Service
 
-This repo is used for the blog post __[Run full text search queries on Amazon DocumentDB (with MongoDB compatibility) data with Amazon Elasticsearch Service] (https://aws.amazon.com/blogs/database/run-full-text-search-queries-on-amazon-documentdb-data-with-amazon-elasticsearch-service/)__
+This repo is used for the blog post __[Run full text search queries on Amazon DocumentDB (with MongoDB compatibility) data with Amazon Elasticsearch Service](https://aws.amazon.com/blogs/database/run-full-text-search-queries-on-amazon-documentdb-data-with-amazon-elasticsearch-service/)__
 
 You can also use this sample solution to stream events to Amazon Managed Stream for Kafka (or any other Apache Kafka distro), AWS Kinesis Streams, AWS SQS, and S3. S3 streaming is done in micro-batches and the rest of the integration are near real-time.  
 
