@@ -1,5 +1,9 @@
 # Sample Categories
 
+__[app-config](https://github.com/aws-samples/amazon-documentdb-samples/tree/master/samples/app-config)__
+
+Sample code for client configuration and connection best practices using Java
+
 __[Connect and query](https://github.com/aws-samples/amazon-documentdb-samples/tree/master/samples/connect-and-query)__
 
 Sample code for connecting to Amazon DocumentDB from Python, PHP, Node.js and Ruby (more coming soon)
