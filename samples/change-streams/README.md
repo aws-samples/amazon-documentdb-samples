@@ -1,25 +1,19 @@
-# A sample solution to stream AWS DocumentDB events to different targets
+# Run full text search queries on Amazon DocumentDB (with MongoDB compatibility) data with Amazon Elasticsearch Service
 
-This sample solution allows to stream AWS DocumentDB events to Amazon Elasticsearch Service, Amazon Managed Stream for Kafka (or any other Apache Kafka distro), AWS Kinesis Streams, AWS SQS, and S3. S3 streaming is done in micro-batches and the rest of the integration are near real-time.  
+This repo is used for the blog post __[Run full text search queries on Amazon DocumentDB (with MongoDB compatibility) data with Amazon Elasticsearch Service] (https://aws.amazon.com/blogs/database/run-full-text-search-queries-on-amazon-documentdb-data-with-amazon-elasticsearch-service/)__
+
+You can also use this sample solution to stream events to Amazon Managed Stream for Kafka (or any other Apache Kafka distro), AWS Kinesis Streams, AWS SQS, and S3. S3 streaming is done in micro-batches and the rest of the integration are near real-time.  
 
 This sample solution is composed of:
 
 ## Lambda Function
 
-The AWS Lambda function will retrieve DocumentDB credential information from AWS Secrets Manager, make a connection to the DocumentDB cluster, retrieve the token for where the Lambda last left off in reading the change stream, and use that token to resume consuming change stream events.
+The Lambda function retrieves Amazon DocumentDB credentials from Secrets Manager, sets up a connection to the Amazon DocumentDB cluster, reads the change events from the Amazon DocumentDB change stream, and replicates them to an Amazon ES indexes. The function also stores a change stream resume token in the Amazon DocumentDB cluster so it knows where to resume on its next run. To automate the solution, we poll for changes every 60 seconds. We use EventBridge to trigger a message to Amazon SNS, which invokes the function.
 
-The Lambda will read N change events from the Change Stream and stream them to each target, and then save the change stream token into DocumentDB to use the next time the Lambda is invoked.
+The Lambda function uses three variables that you can tune:
 
-The Lambda function also retrieve a certificate from Amazon S3 to connect via TLS to DocumentDB. 
-
-This sample solution deploys one Lambda function that can be set via environment variables to stream changes in one collection or an entire database. 
-
-Streaming functions must be deployed in a private subnet to reach DocumentDB cluster. 
-
-Each lambda function uses 3 variables to control how many events streaming; customers are encourage to tune this variables according to the throughput of each collection. This variables are: 
-- The lambda function timeout which is set to 120 seconds
-- MAX_LOOP is a control variable to avoid that the lambda times out in an inconsistent state. This is set to 45. 
-- STATE_SYNC_COUNT is a control varible that determines how many iteration should the lambda wait before syncing the resume token (resume token is used to track the events processed in the change stream). It is meant to reduce IO operations on Amazon DocumentDB. This is set to 15.
+* Timeout – The duration after which the Lambda function times out. The default is set to 120 seconds. * Documents_per_run – The variable that controls how many documents to scan from the change stream with every function run. The default is set to 1000.
+* Iterations_per_sync – The variable that determines how many iterations the Lambda function waits before syncing the resume token (the resume token to track the events processed in the change stream). The default is set to 15.
 
 For target, there must be environment varibles in the lambda and permissions for the lambda role and/or network accordingly. 
 
@@ -30,12 +24,13 @@ Change Stream resumability was built around the resume token used within the wat
 The sample solution will poll for changes every 120 seconds. It uses Amazon EventBridge to trigger a message to Amazon SNS, which will in turn invoke the AWS Lambda functions which does the bulk of the work.
 
 # How to install
+
 1. Enable __[change streams](https://docs.aws.amazon.com/documentdb/latest/developerguide/change-streams.html)__
-2. Deploy a the baseline environment. 
+2. Deploy a baseline environment. 
     1. Go to AWS CloudFormation in AWS console and select *Create stack*. 
     2. Check the *Upload a template file* option, select *Choose file *option and upload the __[change stream stack](https://raw.githubusercontent.com/aws-samples/amazon-documentdb-samples/master/samples/change-streams/setup/docdb_change_streams.yml)__ yaml file, and select *Next.*
-    3. Give your stack a name, and input username, password, the identifier for your Amazon DocumentDB cluster, select *Next*. 
-    4. SWS Cloud9 uses a Role and an Instance profile. If you have used Cloud9 before, those have been created automatically for you; therefore, select *true* in the options for *ExistingCloud9Role* and *ExistingCloud9InstanceProfile*. Otherwise, leave it as *false*. 
+    3. Give your stack a name, and input username, password, the identifier for your Amazon DocumentDB cluster. 
+    4. AWS Cloud9 uses a Role. If you have used Cloud9 before, should already have an existing role. You can verify by going to the IAM console and searching for the role __[AWSCloud9SSMAccessRole](https://console.aws.amazon.com/iam/home?region=us-east-2#/roles/AWSCloud9SSMAccessRole)__. If you already have this role, choose true. If not, choose false and the AWS CloudFormation template creates this role for you. Select *Next.*  
     5. Leave everything as default and select *Next*. Check the box to allow the stack create a role on behalf of you and select *Create stack*. The stack should complete provisioning in a few minutes. 
 3. Setup the Cloud9 environment
     1. From your AWS Cloud9 environment, launch a new tab to open the Preferences tab
@@ -57,7 +52,7 @@ The sample solution will poll for changes every 120 seconds. It uses Amazon Even
         ```
     8. Execute the code below to update the environment libraries, upload streaming code to S3, and copy output from previous CloudFormation.
         ```
-        wget https://raw.githubusercontent.com/aws-samples/amazon-documentdb-samples/master/samples/change-streams/setup/startup.sh
+        curl -s https://raw.githubusercontent.com/aws-samples/amazon-documentdb-samples/master/samples/change-streams/setup/startup.sh -o startup.sh
         chmod 700 startup.sh
         ./startup.sh
         ```
@@ -77,6 +72,8 @@ Once deployed, streaming functions will be run with the frequency set in the sch
 
 # Environment Varibles for targets
 When you set up a target, make sure Lambda can reach it and the role associated to the lambda has proper permissions (e.g. s3:PutObject). 
+
+To add new target, you just need to add a new environment variable to the Lambda streaming function. 
 
 ### Elasticsearch
 One index will be automatically created per database or collection. 
