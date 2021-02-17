@@ -35,11 +35,11 @@ public class DocumentDBConnection {
     private static MongoClient getMongoClient() {
         configureSSL();
         String username = "<userName>"; //TODO Update user name for DocumentDB
-        String password = "password"; // TODO Update password for DocumentDB
+        String password = "<password>"; // TODO Update password for DocumentDB
         String clusterEndpoint = "<clusterEndPoint>";// TODO Update Cluster End Point for DocumentDB
 
         // Uncomment below for connecting use Connection String
-//         String template = "mongodb://%s:%s@%s/sample-database?ssl=true&replicaSet=rs0&readpreference=%s";
+//         String template = "mongodb://%s:%s@%s/test?ssl=false&replicaSet=rs0&readpreference=%s";
 //         String readPreference = "secondaryPreferred";
 //         String connectionString = String.format(template, username, password, clusterEndpoint, readPreference);
 //        MongoClient mongoClient = MongoClients.create(connectionString);
@@ -54,7 +54,7 @@ public class DocumentDBConnection {
                                 builder.requiredReplicaSetName("rs0"))
                         .applyToClusterSettings(builder ->
                                 builder.mode(ClusterConnectionMode.MULTIPLE))
-                        .readPreference(ReadPreference.secondaryPreferred())
+                        .readPreference(ReadPreference.secondary())
                         .applyToSslSettings(builder ->
                                 builder.enabled(true))
                         .credential(MongoCredential.createCredential(username,"Admin",password.toCharArray()))
@@ -67,7 +67,7 @@ public class DocumentDBConnection {
                         .applyToConnectionPoolSettings(builder ->
                                 builder.maxWaitTime(2, TimeUnit.MINUTES))
                         .applyToClusterSettings(builder ->
-                                builder.serverSelectionTimeout(10, TimeUnit.SECONDS))
+                                builder.serverSelectionTimeout(30, TimeUnit.SECONDS))
                         .applyToSocketSettings(builder ->
                                 builder.connectTimeout(10, TimeUnit.SECONDS))
                         .applyToSocketSettings(builder ->
