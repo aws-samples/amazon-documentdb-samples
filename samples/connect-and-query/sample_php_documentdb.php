@@ -24,7 +24,7 @@ $clusterendpoint = getenv("clusterendpoint");
 //Create a MongoDB client and open connection to Amazon DocumentDB
 //Sample connection string format - mongodb://myusername:mypassword@testcluster.us-east-2.docdb.amazonaws.com:27017
 
-$client = new MongoDB\Client("mongodb://".$username.":".$password."@".$clusterendpoint, array("ssl" => true), array("context" => $ctx));
+$client = new MongoDB\Client("mongodb://".$username.":".$password."@".$clusterendpoint."/"."?"."retryWrites=false", array("ssl" => true), array("context" => $ctx));
 
 $col = $client->sampledb->samplecoll;
 
