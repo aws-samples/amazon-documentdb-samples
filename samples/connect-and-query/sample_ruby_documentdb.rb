@@ -11,7 +11,8 @@ client_options = {
    password: ENV['password'],
    ssl: true,
    ssl_verify: true,
-   ssl_ca_cert: '/home/ubuntu/environment/rds-combined-ca-bundle.pem'
+   ssl_ca_cert: '/home/ubuntu/environment/rds-combined-ca-bundle.pem',
+   retry_writes: false
 }
 
 data = [{ "_id" => 1, "name" => "Tim", "status"=> "active", "level "=> 12, "score" => 202}, { "_id" => 2, "name" => "Justin", "status" => "inactive", "level" => 2, "score" => 9}, { "_id" => 3, "name" => "Beth", "status" => "active", "level" => 7, "score" => 87}, { "_id" => 4, "name" => "Jesse", "status" => "active", "level" => 3, "score" => 27}]
