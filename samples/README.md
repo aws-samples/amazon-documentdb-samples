@@ -2,7 +2,7 @@
 
 __[app-config](https://github.com/aws-samples/amazon-documentdb-samples/tree/master/samples/app-config)__
 
-Sample code for client configuration and connection best practices using Java
+Sample code for client configuration, connection best practices and exception handling using Java
 
 __[Connect and query](https://github.com/aws-samples/amazon-documentdb-samples/tree/master/samples/connect-and-query)__
 
