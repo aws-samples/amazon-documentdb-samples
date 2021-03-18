@@ -54,7 +54,7 @@ public class DocumentDBConnection {
                                 builder.requiredReplicaSetName("rs0"))
                         .applyToClusterSettings(builder ->
                                 builder.mode(ClusterConnectionMode.MULTIPLE))
-                        .readPreference(ReadPreference.secondary())
+                        .readPreference(ReadPreference.secondaryPreferred())
                         .applyToSslSettings(builder ->
                                 builder.enabled(true))
                         .credential(MongoCredential.createCredential(username,"Admin",password.toCharArray()))
