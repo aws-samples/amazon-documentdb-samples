@@ -16,7 +16,7 @@ const assert = require('assert');
 var ca = [fs.readFileSync("rds-combined-ca-bundle.pem")];
 
 // Connection URL
-const connstring = `mongodb://${username}:${password}@${clusterendpoint}/sample-database?ssl=true&replicaSet=rs0&readPreference=secondaryPreferred`;
+const connstring = `mongodb://${username}:${password}@${clusterendpoint}/sample-database?ssl=true&replicaSet=rs0&readPreference=secondaryPreferred&retryWrites=false`;
 
 // Database Name
 const dbName = 'myproject';
