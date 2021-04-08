@@ -37,7 +37,7 @@ SNS_TOPIC_ARN_EVENT: The topic to send docdb events.
 
 S3 target environment variables:
 BUCKET_NAME: The name of the bucket that will save streamed data. 
-BUCKET_PATH: The path of the bucket that will save streamed data. 
+BUCKET_PATH (optional): The path of the bucket that will save streamed data. 
 
 ElasticSearch target environment variables:
 ELASTICSEARCH_URI: The URI of the Elasticsearch domain where data should be streamed.
