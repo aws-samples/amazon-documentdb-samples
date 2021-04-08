@@ -271,8 +271,12 @@ def load_data_s3(filename, folder):
 
     try:
         logger.debug('Loading batch to S3.')
-        response = s3_client.upload_file('/tmp/'+filename, os.environ['BUCKET_NAME'], str(os.environ['BUCKET_PATH']) + '/' +
-            folder + '/' + datetime.datetime.now().strftime('%Y/%m/%d/') + filename)
+        if "BUCKET_PATH" in os.environ:
+            response = s3_client.upload_file('/tmp/'+filename, os.environ['BUCKET_NAME'], str(os.environ['BUCKET_PATH']) + '/' +
+                folder + '/' + datetime.datetime.now().strftime('%Y/%m/%d/') + filename)
+        else:
+            response = s3_client.upload_file('/tmp/'+filename, os.environ['BUCKET_NAME'],
+                folder + '/' + datetime.datetime.now().strftime('%Y/%m/%d/') + filename)
     except Exception as ex:
         logger.error('Exception in loading data to s3 message: {}'.format(ex))
         send_sns_alert(str(ex))
