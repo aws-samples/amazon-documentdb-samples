@@ -260,29 +260,6 @@ def get_es_certificate():
         raise
 
 
-def load_data_s3(filename, folder):
-    """Load data into S3."""
-    
-    global s3_client
-
-    if s3_client is None:
-        logger.debug('Creating new S3 client.')
-        s3_client = boto3.client('s3')  
-
-    try:
-        logger.debug('Loading batch to S3.')
-        if "BUCKET_PATH" in os.environ:
-            response = s3_client.upload_file('/tmp/'+filename, os.environ['BUCKET_NAME'], str(os.environ['BUCKET_PATH']) + '/' +
-                folder + '/' + datetime.datetime.now().strftime('%Y/%m/%d/') + filename)
-        else:
-            response = s3_client.upload_file('/tmp/'+filename, os.environ['BUCKET_NAME'],
-                folder + '/' + datetime.datetime.now().strftime('%Y/%m/%d/') + filename)
-    except Exception as ex:
-        logger.error('Exception in loading data to s3 message: {}'.format(ex))
-        send_sns_alert(str(ex))
-        raise
-
-
 def send_sns_alert(message):
     """send an SNS alert"""
     try:
@@ -421,6 +398,30 @@ def publish_sqs_event(pkey,message,order):
         raise
 
 
+def put_s3_event(event, database, collection):
+    """send event to S3"""
+    # Use a global variable so Lambda can reuse the persisted client on future invocations
+    global s3_client
+
+    if s3_client is None:
+        logger.debug('Creating new S3 client.')
+        s3_client = boto3.resource('s3')  
+
+    try:
+        logger.debug('Publishing message to S3.') #, str(os.environ['BUCKET_PATH'])
+        if "BUCKET_PATH" in os.environ:
+            s3_client.Object(os.environ['BUCKET_NAME'], str(os.environ['BUCKET_PATH']) + '/' + database + '/' +
+                collection + '/' + datetime.datetime.now().strftime('%Y/%m/%d/') +  
+                datetime.datetime.now().strftime("%s")).put(Body=event)
+        else: 
+            s3_client.Object(os.environ['BUCKET_NAME'], + database + '/' + collection + '/' + 
+                datetime.datetime.now().strftime('%Y/%m/%d/') + datetime.datetime.now().strftime("%s")).put(Body=event)
+
+    except Exception as ex:
+        logger.error('Exception in publishing message to S3: {}'.format(ex))
+        send_sns_alert(str(ex))
+        raise
+
 def lambda_handler(event, context):
     """Read any new events from DocumentDB and apply them to an streaming/datastore endpoint."""
     
@@ -429,23 +430,11 @@ def lambda_handler(event, context):
     watcher = None
     folder = None
     filename = None
-    fobj = None
     kafka_client = None
     getDocDbCertificate()
 
     try:
         
-        # S3 client set up   
-        if "BUCKET_NAME" in os.environ:
-            if "WATCHED_COLLECTION_NAME" in os.environ:
-                folder = str(os.environ['WATCHED_DB_NAME']) + '-' + str(os.environ['WATCHED_COLLECTION_NAME'])
-            else: 
-                folder = str(os.environ['WATCHED_DB_NAME'])
-            
-            filename = folder + '-' + datetime.datetime.now().strftime("%s")
-            fobj = open('/tmp/'+filename, 'w')
-            logger.debug('S3 client set up.')
-
         # Kafka client set up    
         if "MSK_BOOTSTRAP_SRV" in os.environ:
             kafka_client = connect_kafka_producer()  
@@ -512,10 +501,9 @@ def lambda_handler(event, context):
                             es_index = str(change_event['ns']['db']) + '-' + str(change_event['ns']['coll'])
                             es_client.index(index=es_index,id=doc_id,body=json_util.dumps(doc_body))   
 
-                        # Append event for S3 micro-batch
+                        # Append event for S3 
                         if "BUCKET_NAME" in os.environ:
-                            fobj.write(json_util.dumps(payload))
-                            fobj.write("\n")
+                            put_s3_event(json_util.dumps(payload), str(change_event['ns']['db']), str(change_event['ns']['coll']))
                         
                         # Publish event to Kinesis
                         if "KINESIS_STREAM" in os.environ:
@@ -551,10 +539,9 @@ def lambda_handler(event, context):
                             es_index = str(change_event['ns']['db']) + '-' + str(change_event['ns']['coll'])
                             es_client.delete(es_index, doc_id)
 
-                        # Append event for S3 micro-batch
+                        # Append event for S3
                         if "BUCKET_NAME" in os.environ:
-                            fobj.write(json_util.dumps(payload))
-                            fobj.write("\n")
+                            put_s3_event(json_util.dumps(payload), str(change_event['ns']['db']), str(change_event['ns']['coll']))
 
                         # Publish event to Kinesis
                         if "KINESIS_STREAM" in os.environ:
@@ -601,11 +588,6 @@ def lambda_handler(event, context):
         
         if events_processed > 0:
 
-            # S3 - close temp object and load data
-            if "BUCKET_NAME" in os.environ:
-                fobj.close()
-                load_data_s3(filename, folder)
-
             store_last_processed_id(change_stream.resume_token)
             logger.debug('Synced token {} to state collection'.format(change_stream.resume_token))
             return{
@@ -628,10 +610,6 @@ def lambda_handler(event, context):
                 }
 
     finally:
-
-        # S3 - close temp object
-        if "BUCKET_NAME" in os.environ:
-            fobj.close()
 
         # Close Kafka client
         if "MSK_BOOTSTRAP_SRV" in os.environ:                                                 
