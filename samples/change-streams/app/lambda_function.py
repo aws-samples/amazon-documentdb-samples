@@ -398,7 +398,7 @@ def publish_sqs_event(pkey,message,order):
         raise
 
 
-def put_s3_event(event, database, collection):
+def put_s3_event(event, database, collection, doc_id):
     """send event to S3"""
     # Use a global variable so Lambda can reuse the persisted client on future invocations
     global s3_client
@@ -411,11 +411,10 @@ def put_s3_event(event, database, collection):
         logger.debug('Publishing message to S3.') #, str(os.environ['BUCKET_PATH'])
         if "BUCKET_PATH" in os.environ:
             s3_client.Object(os.environ['BUCKET_NAME'], str(os.environ['BUCKET_PATH']) + '/' + database + '/' +
-                collection + '/' + datetime.datetime.now().strftime('%Y/%m/%d/') +  
-                datetime.datetime.now().strftime("%s")).put(Body=event)
+                collection + '/' + datetime.datetime.now().strftime('%Y/%m/%d/') + doc_id).put(Body=event)
         else: 
             s3_client.Object(os.environ['BUCKET_NAME'], database + '/' + collection + '/' + 
-                datetime.datetime.now().strftime('%Y/%m/%d/') + datetime.datetime.now().strftime("%s")).put(Body=event)
+                datetime.datetime.now().strftime('%Y/%m/%d/') + doc_id).put(Body=event)
 
     except Exception as ex:
         logger.error('Exception in publishing message to S3: {}'.format(ex))
@@ -503,7 +502,7 @@ def lambda_handler(event, context):
 
                         # Append event for S3 
                         if "BUCKET_NAME" in os.environ:
-                            put_s3_event(json_util.dumps(payload), str(change_event['ns']['db']), str(change_event['ns']['coll']))
+                            put_s3_event(json_util.dumps(payload), str(change_event['ns']['db']), str(change_event['ns']['coll']),doc_id)
                         
                         # Publish event to Kinesis
                         if "KINESIS_STREAM" in os.environ:
@@ -541,7 +540,7 @@ def lambda_handler(event, context):
 
                         # Append event for S3
                         if "BUCKET_NAME" in os.environ:
-                            put_s3_event(json_util.dumps(payload), str(change_event['ns']['db']), str(change_event['ns']['coll']))
+                            put_s3_event(json_util.dumps(payload), str(change_event['ns']['db']), str(change_event['ns']['coll']),doc_id)
 
                         # Publish event to Kinesis
                         if "KINESIS_STREAM" in os.environ:
