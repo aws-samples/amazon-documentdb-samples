@@ -414,7 +414,7 @@ def put_s3_event(event, database, collection):
                 collection + '/' + datetime.datetime.now().strftime('%Y/%m/%d/') +  
                 datetime.datetime.now().strftime("%s")).put(Body=event)
         else: 
-            s3_client.Object(os.environ['BUCKET_NAME'], + database + '/' + collection + '/' + 
+            s3_client.Object(os.environ['BUCKET_NAME'], database + '/' + collection + '/' + 
                 datetime.datetime.now().strftime('%Y/%m/%d/') + datetime.datetime.now().strftime("%s")).put(Body=event)
 
     except Exception as ex:
