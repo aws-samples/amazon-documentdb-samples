@@ -8,3 +8,5 @@ node_modules
 cdk.out
 
 !lib/functions/**/*.js
+
+.DS_Store
