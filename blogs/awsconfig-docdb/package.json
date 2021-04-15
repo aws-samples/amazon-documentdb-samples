@@ -1,0 +1,29 @@
+{
+  "name": "amazon-documentdb-aws-config",
+  "version": "1.0.0",
+  "bin": {
+    "amazon-documentdb-aws-config": "bin/amazon-documentdb-aws-config.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w"
+  },
+  "author": "Amazon Web Services",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "10.17.27",
+    "ts-node": "^9.0.0",
+    "typescript": "~3.9.7"
+  },
+  "dependencies": {
+    "@aws-cdk/aws-config": "1.95.1",
+    "@aws-cdk/aws-events": "1.95.1",
+    "@aws-cdk/aws-events-targets": "1.95.1",
+    "@aws-cdk/aws-iam": "1.95.1",
+    "@aws-cdk/aws-lambda": "1.95.1",
+    "@aws-cdk/aws-logs": "1.95.1",
+    "@aws-cdk/aws-sns": "1.95.1",
+    "@aws-cdk/core": "1.95.1",
+    "source-map-support": "^0.5.16"
+  }
+}
