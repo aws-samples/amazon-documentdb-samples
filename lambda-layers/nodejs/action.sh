@@ -5,7 +5,7 @@
 : "${AWS_DEFAULT_REGION:?Need to set AWS_DEFAULT_REGION non-empty}"
 
 LAYER_NAME=documentdb-nodejs
-RUNTIMES="nodejs10.x nodejs12.x"
+RUNTIMES="nodejs14.x nodejs12.x"
 PACKAGES="mongodb mongoose"
 WORKDIR=/tmp/nodejs
 PEMFILE="https://s3.amazonaws.com/rds-downloads/rds-combined-ca-bundle.pem"
