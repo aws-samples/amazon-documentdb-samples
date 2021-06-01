@@ -9,6 +9,7 @@ import { Topic } from '@aws-cdk/aws-sns';
 import { LogGroup, RetentionDays } from '@aws-cdk/aws-logs';
 import * as cdk from '@aws-cdk/core';
 import { CloudWatchLogGroup, LambdaFunction, SnsTopic } from '@aws-cdk/aws-events-targets';
+import { Key } from '@aws-cdk/aws-kms';
 
 interface DocumentDbConfigStackProps extends cdk.StackProps {
   clusterParameterGroup?: string;
@@ -116,7 +117,8 @@ export class AmazonDocumentdbAwsConfigStack extends cdk.Stack {
     // remediation
     // sns topic for notifications
     const topic = new Topic(this, 'ComplianceNotificationsTopic', {
-      displayName: 'Compliance Notifications'
+      displayName: 'Compliance Notifications',
+      masterKey: new Key(this, 'Key')
     });
 
     // cloudwatch log group for debugging purposes
