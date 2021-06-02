@@ -50,6 +50,8 @@ Resources are provisioned using the [AWS CDK framework](https://docs.aws.amazon.
   ```
 
   After confirming that there will be security-related changes, the provisioning of the Amazon CloudFormation template will start. You can monitor its progress directly from the terminal or through the AWS web console.
+  
+  _Note:_ Among the provisioned resources there is an AWS KMS key to encrypt the body of the notifications that are published through an SNS topic. There is a cost associated that you can check in the [service pricing page](https://aws.amazon.com/kms/pricing/).
 
 There will be two Config custom rules whose correct behaviour will depend on each organisation requirements: parameter group and backup retention policy. By default, the application expects DocumentDB clusters to have a parameter group called `blogpost-param-group` and a minimun backup retention window of 7 days.
 
