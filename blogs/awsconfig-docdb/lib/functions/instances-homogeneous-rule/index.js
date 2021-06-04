@@ -75,15 +75,21 @@ async function getConfigurationItem(invokingEvent) {
 // has been deleted and if it has, then the evaluation is unnecessary
 function isApplicable(configurationItem, event) {
   checkDefined(configurationItem, 'configurationItem');
-  checkDefined(configurationItem.configuration, 'configurationItem.configuration');
-
-  if (configurationItem.resourceType !== 'AWS::RDS::DBInstance' || configurationItem.configuration.engine !== 'docdb') {
-    console.log('This is not a DocumentDB Instance');
+  
+  // if eventLeftScope is true the resource to be evaluated has been removed
+  // https://docs.aws.amazon.com/config/latest/developerguide/evaluate-config_develop-rules_example-events.html
+  const eventLeftScope = event.eventLeftScope;
+  if (eventLeftScope) {
     return false;
   }
 
-  const status = configurationItem.configurationItemStatus;
-  const eventLeftScope = event.eventLeftScope;
+  checkDefined(configurationItem.configuration, 'configurationItem.configuration');
+  if (configurationItem.resourceType !== 'AWS::RDS::DBInstance' || configurationItem.configuration.engine !== 'docdb') {
+    console.log('This is not a DocumentDB instance');
+    return false;
+  }
+
+  const status = configurationItem.configurationItemStatus;  
   return (status === 'OK' || status === 'ResourceDiscovered') && eventLeftScope === false;
 }
 
