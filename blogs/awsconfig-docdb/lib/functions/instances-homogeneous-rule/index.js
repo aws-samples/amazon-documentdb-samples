@@ -87,8 +87,12 @@ function isApplicable(configurationItem, event) {
   return (status === 'OK' || status === 'ResourceDiscovered') && eventLeftScope === false;
 }
 
-// Evaluate if all cluster instances belong to the same instance family and size
+// evaluate if all cluster instances belong to the same instance family and size
 async function evaluateChangeNotificationCompliance(configurationItem, dbClusterInstances) {
+  if (dbClusterInstances.length === 1) {
+    return 'COMPLIANT';
+  }
+
   checkDefined(configurationItem, 'configurationItem');
   checkDefined(configurationItem.configuration, 'configurationItem.configuration');
   
@@ -143,13 +147,13 @@ exports.handler = async event => {
     };
     let dbClusterInstances = [];
 
-    // if it is a document cluster, update rule compliance status
-    // for all its instances
+    // only evaluate rule for documentdb clusters
     if (isApplicable(configurationItem, event)) {
       // invoke the compliance checking function
       dbClusterInstances = await getClusterInstances(configurationItem);
       compliance = await evaluateChangeNotificationCompliance(configurationItem, dbClusterInstances);
 
+      // update rule compliance status for all instances
       dbClusterInstances.forEach(i => {
         putEvaluationsRequest.Evaluations.push({
           ComplianceResourceType: configurationItem.resourceType,
