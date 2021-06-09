@@ -94,8 +94,6 @@ function isApplicable(configurationItem, event) {
 
 // Evaluates whether the cluster backup retention is greater than a value configured as parameter
 async function evaluateChangeNotificationCompliance(configurationItem, ruleParameters) {
-  console.log('configurationItem', configurationItem);
-
   checkDefined(configurationItem, 'configurationItem');
   checkDefined(configurationItem.configuration, 'configurationItem.configuration');
   checkDefined(configurationItem.configuration.backupRetentionPeriod, 'configurationItem.configuration.backupRetentionPeriod');
