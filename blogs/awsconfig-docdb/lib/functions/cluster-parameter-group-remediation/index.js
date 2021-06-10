@@ -9,7 +9,7 @@ exports.handler = async event => {
     const desiredClusterParameterGroup = process.env.DESIRED_CLUSTER_PARAMETER_GROUP;
 
     if (!desiredClusterParameterGroup) {
-      throw new Error('Desired cluster paramater group not found');
+      throw new Error('Desired cluster parameter group not found');
     }
 
     const {detail: {resourceId}} = event;

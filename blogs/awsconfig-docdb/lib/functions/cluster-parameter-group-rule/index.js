@@ -74,22 +74,26 @@ async function getConfigurationItem(invokingEvent) {
 // has been deleted and if it has, then the evaluation is unnecessary
 function isApplicable(configurationItem, event) {
   checkDefined(configurationItem, 'configurationItem');
-  checkDefined(configurationItem.configuration, 'configurationItem.configuration');
 
+  // if eventLeftScope is true the resource to be evaluated has been removed
+  // https://docs.aws.amazon.com/config/latest/developerguide/evaluate-config_develop-rules_example-events.html
+  const eventLeftScope = event.eventLeftScope;
+  if (eventLeftScope) {
+    return false;
+  }
+
+  checkDefined(configurationItem.configuration, 'configurationItem.configuration');
   if (configurationItem.resourceType !== 'AWS::RDS::DBCluster' || configurationItem.configuration.engine !== 'docdb') {
-    console.log('This is not a DocumentDB Instance');
+    console.log('This is not a DocumentDB cluster');
     return false;
   }
 
   const status = configurationItem.configurationItemStatus;
-  const eventLeftScope = event.eventLeftScope;
   return (status === 'OK' || status === 'ResourceDiscovered') && eventLeftScope === false;
 }
 
 // Evaluates whether the cluster parameter group is the one provided to the rule as a parameter
 async function evaluateChangeNotificationCompliance(configurationItem, ruleParameters) {
-  console.log('configurationItem', configurationItem);
-
   checkDefined(configurationItem, 'configurationItem');
   checkDefined(configurationItem.configuration, 'configurationItem.configuration');
   checkDefined(configurationItem.configuration.dbclusterParameterGroup, 'configurationItem.configuration.dbclusterParameterGroup');

@@ -75,20 +75,30 @@ async function getConfigurationItem(invokingEvent) {
 // has been deleted and if it has, then the evaluation is unnecessary
 function isApplicable(configurationItem, event) {
   checkDefined(configurationItem, 'configurationItem');
-  checkDefined(configurationItem.configuration, 'configurationItem.configuration');
-
-  if (configurationItem.resourceType !== 'AWS::RDS::DBInstance' || configurationItem.configuration.engine !== 'docdb') {
-    console.log('This is not a DocumentDB Instance');
+  
+  // if eventLeftScope is true the resource to be evaluated has been removed
+  // https://docs.aws.amazon.com/config/latest/developerguide/evaluate-config_develop-rules_example-events.html
+  const eventLeftScope = event.eventLeftScope;
+  if (eventLeftScope) {
     return false;
   }
 
-  const status = configurationItem.configurationItemStatus;
-  const eventLeftScope = event.eventLeftScope;
+  checkDefined(configurationItem.configuration, 'configurationItem.configuration');
+  if (configurationItem.resourceType !== 'AWS::RDS::DBInstance' || configurationItem.configuration.engine !== 'docdb') {
+    console.log('This is not a DocumentDB instance');
+    return false;
+  }
+
+  const status = configurationItem.configurationItemStatus;  
   return (status === 'OK' || status === 'ResourceDiscovered') && eventLeftScope === false;
 }
 
-// Evaluate if all cluster instances belong to the same instance family and size
+// evaluate if all cluster instances belong to the same instance family and size
 async function evaluateChangeNotificationCompliance(configurationItem, dbClusterInstances) {
+  if (dbClusterInstances.length === 1) {
+    return 'COMPLIANT';
+  }
+
   checkDefined(configurationItem, 'configurationItem');
   checkDefined(configurationItem.configuration, 'configurationItem.configuration');
   
@@ -143,13 +153,13 @@ exports.handler = async event => {
     };
     let dbClusterInstances = [];
 
-    // if it is a document cluster, update rule compliance status
-    // for all its instances
+    // only evaluate rule for documentdb clusters
     if (isApplicable(configurationItem, event)) {
       // invoke the compliance checking function
       dbClusterInstances = await getClusterInstances(configurationItem);
       compliance = await evaluateChangeNotificationCompliance(configurationItem, dbClusterInstances);
 
+      // update rule compliance status for all instances
       dbClusterInstances.forEach(i => {
         putEvaluationsRequest.Evaluations.push({
           ComplianceResourceType: configurationItem.resourceType,

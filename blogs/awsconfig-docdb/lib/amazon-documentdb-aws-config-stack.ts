@@ -149,7 +149,7 @@ export class AmazonDocumentdbAwsConfigStack extends cdk.Stack {
     notificationRule.addTarget(new CloudWatchLogGroup(logGroup));
     notificationRule.addTarget(new SnsTopic(topic));
 
-    // paramater group remediation
+    // parameter group remediation
     // (the IAM role below can be shared among both lambda functions that remediate
     // wrong parameter group and deletion protection disabled as they both perform the
     // same operations and thus require same IAM permissions with current implementation)
