@@ -11,7 +11,7 @@ Important: This application uses various AWS services and there are costs associ
 
 ## Requirements
 
-* An [AWS account](https://portal.aws.amazon.com/gp/aws/developer/registration/index.html) 
+* An AWS account
 * Permissions to create/modify AWS resources such as Amazon S3, Amazon VPC, Amazon DocumentDB, Amazon EC2 and Security Groups,AWS Secrets Manager,AWS IAM Policies and Roles,  AWS Lambda Function and Layer, AWS CloudFormation, AWS CLI, AWS SAM CLI.
 * Familiarity with GraphQL, AWS Lambda, AWS Secrets Manager, Amazon DocumentDB 4.0 (with MongoDB compatibility), AWS IAM Policies and Roles, basic Git, Github operations.
 * AWS CLI already configured with Administrator permission
