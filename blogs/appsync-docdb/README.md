@@ -17,7 +17,7 @@ Important: This application uses various AWS services and there are costs associ
 * AWS CLI already configured with Administrator permission
 * AWS SAM CLI installed - minimum version 0.48.
 * Git Already installed and Configured
-* [NodeJS 12.x installed](https://nodejs.org/en/download/)
+* [NodeJS 12.x installed](https://nodejs.org/en/download/),
 refer to the [BLOG](https://aws.amazon.com/blogs/database/build-a-graphql-api-for-amazon-documentdb-with-mongodb-compatibility-using-aws-appsync/) prerequisites section for more details.
 
 ## Installation Instructions
