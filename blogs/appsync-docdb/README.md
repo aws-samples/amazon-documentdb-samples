@@ -32,7 +32,7 @@ refer to the [BLOG](https://aws.amazon.com/blogs/database/build-a-graphql-api-fo
 
 You need to build and package the .zip file for the Lambda layer that holds the database driver, certificate authority file to connect to Amazon DocumentDB
 and nodejs modules required to run the lambda code. 
-To do this, Navigate to the new folder blogs/appsync-docdb created by the above command  and run below
+To do this, Navigate to the new folder blog/amazon-documentdb-samples/blogs/appsync-docdb created by the above command  and run below
 
 ```bash
 make
