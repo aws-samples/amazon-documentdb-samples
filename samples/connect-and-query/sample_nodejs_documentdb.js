@@ -13,14 +13,13 @@ const MongoClient = require('mongodb').MongoClient,
   fs = require('fs');
   
 const assert = require('assert');
-var ca = [fs.readFileSync("rds-combined-ca-bundle.pem")];
 
 // Connection URL
-const connstring = `mongodb://${username}:${password}@${clusterendpoint}/sample-database?ssl=true&replicaSet=rs0&readPreference=secondaryPreferred&retryWrites=false`;
+const connstring = `mongodb://${username}:${password}@${clusterendpoint}/sample-database?tls=true&replicaSet=rs0&readPreference=secondaryPreferred&retryWrites=false`;
 
 // Database Name
 const dbName = 'myproject';
-const client = new MongoClient(connstring, {sslValidate: false});
+const client = new MongoClient(connstring, {tlsCAFile: `rds-combined-ca-bundle.pem`});
 
 // Use connect method to connect to the server
 client.connect(function(err) {
