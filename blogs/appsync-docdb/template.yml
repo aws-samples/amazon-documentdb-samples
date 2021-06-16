@@ -1,0 +1,297 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: "This Template is (a part of AWS Appsync DocumentDB Blog) used to create resources required to run Appsync API Queries.
+              Permissions mentioned in the blog are required to successfully run this template.
+              This template is invoked by SAM CLI. FOr the purpose of this Blog run this template in regions mentioned in the blog .
+              This template create resources which are chargeable and result in the additional charges in the monthly bill.
+              It is advised that user delete these resources using Cloudformation stack Delete option as deemed necessary after execution."
+Parameters:
+  DocDbpassword:
+    NoEcho: "true"
+    Description : "DocumentDB password"
+    Type: "String"
+    MinLength: "1"
+    MaxLength: "41"
+    AllowedPattern : "[a-zA-Z0-9]+"
+    ConstraintDescription : "must contain only alphanumeric characters."
+Resources:
+  BlogVpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: 'true'
+      EnableDnsHostnames: 'true'
+  BlogIgw:
+    Type: AWS::EC2::InternetGateway
+  BlogIgwAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: !Ref BlogIgw
+      VpcId: !Ref BlogVpc
+  BlogPubRouteTable:
+    Type: AWS::EC2::RouteTable
+    DependsOn: BlogIgwAttachment
+    Properties:
+      VpcId:
+        Ref: BlogVpc
+  BlogPubRoute:
+    Type: AWS::EC2::Route
+    Properties:
+       RouteTableId:
+         Ref: BlogPubRouteTable
+       DestinationCidrBlock: 0.0.0.0/0
+       GatewayId:
+         Ref: BlogIgw
+  BlogPvtSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId:
+        Ref: BlogVpc
+      CidrBlock: 10.0.1.0/24
+      AvailabilityZone: !Select [ 0, !GetAZs '' ]
+  BlogPubSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId:
+        Ref: BlogVpc
+      CidrBlock: 10.0.2.0/24
+      AvailabilityZone: !Select [ 1, !GetAZs '' ]
+      MapPublicIpOnLaunch: true
+  BlogPubSubnetRTAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+          Ref: BlogPubSubnet
+      RouteTableId:
+        Ref: BlogPubRouteTable
+  BlogLambdaSg:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+        GroupDescription: Facilitate Lambda communication with Secrets Manager and DocumentDB
+        VpcId:
+          Ref: BlogVpc
+        SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 0
+          ToPort: 65000
+          CidrIp: 10.0.0.0/16
+        SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: 0
+          ToPort: 65000
+          CidrIp: 10.0.0.0/16
+  BlogDocdbSg:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+        GroupDescription: Allow connection to DocDB within vpc
+        VpcId:
+          Ref: BlogVpc
+        SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 27017
+          ToPort: 27017
+          CidrIp: 10.0.0.0/16
+  BlogEc2DocdbSg:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+        GroupDescription: Allow connection from EC2 and DocDB within vpc
+        VpcId:
+          Ref: BlogVpc
+        SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 27017
+          ToPort: 27017
+          CidrIp: 10.0.0.0/16
+        SecurityGroupEgress:
+        - IpProtocol: ALL
+          FromPort: 0
+          ToPort: 65000
+          CidrIp: 0.0.0.0/0
+  BlogDBSubnetGroup:
+      Type: "AWS::DocDB::DBSubnetGroup"
+      Properties:
+         DBSubnetGroupDescription: "DocumentDB Subnet Group"
+         SubnetIds:
+            - !Ref BlogPvtSubnet
+            - !Ref BlogPubSubnet
+  BlogDocBCluster:
+    Type: "AWS::DocDB::DBCluster"
+    DeletionPolicy: Delete
+    Properties:
+      DBClusterIdentifier: !Sub "${AWS::StackName}-Appsync-Demo-Cluster"
+      MasterUsername: "Bloguser"
+      MasterUserPassword: !Sub "${DocDbpassword}"
+      EngineVersion: 4.0.0
+      DBSubnetGroupName: !Ref BlogDBSubnetGroup
+      VpcSecurityGroupIds:
+      - Fn::GetAtt:
+            - BlogDocdbSg
+            - GroupId
+  BlogDocBInstance:
+    Type: "AWS::DocDB::DBInstance"
+    Properties:
+      DBClusterIdentifier: !Ref BlogDocBCluster
+      DBInstanceIdentifier: !Sub "${AWS::StackName}-Demo-Instance"
+      DBInstanceClass: "db.t3.medium"
+    DependsOn: BlogDocBCluster
+  BlogDocdbSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Description: "Docdb Secret" 
+      Name: 'Blog-DocdbSecret'
+      SecretString: !Sub '{ "username" : "Bloguser", "password" : "${DocDbpassword}","host" : "${BlogDocBInstance.Endpoint}", "port":"27017" }'
+  BlogLambdFunctionIAMRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${AWS::StackName}-LambdaResolver"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
+        - arn:aws:iam::aws:policy/AWSLambdaExecute
+      Policies:
+        - PolicyName: !Sub "${AWS::StackName}-LambdaResolver"
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                   - secretsmanager:GetSecretValue
+                Resource: !Ref BlogDocdbSecret
+  BlogLambdaLayer:
+        Type: AWS::Serverless::LayerVersion
+        Properties:
+          Description: "This layer contains libraries required to run Lambda function"
+          CompatibleRuntimes:
+            - nodejs12.x
+          ContentUri: layer-blog.zip
+          LayerName: !Sub "${AWS::StackName}-Libraries"
+          LicenseInfo: 'MIT'
+  BlogDocdbResolverFn:
+    Type: AWS::Serverless::Function
+    Properties:
+          FunctionName: !Sub ${AWS::StackName}-appsync-DocDBFn
+          Description: "This Lambda will get invoked by the appsync api"
+          Handler: index.handler
+          Runtime: nodejs12.x
+          Timeout: 5
+          CodeUri: index.zip
+          Layers:
+            - !Ref BlogLambdaLayer
+          VpcConfig:
+            SecurityGroupIds:
+              - !Ref BlogLambdaSg
+            SubnetIds:
+              - !Ref BlogPvtSubnet
+              - !Ref BlogPubSubnet
+          Role: !GetAtt BlogLambdFunctionIAMRole.Arn
+  BlogSmVpcEndPoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: '*'
+            Action:
+            - secretsmanager:GetSecretValue
+            Resource: !Ref BlogDocdbSecret
+      SecurityGroupIds:
+        - !Ref BlogLambdaSg
+      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.secretsmanager'
+      SubnetIds:
+            - !Ref BlogPvtSubnet
+      VpcEndpointType: 'Interface'
+      PrivateDnsEnabled: 'true'
+      VpcId:
+        Ref: BlogVpc
+  BlogLambdaAppsyncIAMRole:
+        Type: AWS::IAM::Role
+        Properties:
+            RoleName: !Sub "${AWS::StackName}-ResolverAppsyncRole"
+            AssumeRolePolicyDocument:
+                Version: '2012-10-17'
+                Statement:
+                - Effect: Allow
+                  Principal:
+                    Service:
+                    - appsync.amazonaws.com
+                  Action:
+                    - sts:AssumeRole
+            Path: "/"
+            Policies:
+            - PolicyName: !Sub "${AWS::StackName}-ResolverAppsyncPolicy"
+              PolicyDocument:
+                Version: '2012-10-17'
+                Statement:
+                - Effect: Allow
+                  Action:
+                  - lambda:invokeFunction
+                  Resource: !GetAtt BlogDocdbResolverFn.Arn
+  BlogEC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId:
+        !FindInMap [ Amznlnx2, !Ref 'AWS::Region', AMI ]
+      InstanceType: t2.micro
+      SecurityGroupIds: 
+        - !Ref BlogEc2DocdbSg
+      Tags:
+        -
+          Key: "Name"
+          Value: !Sub "ec2-${AWS::StackName}"
+      SubnetId:  !Ref BlogPubSubnet
+      UserData:
+        Fn::Base64: 
+          !Sub |
+            #!/bin/bash -xe
+            yum update -y
+            wget https://s3.amazonaws.com/rds-downloads/rds-combined-ca-bundle.pem
+            wget https://s3.amazonaws.com/aws-database-blog/artifacts/DBBLOG-922/friendsEpisodes.csv
+
+            echo -e "[mongodb-org-4.0] \nname=MongoDB Repository\nbaseurl=https://repo.mongodb.org/yum/amazon/2013.03/mongodb-org/4.0/x86_64/\ngpgcheck=1 \nenabled=1 \ngpgkey=https://www.mongodb.org/static/pgp/server-4.0.asc" | sudo tee /etc/yum.repos.d/mongodb-org-4.0.repo
+            yum install -y mongodb-org-shell mongodb-org-tools	
+            
+            mongoimport  \
+            --host=${BlogDocBCluster.Endpoint}:27017 \
+            --sslCAFile rds-combined-ca-bundle.pem \
+            --collection=friendsEpisodes \
+            --db=friends \
+            --file=friendsEpisodes.csv \
+            --headerline \
+            --type csv \
+            --ssl \
+            --username=Bloguser \
+            --password=${DocDbpassword}
+    DependsOn: BlogDocBInstance        
+Mappings:
+  Amznlnx2:
+    ap-south-1:
+      AMI: ami-0eeb03e72075b9bcc
+    us-east-1:
+      AMI: ami-047a51fa27710816e
+    us-west-1:
+      AMI: ami-005c06c6de69aee84
+    ca-central-1:
+      AMI: ami-075cfad2d9805c5f2
+    eu-west-1:
+      AMI: ami-0fc970315c2d38f01
+    eu-central-1:
+      AMI: ami-02f9ea74050d6f812
+    ap-southeast-1:
+      AMI: ami-0e2e44c03b85f58b3
+Outputs:
+  ClusterEndpoint:
+    Value: !GetAtt BlogDocBCluster.Endpoint
+  LambdaFunction:
+    Value: !GetAtt BlogDocdbResolverFn.Arn
+  LambdaAppsyncRole:
+    Value: !GetAtt BlogLambdaAppsyncIAMRole.Arn
