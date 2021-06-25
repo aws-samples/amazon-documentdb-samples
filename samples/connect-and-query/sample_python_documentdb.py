@@ -10,15 +10,15 @@ SEED_DATA = [
 { "_id" : 4, "name" : "Jesse", "status": "active", "level": 3, "score":27}
 ]
 
-#Get Amazon DocumentDB ceredentials from enviornment variables
-username = os.environ.get("username")
-password = os.environ.get("password")
-clusterendpoint = os.environ.get("clusterendpoint")
+#Get Amazon DocumentDB ceredentials from environment variables
+username = os.environ.get("docdbUser")
+password = os.environ.get("docdbPass")
+clusterendpoint = os.environ.get("docdbEndpoint")
 
 
 def main(args):
     #Establish DocumentDB connection
-    client = pymongo.MongoClient(clusterendpoint, username=username, password=password, ssl='true', ssl_ca_certs='rds-combined-ca-bundle.pem',retryWrites='false')
+    client = pymongo.MongoClient(clusterendpoint, username=username, password=password, tls='true', tlsCAFile='rds-combined-ca-bundle.pem',retryWrites='false')
     db = client.sample_database
     profiles = db['profiles']
 
