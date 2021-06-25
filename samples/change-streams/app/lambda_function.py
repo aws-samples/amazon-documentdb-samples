@@ -502,7 +502,7 @@ def lambda_handler(event, context):
 
                         # Append event for S3 
                         if "BUCKET_NAME" in os.environ:
-                            put_s3_event(json_util.dumps(payload), str(change_event['ns']['db']), str(change_event['ns']['coll']),doc_id)
+                            put_s3_event(json_util.dumps(payload), str(change_event['ns']['db']), str(change_event['ns']['coll']),op_id)
                         
                         # Publish event to Kinesis
                         if "KINESIS_STREAM" in os.environ:
@@ -540,7 +540,7 @@ def lambda_handler(event, context):
 
                         # Append event for S3
                         if "BUCKET_NAME" in os.environ:
-                            put_s3_event(json_util.dumps(payload), str(change_event['ns']['db']), str(change_event['ns']['coll']),doc_id)
+                            put_s3_event(json_util.dumps(payload), str(change_event['ns']['db']), str(change_event['ns']['coll']),op_id)
 
                         # Publish event to Kinesis
                         if "KINESIS_STREAM" in os.environ:
