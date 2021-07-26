@@ -116,9 +116,19 @@ export class AmazonDocumentdbAwsConfigStack extends cdk.Stack {
 
     // remediation
     // sns topic for notifications
+    const key = new Key(this, 'Key');
+    key.addToResourcePolicy(new PolicyStatement({
+      actions: [
+        'kms:GenerateDataKey',
+        'kms:Decrypt'
+      ],
+      principals: [new ServicePrincipal('events.amazonaws.com')],
+      resources: ['*'],
+    }));
+
     const topic = new Topic(this, 'ComplianceNotificationsTopic', {
       displayName: 'Compliance Notifications',
-      masterKey: new Key(this, 'Key')
+      masterKey: key
     });
 
     // cloudwatch log group for debugging purposes
