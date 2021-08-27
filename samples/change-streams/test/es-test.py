@@ -21,7 +21,7 @@ def main(args):
     db = client.sampledb
     tweets = db['tweets']
     tweets.insert_many(SEED_DATA)
-
+    print("Successfully inserted data to tweets collection in sampledb")
     client.close()
     
 if __name__ == '__main__':
