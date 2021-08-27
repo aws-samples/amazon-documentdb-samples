@@ -15,3 +15,7 @@ Sample code that shows how to use AWS DocumentDB change streams to stream events
 __[Templates](https://github.com/aws-samples/amazon-documentdb-samples/tree/master/samples/templates)__
 
 Cloudformation templates
+
+__[global-clusters](https://github.com/aws-samples/amazon-documentdb-samples/tree/master/samples/global-clusters)__
+
+Sample bash script to automate global cluster failover
