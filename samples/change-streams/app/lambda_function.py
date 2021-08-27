@@ -489,7 +489,7 @@ def lambda_handler(event, context):
                         doc_id = str(doc_body.pop("_id", None))
                         readable = datetime.datetime.fromtimestamp(change_event['clusterTime'].time).isoformat()
                         ######## Uncomment the following line if you want to add operation metadata fields to the document event. 
-                        #doc_body.update({'operation':op_type,'timestamp':str(change_event['clusterTime'].time),'timestampReadable':str(readable)})
+                        doc_body.update({'operation':op_type,'timestamp':str(change_event['clusterTime'].time),'timestampReadable':str(readable)})
                         ######## Uncomment the following line if you want to add db and coll metadata fields to the document event. 
                         #doc_body.update({'db':str(change_event['ns']['db']),'coll':str(change_event['ns']['coll'])})
                         payload = {'_id':doc_id}
@@ -529,7 +529,7 @@ def lambda_handler(event, context):
                         readable = datetime.datetime.fromtimestamp(change_event['clusterTime'].time).isoformat()
                         payload = {'_id':doc_id}
                         ######## Uncomment the following line if you want to add operation metadata fields to the document event. 
-                        #payload.update({'operation':op_type,'timestamp':str(change_event['clusterTime'].time),'timestampReadable':str(readable)})
+                        payload.update({'operation':op_type,'timestamp':str(change_event['clusterTime'].time),'timestampReadable':str(readable)})
                         ######## Uncomment the following line if you want to add db and coll metadata fields to the document event. 
                         #payload.update({'db':str(change_event['ns']['db']),'coll':str(change_event['ns']['coll'])})
 
