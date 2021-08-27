@@ -12,8 +12,8 @@ This script automates steps 3 and 4 by using AWS CLI. To install AWS CLI which i
 
 The script takes 3 parameters as input. 
 
-- -g --> Global Cluster Identifer
-- -r --> Secondary Cluster Identifer
+- -g --> Global cluster identifer
+- -r --> Secondary cluster identifer
 - -d --> Indicator to delete global cluster after secondary cluster promotion is completed (Y/N). 
 
 
