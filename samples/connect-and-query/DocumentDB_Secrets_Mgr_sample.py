@@ -79,7 +79,7 @@ SEED_DATA = [
 
 def main(args):
     #Establish DocumentDB connection
-    client = pymongo.MongoClient(host, port, username=username, password=password, ssl='true', ssl_ca_certs='rds-combined-ca-bundle.pem',retryWrites='false')
+    client = pymongo.MongoClient(host, port, username=username, password=password, ssl='true', tlsCAFile='rds-combined-ca-bundle.pem',retryWrites='false')
     db = client.sample_database
     profiles = db['profiles']
 
