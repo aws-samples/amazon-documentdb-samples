@@ -33,7 +33,7 @@ def main(args):
 
     #Update a document
     print("Updating document")
-    profiles.update(query, {'$set': {'level': 4}})
+    profiles.update_one(query, {'$set': {'level': 4}})
     print(profiles.find_one(query))
 
     #Clean up
