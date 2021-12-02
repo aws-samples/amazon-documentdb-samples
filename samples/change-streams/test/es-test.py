@@ -17,7 +17,7 @@ clusterendpoint = os.environ.get("DOCDB_ENDPOINT")
 
 def main(args):
     #Establish DocumentDB connection
-    client = pymongo.MongoClient(clusterendpoint, username=username, password=password, ssl='true', ssl_ca_certs='rds-combined-ca-bundle.pem')
+    client = pymongo.MongoClient(clusterendpoint, username=username, password=password, ssl='true', tlsCAFile='rds-combined-ca-bundle.pem')
     db = client.sampledb
     tweets = db['tweets']
     tweets.insert_many(SEED_DATA)
