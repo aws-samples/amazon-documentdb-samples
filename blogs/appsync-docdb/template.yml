@@ -123,6 +123,7 @@ Resources:
       MasterUserPassword: !Sub "${DocDbpassword}"
       EngineVersion: 4.0.0
       DBSubnetGroupName: !Ref BlogDBSubnetGroup
+      StorageEncrypted : true
       VpcSecurityGroupIds:
       - Fn::GetAtt:
             - BlogDocdbSg
