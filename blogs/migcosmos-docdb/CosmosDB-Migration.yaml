@@ -1,0 +1,368 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Description: >-
+  MIGRATION of Azure CosmosDB (SQL API) to Amazon DocumentDB in AWS Cloud:
+  
+  1) Data is securely exported (HTTPS/TLS1.2) from Cosmos DB as JSON array using dt.exe tool on a Windows EC2 instance.
+  2) The JSON file is securely copied from the Windows EC2 instance to a Linux EC2 instance.
+  3) The JSON file is imported into a DocumentDB from the Linux EC2 instance.
+  4) Verification: imported data is exported again from DocumentDB to check any difference between the source data from Cosmos DB and the imported/exported data from DocumentDB.
+   
+  Windows Script: C:\CosmosDB2JSON\CosmosDB2JSON.bat (LAUNCH THIS SCRIPT TO START THE AUTOMATED FULL MIGRATION).
+  Windows Script logs are output to the CMD console.
+  
+  Linux app commands: systemctl [start|stop|restart] JSON2DocumentDB.service (the service is automatically started)
+  Linux app logs are in file /var/log/JSON2DocumentDB
+
+#  PREREQUISITES: 
+#    * Cosmos DB is running in Azure Cloud and you are in possision of AccountEndpoint and AccountKey to access the database and container(s) to be migrated
+#    * DocumentDB Cluster is running in AWS Cloud and you are in possision of database Endpoint, username and password to access the target database and collection(s)
+#    * Key Pair for EC2 instances, in the AWS Region where DocumentDB is running. You need to be in possetion of both, Public and Private keys of this Key Pair
+
+Parameters:
+    
+  VPCId:
+    Description: VPC ID
+    Default: vpc-0e8a0b6878701aa40
+    Type: String
+    
+  KeyName:
+    Description: Name of an existing EC2 KeyPair to enable access to the instances
+    Type: AWS::EC2::KeyPair::KeyName
+    Default: CosmosMigration
+    ConstraintDescription: must be the name of an existing EC2 KeyPair.
+    
+  PrivKey:
+    NoEcho: true
+    Description: Private key (pem format) of the EC2 KeyPair to enable scp from Windows to Linux
+    Type: String
+    MinLength: 320
+    MaxLength: 4160
+    AllowedPattern : "-----BEGIN RSA PRIVATE KEY-----([^-!]+)-----END RSA PRIVATE KEY-----"
+    ConstraintDescription: Must be a valid private key (pem format)
+  
+  # Linux Instance
+  #######################################
+  
+  LinuxInstanceType:
+    Description: Linux worker EC2 instance type
+    Type: String
+    Default: t2.micro
+    ConstraintDescription: must be a valid EC2 instance type.
+
+  LinuxAMI:
+    Description: Amazon Machine Image (AMI) for the Linux instance
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2
+
+  LinuxSubnetId:
+    Description: Subnet this instance will be launched in 
+    Type: AWS::EC2::Subnet::Id
+    Default: subnet-009f34769ff72ae39
+
+  # Windows Instance
+  #######################################
+  
+  WindowsInstanceType:
+    Description: Windows worker EC2 instance type
+    Type: String
+    Default: t2.micro
+    ConstraintDescription: must be a valid EC2 instance type.
+    
+  WindowsAMI:
+    Description: Amazon Machine Image (AMI) for the Windows instance
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ami-windows-latest/Windows_Server-2019-English-Full-Base
+
+  WindowsSubnetId:
+    Description: Subnet this instance will be launched in 
+    Type: AWS::EC2::Subnet::Id
+    Default: subnet-009f34769ff72ae39
+  
+  # Cosmos DB 
+  #######################################
+  
+  SQLAccountEndpoint: 
+    Default: https://cosmos-db01.documents.azure.com
+    Description : Cosmos DB Endpoint URL (with protocols included, i.e. it must start with https://)
+    Type: String
+    MinLength: 1
+    MaxLength: 64
+    AllowedPattern : "^https?://[^\\s/$.?#].[^\\s]*$"
+    ConstraintDescription : "Must be a valid secure URL: https://xxx.yyy"
+
+  SQLAccountPort: 
+    Default: 443
+    Description : Cosmos DB Endpoint communication port
+    Type: String
+    MinLength: 1
+    MaxLength: 5
+    AllowedPattern : "[0-9]+"
+    ConstraintDescription : Must contain only numeric characters.
+
+  SQLAccountKey:
+    NoEcho: true
+    Description : Cosmos DB account key
+    Type: String
+    MinLength: 4
+    MaxLength: 256
+    AllowedPattern: "[a-zA-Z0-9=]+"
+    ConstraintDescription : Must contain only alphanumeric characters and some special characters (=).
+ 
+  SQLDatabaseName:
+    Default: PostalService
+    Description : Source Cosmos DB database to use
+    Type: String
+    MinLength: 4
+    MaxLength: 16
+    AllowedPattern: "[a-zA-Z0-9]+"
+    ConstraintDescription : Must contain only alphanumeric characters.
+    
+  SQLCollectionName:
+    Default: us-zip-codes
+    Description : Source Cosmos DB container to migrate
+    Type: String
+    MinLength: 4
+    MaxLength: 16
+    AllowedPattern: "[a-zA-Z0-9_-]+"
+    ConstraintDescription : Must contain only alphanumeric characters, _ and -.
+
+  # DocumentDB Cluster
+  #######################################
+
+  DBClusterEndpoint:
+    Default: docdb-demo-dev-par-cluster.cluster-ck1z9gimxtxg.eu-west-3.docdb.amazonaws.com
+    Description: --host parameter. The endpoint of the DocumentDB Cluster connection. 
+    Type: String
+
+  DBClusterPort:
+    Default: 27017
+    Description : Database port of DocumentDB. Default is 27017
+    Type: String
+
+  DBDatabaseName:
+    Default: PostalService
+    Description: Destination DocumentDB database to use. If it does not exist, it will be created automatically with the name speciified here. 
+    Type: String
+    MinLength: 4
+    MaxLength: 16
+    AllowedPattern: "[a-zA-Z0-9]*"
+    ConstraintDescription : Must contain only alphanumeric characters.
+
+  DBCollectionName:
+    Default: us-zip-codes
+    Description : Destination DocumentDB collection to use. If it does not exist, it will be created automatically with the name speciified here. 
+    Type: String
+    MinLength: 4
+    MaxLength: 16
+    AllowedPattern: "[a-zA-Z0-9_-]*"
+    ConstraintDescription : Must contain only alphanumeric characters, _ and -.
+
+  DBClusterSecurityGroupId:
+    Default: sg-0b7ff7c3783633e54
+    Description: Security group ID of the security group associated with the DocumentDB, because this security group must be updated to allow ingress traffic from LinuxInstanceSecurityGroup of the Linux EC2 instance performing the import.
+    Type: String
+
+  DocumentDBSecret:
+    Default: arn:aws:secretsmanager:eu-west-3:012345678910:secret:docdb-demo-dev-par-secret-dQkuu3
+    Description: Secret ARN of the DocumentDB Secret in the AWS Secrets Manager
+    Type: String
+
+  SecretsManagerVPCEndpointSecurityGroupId:
+    Default: sg-0b7ff7c3783633e54
+    Description: Security group ID of the security group associated with the Secrets Manager VPC Endpoint, because the Linux EC2 instance is placed in the Private Subnet and this security group must be updated to allow ingress traffic from LinuxInstanceSecurityGroup of the Linux EC2 instance performing the import.
+    Type: String
+
+Resources:
+
+  LinuxEC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      UserData:
+        Fn::Base64: !Sub |
+            #!/bin/bash -xe
+            echo -e "[mongodb-org-4.0]
+            name=MongoDB Repository
+            baseurl=https://repo.mongodb.org/yum/amazon/2/mongodb-org/4.0/x86_64/
+            gpgcheck=1
+            enabled=1
+            gpgkey=https://www.mongodb.org/static/pgp/server-4.0.asc
+            " | sudo tee /etc/yum.repos.d/mongodb-org-4.0.repo
+            sudo amazon-linux-extras install epel -y
+            sudo yum-config-manager --enable epel
+            sudo yum update -y
+            sudo yum install -y mongodb-org-shell mongodb-org-tools jq inotify-tools
+            wget https://s3.amazonaws.com/rds-downloads/rds-combined-ca-bundle.pem -P /etc/ssl/certs/
+            echo -e "#!/bin/bash -x
+            # Wait for a change in file then move ahead
+            inotifywait -q -m -e close_write,moved_to,create /tmp |
+            while read -r directory events filename; do
+              if [ \"\$filename\" = \"${DBCollectionName}.json\" ]; then
+                sleep 5
+                # Validate the file integrity
+                if md5sum -c <<< \"\$(cat /tmp/${DBCollectionName}.md5 | tr -dc '[:print:]') /tmp/${DBCollectionName}.json\"; then
+                  # Retrieve the DocumentDB credentials
+                  USR=\$(aws secretsmanager get-secret-value --region ${AWS::Region} --secret-id ${DocumentDBSecret} --version-stage AWSCURRENT | jq --raw-output '.SecretString' | jq -r .username)
+                  PASS=\$(aws secretsmanager get-secret-value --region ${AWS::Region} --secret-id ${DocumentDBSecret} --version-stage AWSCURRENT | jq --raw-output '.SecretString' | jq -r .password)
+                  # Flush the current Collection
+                  mongo ${DBDatabaseName} --ssl --host ${DBClusterEndpoint}:${DBClusterPort} --sslCAFile /etc/ssl/certs/rds-combined-ca-bundle.pem -u \"\$USR\" -p \"\$PASS\" --eval 'db.getCollection(\"${DBCollectionName}\").drop()'
+                  # Import the file in DocumentDB
+                  mongoimport --ssl --host ${DBClusterEndpoint}:${DBClusterPort} --sslCAFile /etc/ssl/certs/rds-combined-ca-bundle.pem -u \"\$USR\" -p \"\$PASS\" -d ${DBDatabaseName} -c ${DBCollectionName} --file /tmp/${DBCollectionName}.json --jsonArray
+                  # Export the new DB as JSON array (removing on the fly numberLong field, which have been added by MongoDB after import)
+                  # In case you need to remove _id field in some other imports, the you may use: 
+                  # mongoexport --ssl --host ${DBClusterEndpoint}:${DBClusterPort} --sslCAFile /etc/ssl/certs/rds-combined-ca-bundle.pem -u \"\$USR\" -p \"\$PASS\" -d ${DBDatabaseName} -c ${DBCollectionName} --jsonArray --pretty | jq 'del(.[]._id)' | sed -r -n \"1h;2,\\\$H;\\$ {g;s/\\{[ \\\\n\\\\r\\\\t]+\\\"[$]numberLong\\\": \\\"([0-9]+)\\\"[ \\\\n\\\\r\\\\t]+\\}/\\1/g;p}\" > /tmp/${DBCollectionName}.out.json
+                  mongoexport --ssl --host ${DBClusterEndpoint}:${DBClusterPort} --sslCAFile /etc/ssl/certs/rds-combined-ca-bundle.pem -u \"\$USR\" -p \"\$PASS\" -d ${DBDatabaseName} -c ${DBCollectionName} --jsonArray --pretty | sed -r -n \"1h;2,\\\$H;\\$ {g;s/\\{[ \\\\n\\\\r\\\\t]+\\\"[$]numberLong\\\": \\\"([0-9]+)\\\"[ \\\\n\\\\r\\\\t]+\\}/\\1/g;p}\" > /tmp/${DBCollectionName}.out.json
+                  # Compare both JSON arrays to validate they are identical
+                  cmp <(jq 'sort_by(.\"_id\")' -S /tmp/${DBCollectionName}.json) <(jq 'sort_by(.\"_id\")' -S /tmp/${DBCollectionName}.out.json)
+                fi
+              fi
+            done
+            " | sudo tee /usr/local/bin/JSON2DocumentDB
+            echo -e ":programname, isequal, \"JSON2DocumentDB\" /var/log/JSON2DocumentDB\n& stop
+            " | sudo tee /etc/rsyslog.d/JSON2DocumentDB.conf
+            echo -e "[Unit]\nDescription=JSON2DocumentDB service\nAfter=network.target\n\n[Service]\nType=simple\nStandardOutput=syslog\nStandardError=syslog\nSyslogIdentifier=JSON2DocumentDB\nRestart=always\nUser=ec2-user\nExecStart=/usr/local/bin/JSON2DocumentDB\n\n[Install]\nWantedBy=multi-user.target
+            " | sudo tee /etc/systemd/system/JSON2DocumentDB.service
+            touch /var/log/JSON2DocumentDB /tmp/${DBCollectionName}.json
+            sudo chown ec2-user:ec2-user /usr/local/bin/JSON2DocumentDB /tmp/${DBCollectionName}.json
+            sudo chmod u+x /usr/local/bin/JSON2DocumentDB
+            sudo systemctl start JSON2DocumentDB
+            sudo systemctl enable JSON2DocumentDB
+            sudo systemctl restart rsyslog
+      InstanceType: !Ref LinuxInstanceType
+      SecurityGroupIds:
+        - !GetAtt LinuxInstanceSecurityGroup.GroupId
+      IamInstanceProfile: !Ref EC2InstanceProfile
+      KeyName: !Ref KeyName
+      ImageId: !Ref LinuxAMI
+      SubnetId: !Ref LinuxSubnetId
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeType: gp2
+            VolumeSize: '15'
+            DeleteOnTermination: 'true'
+            Encrypted: 'true'
+      Tags: 
+        - Key: "Name"
+          Value: "docdb-demo-dev-par-ec2-lin"
+        - Key: "Project"
+          Value: "Cosmos DB to DocDB Demo Migration"
+      
+  LinuxInstanceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId: !Ref VPCId
+      GroupDescription: Enable SSH access from Windows worker EC2 instance
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 22
+        ToPort: 22
+        SourceSecurityGroupId: !GetAtt WindowsInstanceSecurityGroup.GroupId
+      
+  WindowsEC2Instance:
+    Type: AWS::EC2::Instance
+    DependsOn: LinuxEC2Instance
+    Properties:
+      UserData:
+        Fn::Base64: !Sub |
+          <powershell>
+            New-Item -Path "c:\" -Name "CosmosDB2JSON" -ItemType "directory"
+            Invoke-WebRequest "https://github.com/Azure/azure-documentdb-datamigrationtool/releases/download/1.8.3/azure-documentdb-datamigrationtool-1.8.3.zip" -OutFile "c:\CosmosDB2JSON\dt.zip"
+            Expand-Archive -Path "c:\CosmosDB2JSON\dt.zip" -DestinationPath "c:\CosmosDB2JSON\"
+            Invoke-WebRequest "https://the.earth.li/~sgtatham/putty/latest/w32/pscp.exe" -OutFile "c:\CosmosDB2JSON\pscp.exe"
+            Invoke-WebRequest "https://jztkft.dl.sourceforge.net/project/winscp/WinSCP/5.19.6/WinSCP-5.19.6-Portable.zip" -OutFile "c:\CosmosDB2JSON\WinSCP.zip"
+            Expand-Archive -Path "c:\CosmosDB2JSON\WinSCP.zip" -DestinationPath "c:\CosmosDB2JSON\"
+            Set-Content -Path "c:\CosmosDB2JSON\PrivKey.in" -Value "${PrivKey}"
+            Get-Content c:\CosmosDB2JSON\PrivKey.in | %{$_ -Replace "-----([ A-Z]*)-----",""} | %{$_ -Replace "\s",""} | %{$_ -Split '(?<=\G.{64})'} | %{Add-Content c:\CosmosDB2JSON\PrivKey.pem -Value $_}
+            "-----BEGIN RSA PRIVATE KEY-----`r`n" + (Get-Content c:\CosmosDB2JSON\PrivKey.pem -Raw | ? {$_.trim() -ne "" })+ "-----END RSA PRIVATE KEY-----" | Set-Content c:\CosmosDB2JSON\PrivKey.pem
+            Add-Content -Path "c:\CosmosDB2JSON\CosmosDB2JSON.bat" -Value "REM 1 xxxxxxxxxxxxxxxxx Azure Cosmos DB Data Migration tool to export a Cosmos DB (SQL API) to a JSON local file   xxxxxxxxxxxxxxxxx"
+            Add-Content -Path "c:\CosmosDB2JSON\CosmosDB2JSON.bat" -Value "c:\CosmosDB2JSON\azure-documentdb-datamigrationtool-1.8.3\dt.exe /ErrorDetails:All /s:DocumentDB /s.ConnectionString:`"AccountEndpoint=${SQLAccountEndpoint}:${SQLAccountPort};AccountKey=${SQLAccountKey};Database=${SQLDatabaseName}`" /s.Collection:${SQLCollectionName} /t:JsonFile /t.File:`"c:\CosmosDB2JSON\${DBCollectionName}.json`" /t.Overwrite /t.Prettify"
+            Add-Content -Path "c:\CosmosDB2JSON\CosmosDB2JSON.bat" -Value "REM Generate a MD5 hash value"
+            Add-Content -Path "c:\CosmosDB2JSON\CosmosDB2JSON.bat" -Value "certutil.exe -hashfile c:\CosmosDB2JSON\${DBCollectionName}.json md5 | find /i /v `"md5`" | find /i /v `"certutil`" > c:\CosmosDB2JSON\${DBCollectionName}.md5"
+            Add-Content -Path "c:\CosmosDB2JSON\CosmosDB2JSON.bat" -Value "REM copy over SSH both JSON and hash files to the AWS Linux instance"
+            Add-Content -Path "c:\CosmosDB2JSON\CosmosDB2JSON.bat" -Value "c:\CosmosDB2JSON\winscp.com /keygen c:\CosmosDB2JSON\PrivKey.pem /output=c:\CosmosDB2JSON\PrivKey.ppk"
+            Add-Content -Path "c:\CosmosDB2JSON\CosmosDB2JSON.bat" -Value "cmd.exe /c echo y | c:\CosmosDB2JSON\pscp.exe -P 22 -i c:\CosmosDB2JSON\PrivKey.ppk c:\CosmosDB2JSON\${DBCollectionName}.md5 c:\CosmosDB2JSON\${DBCollectionName}.json ec2-user@${LinuxEC2Instance.PrivateIp}:/tmp/"
+            Add-Content -Path "c:\CosmosDB2JSON\CosmosDB2JSON.bat" -Value "PAUSE"
+            Invoke-WebRequest https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/windows_amd64/AmazonSSMAgentSetup.exe -OutFile $env:USERPROFILE\Desktop\SSMAgent_latest.exe
+            Start-Process -FilePath $env:USERPROFILE\Desktop\SSMAgent_latest.exe -ArgumentList "/S"
+            rm -Force $env:USERPROFILE\Desktop\SSMAgent_latest.exe
+            Restart-Service AmazonSSMAgent
+          </powershell>
+          <persist>true</persist>
+      InstanceType: !Ref WindowsInstanceType
+      SecurityGroupIds:
+        - !GetAtt WindowsInstanceSecurityGroup.GroupId
+      IamInstanceProfile: !Ref EC2InstanceProfile
+      KeyName: !Ref KeyName
+      ImageId: !Ref WindowsAMI
+      SubnetId: !Ref WindowsSubnetId
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeType: gp2
+            VolumeSize: '30'
+            DeleteOnTermination: 'true'
+            Encrypted: 'true'
+      Tags: 
+        - Key: "Name"
+          Value: "docdb-demo-dev-par-ec2-win"
+        - Key: "Project"
+          Value: "Cosmos DB to DocDB Demo Migration"
+
+  WindowsInstanceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId: !Ref VPCId
+      GroupDescription: Windows worker EC2 instance security group
+
+  EC2InstanceProfile: 
+    Type: AWS::IAM::InstanceProfile
+    Properties: 
+      Path: /
+      Roles: 
+        - !Ref EC2InstanceRole
+        
+  EC2InstanceRole: 
+    Type: AWS::IAM::Role
+    Properties: 
+      AssumeRolePolicyDocument: 
+        Version: 2012-10-17
+        Statement: 
+          - Effect: Allow
+            Principal: 
+              Service: 
+                - ec2.amazonaws.com
+            Action: 
+              - sts:AssumeRole
+      Path: /
+      ManagedPolicyArns:
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/AmazonSSMManagedInstanceCore
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/SecretsManagerReadWrite
+
+  DocumentDBIngress:
+   Type: 'AWS::EC2::SecurityGroupIngress'
+   Properties:
+      GroupId: !Ref DBClusterSecurityGroupId
+      IpProtocol: tcp
+      FromPort: 27017
+      ToPort: 27017
+      SourceSecurityGroupId: !GetAtt LinuxInstanceSecurityGroup.GroupId
+
+  SecretsManagerIngress:
+   Type: 'AWS::EC2::SecurityGroupIngress'
+   Properties:
+      GroupId: !Ref SecretsManagerVPCEndpointSecurityGroupId
+      IpProtocol: tcp
+      FromPort: 443
+      ToPort: 443
+      SourceSecurityGroupId: !GetAtt LinuxInstanceSecurityGroup.GroupId
+
+Outputs:
+
+  LinuxInstanceId:
+    Description: Instance Id of the newly created Linux EC2 instance
+    Value: !Ref LinuxEC2Instance
+
+  WindowsInstanceId:
+    Description: Instance Id of the newly created Windows EC2 instance
+    Value: !Ref WindowsEC2Instance
