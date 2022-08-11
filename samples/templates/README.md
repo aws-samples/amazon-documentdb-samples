@@ -17,7 +17,7 @@ Since Amazon DocumentDB is VPC-only and will not be accessible from the Internet
 This Cloudformation template deploys:  
 - A VPC with 3 public and 3 private subnets. 
 - An Amazon DocumentDB cluster with a master and 2 replicas spread in different availiability zones. 
-- A Cloud9 environment that serves as a jumbbox for the Amazon DocumentDB cluster. 
+- A Cloud9 environment that serves as a jumpbox for the Amazon DocumentDB cluster. 
 
 Once the template is deployed, access the Cloud9 workspace. Open a terminal within the workspace and run the following commands:
 
