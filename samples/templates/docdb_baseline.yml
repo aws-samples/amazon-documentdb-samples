@@ -296,7 +296,7 @@ Resources:
       Tags: 
         - Key: Name
           Value: !Sub DocumentDBInstance-${AWS::StackName}
-   AWSCloud9SSMAccessRole:
+  AWSCloud9SSMAccessRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
