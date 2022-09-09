@@ -1,0 +1,378 @@
+#  Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+
+#  Licensed under the Apache License, Version 2.0 (the "License").
+#  You may not use this file except in compliance with the License.
+#  A copy of the License is located at
+
+#      http://www.apache.org/licenses/LICENSE-2.0
+
+#  or in the "license" file accompanying this file. This file is distributed
+#  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+#  express or implied. See the License for the specific language governing
+#  permissions and limitations under the License.
+
+AWSTemplateFormatVersion: "2010-09-09"
+Description: This stack deploys the infrastructure used in the blog post, "Using Amazon SageMaker to Query and Write into Amazon DocumentDB".
+
+Parameters:
+  Ec2Ami:
+    Type: String
+    Description: Required AMI ID for amazon linux 2 for jump host. 
+
+  Ec2KeyPair:
+    Type: String
+    Description: Name of the key/value pair required to connect to Ec2 machine. 
+
+  DocDBUsername:
+    Type: String
+    Description: Username for the Amazon DocumentDB cluster 
+
+  DocDBPassword:
+    Type: String
+    Description: Password for the Amazon DocumentDB cluster
+    NoEcho: true
+    MinLength: 8
+
+  DocDBInstanceType:
+    Type: String
+    Description: Instance type for DocumentDB cluster
+    Default: db.r5.large
+    AllowedValues:
+      - db.t3.medium
+      - db.r5.large
+      - db.r5.xlarge
+      - db.r5.2xlarge
+      - db.r5.4xlarge
+      - db.r5.12xlarge
+      - db.r5.24xlarge
+
+  Ec2InstanceType:
+    Type: String
+    Description: Instance type for SageMaker
+    Default: t3.small
+    AllowedValues:
+      - t3.medium
+      - t3.large
+      - t3.xlarge
+      - t3.small
+
+Metadata:
+  AWS::CloudFormation::Interface: 
+    ParameterGroups: 
+      - 
+        Label: 
+          default: "DocumentDB Configuration"
+        Parameters: 
+          - DocDBInstanceType
+          - DocDBUsername
+          - DocDBPassword
+    ParameterLabels: 
+      DocDBInstanceType: 
+        default: "Instance type for DocumentDB cluster"
+      DocDBUsername: 
+        default: "DocumentDB master username"
+      DocDBPassword: 
+        default: "DocumentDB master password"
+        
+Mappings:
+  SubnetConfig:
+    VPC:
+      CIDR: '10.0.0.0/16'
+    PublicOne:
+      CIDR: '10.0.0.0/24'
+    PrivateOne:
+      CIDR: '10.0.100.0/24'
+    PrivateTwo:
+      CIDR: '10.0.101.0/24'
+    PrivateThree:
+      CIDR: '10.0.102.0/24'
+
+Resources:
+# Networking
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      CidrBlock: !FindInMap ['SubnetConfig', 'VPC', 'CIDR']
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-VPC
+
+  PublicSubnetOne:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone:
+         Fn::Select:
+         - 0
+         - Fn::GetAZs: {Ref: 'AWS::Region'}
+      VpcId: !Ref VPC
+      CidrBlock: !FindInMap ['SubnetConfig', 'PublicOne', 'CIDR']
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-PublicOne
+
+  PrivateSubnetOne:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone:
+         Fn::Select:
+         - 0
+         - Fn::GetAZs: {Ref: 'AWS::Region'}
+      VpcId: !Ref VPC
+      CidrBlock: !FindInMap ['SubnetConfig', 'PrivateOne', 'CIDR']
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-PrivateOne
+
+  PrivateSubnetTwo:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone:
+         Fn::Select:
+         - 1
+         - Fn::GetAZs: {Ref: 'AWS::Region'}
+      VpcId: !Ref VPC
+      CidrBlock: !FindInMap ['SubnetConfig', 'PrivateTwo', 'CIDR']
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-PrivateTwo
+
+  PrivateSubnetThree:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone:
+         Fn::Select:
+         - 2
+         - Fn::GetAZs: {Ref: 'AWS::Region'}
+      VpcId: !Ref VPC
+      CidrBlock: !FindInMap ['SubnetConfig', 'PrivateThree', 'CIDR']
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-PrivateThree
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-igw
+  GatewayAttachement:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-PublicRouteTable
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: GatewayAttachement
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+  PublicSubnetOneRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnetOne
+      RouteTableId: !Ref PublicRouteTable
+
+  Ec2SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties: 
+      GroupDescription: Ec2 jump server security group
+      GroupName: !Sub ${AWS::StackName}-SG-Ec2
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+         - IpProtocol: tcp
+           CidrIp: 0.0.0.0/0
+           FromPort: 22
+           ToPort: 22
+         - IpProtocol: tcp
+           CidrIp: 10.0.0.0/16
+           FromPort: 27017
+           ToPort: 27017           
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-SG-DocumentDB
+
+
+# DocumentDB
+  DocumentDBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties: 
+      GroupDescription: Amazon DocumentDB Security Group
+      GroupName: !Sub ${AWS::StackName}-SG-DocumentDB
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+         - IpProtocol: tcp           
+           FromPort: 27017
+           ToPort: 27017
+           SourceSecurityGroupId: !Ref Ec2SecurityGroup
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-SG-DocumentDB
+ 
+  DocumentDBSubnetGroup:
+    Type: AWS::DocDB::DBSubnetGroup
+    Properties: 
+      DBSubnetGroupDescription: Subnet Group for DocumentDB
+      DBSubnetGroupName: !Sub ${AWS::StackName}-SG-DocumentDB
+      SubnetIds: 
+         - !Ref PrivateSubnetOne
+         - !Ref PrivateSubnetTwo
+         - !Ref PrivateSubnetThree
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-SG-DocumentDB
+  
+  DocDBParameterGroup:
+    Type: "AWS::DocDB::DBClusterParameterGroup"
+    Properties:
+      Description: "description"
+      Family: "docdb4.0"
+      Name: "DotNetParamGroup"
+      Parameters:
+            tls: "disabled"
+  
+  DocumentDBCluster:  
+    Type: AWS::DocDB::DBCluster
+    Properties: 
+      DBClusterIdentifier: !Sub ${AWS::StackName}-DocumentDB
+      MasterUsername: !Ref DocDBUsername
+      MasterUserPassword: !Ref DocDBPassword
+      DBSubnetGroupName : !Ref DocumentDBSubnetGroup
+      DBClusterParameterGroupName: !Ref DocDBParameterGroup
+      StorageEncrypted: yes
+      Tags: 
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-DocumentDB
+      VpcSecurityGroupIds: 
+        - !Ref DocumentDBSecurityGroup
+    DependsOn: VPC
+
+  DocumentDBInstanceOne: 
+    Type: AWS::DocDB::DBInstance
+    Properties: 
+      DBClusterIdentifier: !Ref DocumentDBCluster
+      DBInstanceClass: !Ref DocDBInstanceType
+      Tags: 
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-DocumentDBInstance1
+
+  DocumentDBInstanceTwo: 
+    Type: AWS::DocDB::DBInstance
+    Properties: 
+      DBClusterIdentifier: !Ref DocumentDBCluster
+      DBInstanceClass: !Ref DocDBInstanceType
+      Tags: 
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-DocumentDBInstance2
+
+  DocumentDBInstanceThree: 
+    Type: AWS::DocDB::DBInstance
+    Properties: 
+      DBClusterIdentifier: !Ref DocumentDBCluster
+      DBInstanceClass: !Ref DocDBInstanceType
+      Tags: 
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-DocumentDBInstance3
+
+  DocDBSecret:
+    Type: 'AWS::SecretsManager::Secret'
+    Properties:
+      Name: !Sub ${AWS::StackName}-DocDBSecret
+      Description: This secret has the credentials for the DocumentDB cluster
+      SecretString:
+        !Join
+          - '' 
+          - - '{"username":"'
+            - !Ref DocDBUsername
+            - '","password":"'
+            - !Ref DocDBPassword
+            - '", "ssl": true}'
+  
+  SecretDocDBClusterAttachment:
+    Type: AWS::SecretsManager::SecretTargetAttachment
+    Properties:
+      SecretId: !Ref DocDBSecret
+      TargetId: !Ref DocumentDBCluster
+      TargetType: AWS::DocDB::DBCluster
+      
+  DocumentDBSecretPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub ${AWS::StackName}-DocumentDBSecretPolicy
+      Roles: 
+        - !Ref Ec2Role
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - 
+            Effect: Allow
+            Action:
+              - secretsmanager:GetSecretValue
+            Resource: !Ref DocDBSecret
+# Ec2 Role
+  Ec2Role:
+    Type: AWS::IAM::Role
+    Properties: 
+      AssumeRolePolicyDocument: 
+        Version: "2012-10-17"
+        Statement: 
+          - 
+            Effect: "Allow"
+            Principal: 
+              Service: 
+                - "ec2.amazonaws.com"
+            Action: 
+              - "sts:AssumeRole"
+      Description: Ec2 role to have full access to documentdb
+      RoleName: !Sub ${AWS::StackName}-Ec2Role
+      Tags: 
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-Ec2Role
+
+  Ec2Instance:
+    Type: AWS::EC2::Instance
+    Properties: 
+      InstanceType: !Ref Ec2InstanceType
+      ImageId: !Ref Ec2Ami
+      KeyName: !Ref Ec2KeyPair
+      SecurityGroupIds: 
+        - !Ref Ec2SecurityGroup
+      SubnetId: !Ref PublicSubnetOne
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-Ec2Instance
+    DependsOn: DocumentDBCluster            
+
+Outputs:
+  StackName:
+    Value: !Sub ${AWS::StackName}
+  VpcId:
+    Value: !Ref VPC
+  PrivateSubnetOne:
+    Value: !Ref PrivateSubnetOne
+  PrivateSubnetTwo:
+    Value: !Ref PrivateSubnetTwo
+  PrivateSubnetThree:
+    Value: !Ref PrivateSubnetThree
+  PublicSubnetOne:
+    Value: !Ref PublicSubnetOne
+  DocumentDBClusterName:
+    Value: !Ref DocumentDBCluster
+  DocumentDBCluster:
+    Value: !GetAtt DocumentDBCluster.Endpoint
+  DocDBSecret:
+    Value: !Ref DocDBSecret
+  Ec2Role:
+    Value: !Ref Ec2Role
+  Ec2PublicDns:
+    Value: !GetAtt Ec2Instance.PublicDnsName
