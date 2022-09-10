@@ -30,7 +30,6 @@ LINUX2-AMI=ami-02538f8925e3aa27a
 DOCDB-CLUSTER=$(shell aws cloudformation describe-stacks --region $(REGION) --stack-name $(APP) --query "Stacks[0].Outputs[?OutputKey=='DocumentDBCluster'].OutputValue | [0]" --output text)
 EC2-PUBLICDNS=$(shell aws cloudformation describe-stacks --region $(REGION) --stack-name $(APP) --query "Stacks[0].Outputs[?OutputKey=='Ec2PublicDns'].OutputValue | [0]" --output text)
 
-foo=$(shell aws cloudformation describe-stacks --stack-name $(APP)1)
 
 
 
@@ -38,7 +37,7 @@ infra:
 	@echo "\n\n########################################"
 	@echo "     ==> Starting cloudformation deployment ! <==\n"
 	@echo "########################################\n" 
-	aws cloudformation create-stack --stack-name $(APP) --template-body file://cfn/template.yaml \
+	aws cloudformation update-stack --stack-name $(APP) --template-body file://cfn/template.yaml \
 			--parameters ParameterKey=DocDBUsername,ParameterValue=$(DOCDB-USER) \
 						 ParameterKey=DocDBPassword,ParameterValue=$(DOCDB-PASS) \
 						 ParameterKey=Ec2Ami,ParameterValue=$(LINUX2-AMI) \

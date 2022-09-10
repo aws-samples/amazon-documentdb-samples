@@ -29,15 +29,15 @@ namespace docdb_dotnet_starter.Services
     {
         private readonly IMongoCollection<Location> _locations;
         private SecretsManagerCache cache = new SecretsManagerCache();
+        private int pageLength = 100;
 
         public LocationsService(IRestaurantsDatabaseSettings settings)
         {
+            this.pageLength = settings.defaultPageLength;
             string  docdbSecret = settings.secretName;
             //System.Console.WriteLine("docdbSecret");
             var secret = this.GetDocDBSecret(docdbSecret);
             secret.Wait();
-
-            
 
             string connectionString = String.Format(settings.connTemplate, secret.Result.user, secret.Result.pass, 
                                                     settings.clusterEndpoint, settings.clusterEndpoint, settings.readPreference);
@@ -55,7 +55,10 @@ namespace docdb_dotnet_starter.Services
             return ( user: output["username"].ToString(), pass: output["password"].ToString());
         }
 
-        public List<Location> Get() => _locations.Find(location => true).Limit(100).ToList();
+        public List<Location> Get(int pageLength)
+        {                        
+            return _locations.Find(location => true).Limit(pageLength == 0 ? this.pageLength: pageLength).ToList();        
+        } 
 
         public Location Get(string id) => _locations.Find(location => location.Id == id).FirstOrDefault();
 

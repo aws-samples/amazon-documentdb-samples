@@ -25,6 +25,7 @@ namespace docdb_dotnet_starter.Models
         public string password { get; set; }
         public string clusterEndpoint { get; set; }
         public string secretName {get; set; }
+        public int defaultPageLength {get;set;}
     }
 
     public interface IRestaurantsDatabaseSettings
@@ -38,5 +39,6 @@ namespace docdb_dotnet_starter.Models
         public string password { get; set; }
         public string clusterEndpoint { get; set; }
         public string secretName {get; set; }
+        public int defaultPageLength {get;set;}
     }
 }

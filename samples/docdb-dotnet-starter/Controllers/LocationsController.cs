@@ -12,7 +12,7 @@
   express or implied. See the License for the specific language governing
   permissions and limitations under the License.
 */
-
+using System;
 using docdb_dotnet_starter.Models;
 using docdb_dotnet_starter.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -32,8 +32,12 @@ namespace docdb_dotnet_starter.Controllers
         }
 
         [HttpGet]
-        public ActionResult<List<Location>> Get() =>
-            _locationService.Get();
+        public ActionResult<List<Location>> Get(int pageLength)
+        {
+            var locations = _locationService.Get(pageLength);            
+            return locations;
+        }
+            
 
         [HttpGet("{id:length(24)}", Name = "GetLocation")]
         public ActionResult<Location> Get(string id)
