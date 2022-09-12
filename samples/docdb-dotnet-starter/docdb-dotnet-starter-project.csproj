@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <RootNamespace>docdb_dotnet_starter</RootNamespace>    
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3" />
+    <PackageReference Include="mongodb.driver" Version="2.12.4" />
+    <PackageReference Include="AWSSDK.SecretsManager.Caching" Version="1.0.3" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1"/>
+  </ItemGroup>
+
+</Project>
