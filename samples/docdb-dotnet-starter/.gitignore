@@ -42,7 +42,7 @@ bld/
 Generated\ Files/
 
 # Visual Studio Code directory
-.vscode/
+#.vscode/
 
 
 # MSTest test Results
