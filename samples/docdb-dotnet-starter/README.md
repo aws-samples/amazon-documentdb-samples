@@ -67,7 +67,7 @@ This should return empty results right now as there is no data loaded to Documen
 ### Step 7 : Load data to Amazon DocumentDB
 This uses Restaurants.json file that comes with this project in the `data` directory. Use the following command to load to Amazon DocumentDB. 
 ```
-mongoimport --username docdb --password --file=data/restaurant.json --db=restaurants --collection=locations"
+mongoimport --username docdb --file=data/restaurant.json --db=restaurants --collection=locations --password docdb123 --writeConcern {w:0}
 ```
 
 ### Step 8 : Verify Data
