@@ -23,13 +23,11 @@ Parameters:
     
   VPCId:
     Description: VPC ID
-    Default: vpc-0e8a0b6878701aa40
     Type: String
     
   KeyName:
     Description: Name of an existing EC2 KeyPair to enable access to the instances
     Type: AWS::EC2::KeyPair::KeyName
-    Default: CosmosMigration
     ConstraintDescription: must be the name of an existing EC2 KeyPair.
     
   PrivKey:
@@ -58,7 +56,6 @@ Parameters:
   LinuxSubnetId:
     Description: Subnet this instance will be launched in 
     Type: AWS::EC2::Subnet::Id
-    Default: subnet-009f34769ff72ae39
 
   # Windows Instance
   #######################################
@@ -77,7 +74,6 @@ Parameters:
   WindowsSubnetId:
     Description: Subnet this instance will be launched in 
     Type: AWS::EC2::Subnet::Id
-    Default: subnet-009f34769ff72ae39
   
   # Cosmos DB 
   #######################################
@@ -131,7 +127,6 @@ Parameters:
   #######################################
 
   DBClusterEndpoint:
-    Default: docdb-demo-dev-par-cluster.cluster-ck1z9gimxtxg.eu-west-3.docdb.amazonaws.com
     Description: --host parameter. The endpoint of the DocumentDB Cluster connection. 
     Type: String
 
@@ -159,17 +154,14 @@ Parameters:
     ConstraintDescription : Must contain only alphanumeric characters, _ and -.
 
   DBClusterSecurityGroupId:
-    Default: sg-0b7ff7c3783633e54
     Description: Security group ID of the security group associated with the DocumentDB, because this security group must be updated to allow ingress traffic from LinuxInstanceSecurityGroup of the Linux EC2 instance performing the import.
     Type: String
 
   DocumentDBSecret:
-    Default: arn:aws:secretsmanager:eu-west-3:012345678910:secret:docdb-demo-dev-par-secret-dQkuu3
     Description: Secret ARN of the DocumentDB Secret in the AWS Secrets Manager
     Type: String
 
   SecretsManagerVPCEndpointSecurityGroupId:
-    Default: sg-0b7ff7c3783633e54
     Description: Security group ID of the security group associated with the Secrets Manager VPC Endpoint, because the Linux EC2 instance is placed in the Private Subnet and this security group must be updated to allow ingress traffic from LinuxInstanceSecurityGroup of the Linux EC2 instance performing the import.
     Type: String
 
