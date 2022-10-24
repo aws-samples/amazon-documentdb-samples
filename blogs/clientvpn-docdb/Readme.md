@@ -9,7 +9,7 @@ resources as discussed on the blog \<blog link here\>.
 
 **Architecture diagram**
 
-![](./media/image1.png){width="6.0625in" height="3.5104166666666665in"}
+![](./media/image1.png)
 
 After you finish the steps outlined on this readme, you will have the
 Client VPN resource launched for you. To see the list of pre-requisites
