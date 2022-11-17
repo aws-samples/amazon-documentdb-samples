@@ -5,7 +5,7 @@ using AWS Client VPN**
 
 In this section, we provide the steps to launch the CloudFormation
 template that helps in automating the provisioning of some of the
-resources as discussed on the blog \<blog link here\>.
+resources as discussed on the [blog](https://aws.amazon.com/blogs/database/securely-access-amazon-documentdb-with-mongodb-compatibility-locally-using-aws-client-vpn/).
 
 **Architecture diagram**
 
@@ -13,8 +13,7 @@ resources as discussed on the blog \<blog link here\>.
 
 After you finish the steps outlined on this readme, you will have the
 Client VPN resource launched for you. To see the list of pre-requisites
-before launching the CloudFormation stack, please refer \<link to the
-blog pre-requisite\>. You will get a configuration file in the S3 bucket
+before launching the CloudFormation stack, please refer to the prerequisite section in the [blog](https://aws.amazon.com/blogs/database/securely-access-amazon-documentdb-with-mongodb-compatibility-locally-using-aws-client-vpn/). You will get a configuration file in the S3 bucket
 which you can download and use after the CloudFormation stack is
 provisioned successfully.
 
@@ -26,7 +25,7 @@ provisioned successfully.
 
 2.  In the "Create stack" page, choose "Upload a template file" option
     and provide the template that you downloaded into your local machine
-    from \<Provide the link to download the template\>.
+    from [this repo](https://github.com/aws-samples/amazon-documentdb-samples/blob/master/blogs/clientvpn-docdb/docdb_clientVPN.yaml).
 
 3.  In the "Specify stack details" page, provide the values as below
     (Replace the example values provided with your own values).
@@ -72,8 +71,7 @@ key objects.
 **Testing the connectivity**
 
 After successfully launching the CloudFormation stack, to test the
-connectivity, please follow the steps as mentioned \<link to the section
-on testing from blog\>.
+connectivity, please follow the steps as mentioned in the [blog](https://aws.amazon.com/blogs/database/securely-access-amazon-documentdb-with-mongodb-compatibility-locally-using-aws-client-vpn/).
 
 **Cleanup**
 
