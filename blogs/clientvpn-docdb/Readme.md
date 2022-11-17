@@ -48,7 +48,7 @@ You are asked to provide 2 private subnets to have the DocumentDB
 cluster with HA as discussed
 [here](https://docs.aws.amazon.com/documentdb/latest/developerguide/replication.html#replication.high-availability).
 After you created the EasyRSA certificates following the steps outlined
-in the \<link to blog\>, you will have to upload the certificate and key
+in the [blog](https://aws.amazon.com/blogs/database/securely-access-amazon-documentdb-with-mongodb-compatibility-locally-using-aws-client-vpn/), you will have to upload the certificate and key
 files to the S3 bucket that you already own. client1.domain.tld.key and
 client1.domain.tld.crt files will have to be uploaded to the S3 bucket
 which will be used to populate the OVPN file (configuration file
