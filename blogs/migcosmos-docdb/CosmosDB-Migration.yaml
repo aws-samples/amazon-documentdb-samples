@@ -35,7 +35,7 @@ Parameters:
     Description: Private key (pem format) of the EC2 KeyPair to enable scp from Windows to Linux
     Type: String
     MinLength: 320
-    MaxLength: 4160
+    MaxLength: 4000
     AllowedPattern : "-----BEGIN RSA PRIVATE KEY-----([^-!]+)-----END RSA PRIVATE KEY-----"
     ConstraintDescription: Must be a valid private key (pem format)
   
@@ -243,13 +243,18 @@ Resources:
   LinuxInstanceSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
+      GroupDescription: "Enable SSH access from Windows worker EC2 instance"
       VpcId: !Ref VPCId
-      GroupDescription: Enable SSH access from Windows worker EC2 instance
       SecurityGroupIngress:
       - IpProtocol: tcp
         FromPort: 22
         ToPort: 22
+        Description: "Allow connections from Windows to Linux worker EC2 instance"
         SourceSecurityGroupId: !GetAtt WindowsInstanceSecurityGroup.GroupId
+      SecurityGroupEgress:
+      - Description: "Allow all outbound traffic"
+        IpProtocol: "-1"
+        CidrIp: 0.0.0.0/0
       
   WindowsEC2Instance:
     Type: AWS::EC2::Instance
@@ -305,7 +310,11 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties:
       VpcId: !Ref VPCId
-      GroupDescription: Windows worker EC2 instance security group
+      GroupDescription: "Windows worker EC2 instance security group"
+      SecurityGroupEgress:
+      - Description: "Allow all outbound traffic"
+        IpProtocol: "-1"
+        CidrIp: 0.0.0.0/0
 
   EC2InstanceProfile: 
     Type: AWS::IAM::InstanceProfile
@@ -334,6 +343,7 @@ Resources:
   DocumentDBIngress:
    Type: 'AWS::EC2::SecurityGroupIngress'
    Properties:
+      Description: "Allow DocumentDB connections from Linux worker EC2 instance"
       GroupId: !Ref DBClusterSecurityGroupId
       IpProtocol: tcp
       FromPort: 27017
@@ -343,6 +353,7 @@ Resources:
   SecretsManagerIngress:
    Type: 'AWS::EC2::SecurityGroupIngress'
    Properties:
+      Description: "Allow connections from Linux worker EC2 instance to Secrets Manager"
       GroupId: !Ref SecretsManagerVPCEndpointSecurityGroupId
       IpProtocol: tcp
       FromPort: 443
