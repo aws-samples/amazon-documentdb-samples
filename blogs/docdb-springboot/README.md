@@ -26,14 +26,14 @@ This is a sample Spring Boot application to demonstrate integration between Spri
 
 ## Update Configuration 
 
-To connect to Amazon DocumentDB cluster, you specify the connection URI string in the application.properties file located in the src/main/resources folder.
+To connect to Amazon DocumentDB cluster, you specify the connection URI string in the application.properties file located in the `blogs/docdb-springboot/src/main/resources` folder.
 
-1.  Add connection URI to the application.properties file.  Key for the connection URI is `spring.data.mongodb.uri`.  Make sure your copied connection string is in below format. Replace <user name>, <password> and <cluster end point> with your cluster specific details. 
+1.  Add Amazon DocumentDB connection URI to the application.properties file.  Key for the connection URI is `spring.data.mongodb.uri`.  Make sure your copied connection string is in below format. Replace `<user name>`, `<password>` and `<cluster end point>` with your cluster specific details. 
 
 ```bash  
 spring.data.mongodb.uri=mongodb://<user name>:<password>@<cluster end point>: 27017/?ssl=true&replicaSet=rs0&readPreference=secondaryPreferred&retryWrites=false
 ``` 
-Alternatively, you can also provide the connection details separately like host name, port, user name and password with corresponding property keys. e.g : ‘spring.data.mongodb.host’ or ‘spring.data.mongodb.port’, see [Common Application Properties](https://docs.spring.io/spring-boot/docs/current/reference/html/application-properties.html#appendix.application-properties.data) for complete list of available Spring Boot parameter configuration options. 
+Alternatively, you can also provide the connection details separately like host name, port, user name and password with corresponding property keys. e.g : `spring.data.mongodb.host` or `spring.data.mongodb.port`, see [Common Application Properties](https://docs.spring.io/spring-boot/docs/current/reference/html/application-properties.html#appendix.application-properties.data) for complete list of available Spring Boot parameter configuration options. 
 
 2.  Optionally, you can also specify the database name in the `application.properties` file. 
 
@@ -82,7 +82,7 @@ done
 
 ## Run and Test
 
-Run your Spring Boot application with following Maven command: 
+Run your Spring Boot application with following Maven command from `blogs/docdb-springboot/` folder: 
 
 ```bash
 mvn spring-boot:run
