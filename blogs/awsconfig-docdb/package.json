@@ -21,8 +21,8 @@
     "@aws-cdk/aws-events-targets": "1.183.0",
     "@aws-cdk/aws-iam": "1.95.1",
     "@aws-cdk/aws-kms": "1.95.1",
-    "@aws-cdk/aws-lambda": "1.95.1",
-    "@aws-cdk/aws-logs": "1.95.1",
+    "@aws-cdk/aws-lambda": "1.189.0",
+    "@aws-cdk/aws-logs": "1.189.0",
     "@aws-cdk/aws-sns": "1.183.0",
     "@aws-cdk/core": "1.95.1",
     "source-map-support": "^0.5.16"
