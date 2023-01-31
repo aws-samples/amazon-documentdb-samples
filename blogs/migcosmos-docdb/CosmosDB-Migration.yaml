@@ -267,7 +267,7 @@ Resources:
             Invoke-WebRequest "https://github.com/Azure/azure-documentdb-datamigrationtool/releases/download/1.8.3/azure-documentdb-datamigrationtool-1.8.3.zip" -OutFile "c:\CosmosDB2JSON\dt.zip"
             Expand-Archive -Path "c:\CosmosDB2JSON\dt.zip" -DestinationPath "c:\CosmosDB2JSON\"
             Invoke-WebRequest "https://the.earth.li/~sgtatham/putty/latest/w32/pscp.exe" -OutFile "c:\CosmosDB2JSON\pscp.exe"
-            Invoke-WebRequest "https://github.com/aws-samples/amazon-documentdb-samples/tree/master/blogs/migcosmos-docdb/WinSCP-5.21.7-Portable.zip" -OutFile "c:\CosmosDB2JSON\WinSCP.zip"
+            Invoke-WebRequest "https://github.com/oigor77/blogs/raw/main/resources/WinSCP-5.21.7-Portable.zip" -OutFile "c:\CosmosDB2JSON\WinSCP.zip"
             Expand-Archive -Path "c:\CosmosDB2JSON\WinSCP.zip" -DestinationPath "c:\CosmosDB2JSON\"
             Set-Content -Path "c:\CosmosDB2JSON\PrivKey.in" -Value "${PrivKey}"
             Get-Content c:\CosmosDB2JSON\PrivKey.in | %{$_ -Replace "-----([ A-Z]*)-----",""} | %{$_ -Replace "\s",""} | %{$_ -Split '(?<=\G.{64})'} | %{Add-Content c:\CosmosDB2JSON\PrivKey.pem -Value $_}
