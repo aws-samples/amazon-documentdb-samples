@@ -19,7 +19,7 @@
 
 **docdb-patch-notification**
 
-<img width="422" alt="image" src="https://user-images.githubusercontent.com/50776512/217126642-d9cdab87-c21b-4763-8cae-c0acc9b17bac.png">
+<img width="422" alt="image" src="images/create_sns_topic.png">
 
 2. **Create topic subscription**
 <img width="422" alt="image" src="https://user-images.githubusercontent.com/50776512/217127581-30602287-8b0e-4e89-a314-f3924c7c0240.png">
