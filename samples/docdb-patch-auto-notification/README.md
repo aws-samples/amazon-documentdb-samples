@@ -29,7 +29,7 @@
 
 3. **Confirm subscription in the email：**
 
-<img width="468" alt="image" src="https://user-images.githubusercontent.com/50776512/217141783-97d1714f-8d86-4480-8bb4-1133065893c6.png">
+<img width="468" alt="image" src="images/confirm_subscription.png">
 
 
 ## Create Lambda
