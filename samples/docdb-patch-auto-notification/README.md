@@ -2,7 +2,7 @@
 **Automatically query available DocumentDB Patch**
 ## Architecture Diagram：
 
-<img width="422" alt="image" src="https://user-images.githubusercontent.com/50776512/216918607-dc639069-21c5-488e-b647-4c8d6e2bf31a.png">
+<img width="422" alt="image" src="images/architecture_diagram.png">
 
 ## Create an IAM Policy for Lambda
 **Policy name: query-pending-maintenance**
