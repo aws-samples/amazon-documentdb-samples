@@ -25,7 +25,7 @@
 <img width="422" alt="image" src="images/create_topic_subscription.png">
 
 
-<img width="422" alt="image" src="https://user-images.githubusercontent.com/50776512/217127664-effd86cb-2d86-44a7-8914-57159a5715e1.png">
+<img width="422" alt="image" src="images/create_topic_subscription_detail.png">
 
 3. **Confirm subscription in the email：**
 
