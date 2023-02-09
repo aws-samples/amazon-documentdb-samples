@@ -43,7 +43,7 @@
 
 **Lambda Timeout:  7 Minutes（Change default timeout:  from 3 seconds to 7 minutes）：**
 
-<img width="422" alt="image" src="https://user-images.githubusercontent.com/50776512/217133071-05cf3be8-4b3b-4aba-a33f-ecbb509c98c3.png">
+<img width="422" alt="image" src="images/set_lambda_timeout.png">
 
 **Lambda Runtime: Python 3.7**
 
@@ -61,17 +61,17 @@
 
 **Rule type: schedule**
 
-<img width="422" alt="image" src="https://user-images.githubusercontent.com/50776512/217153322-31abafcc-c40f-4904-b817-87fb1a614e77.png">
+<img width="422" alt="image" src="images/create_event_rules.png">
 
 2.	**Create event schedule:**
 
 **Schedule_name: docdb-patch-notification-schedule (executed once a day)**
 
-<img width="422" alt="image" src="https://user-images.githubusercontent.com/50776512/217153808-26803180-5ce1-47cf-9622-6ed9aafe7247.png">
+<img width="422" alt="image" src="images/create_events_schedule.png">
 
 **Schedule Targe: Select the created Lambda function (invoke)**
 
-<img width="422" alt="image" src="https://user-images.githubusercontent.com/50776512/217154493-909176a9-6bf0-4cc5-836f-4271af5aabd0.png">
+<img width="422" alt="image" src="images/schedule_target_lambda.png">
 
 **Create successfully：**
 
@@ -79,5 +79,5 @@
 
 ## Email Notification Example：
 
-<img width="422" alt="image" src="https://user-images.githubusercontent.com/50776512/217155276-19802738-c6a1-40cb-af8b-f755ff2d8539.png">
+<img width="422" alt="image" src="images/email_notification_example.png">
 
