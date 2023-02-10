@@ -71,10 +71,10 @@ port = get_secret()['port']
 
 #Insert sample data
 SEED_DATA = [
-{ "_id" : 1, "name" : "Tim", "status": "active", "level": 12, "score":202},
-{ "_id" : 2, "name" : "Justin", "status": "inactive", "level": 2, "score":9},
-{ "_id" : 3, "name" : "Beth", "status": "active", "level": 7, "score":87},
-{ "_id" : 4, "name" : "Jesse", "status": "active", "level": 3, "score":27}
+{ "_id" : 1, "name" : "Terry", "status": "active", "level": 12, "score":202},
+{ "_id" : 2, "name" : "John", "status": "inactive", "level": 2, "score":9},
+{ "_id" : 3, "name" : "Mary", "status": "active", "level": 7, "score":87},
+{ "_id" : 4, "name" : "Jane", "status": "active", "level": 3, "score":27}
 ]
 
 def main(args):
@@ -88,7 +88,7 @@ def main(args):
     print("Successfully inserted data")
 
     #Find a document
-    query = {'name': 'Jesse'}
+    query = {'name': 'Jane'}
     print("Printing query results")
     print(profiles.find_one(query))
 
