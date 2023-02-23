@@ -27,12 +27,15 @@ namespace docdb_dotnet_starter.Models
         public string URL { get; set; }
 
         public string name { get; set; }
-
+               
         public string address { get; set; }
+
+        public string address_line_2 { get; set; }
+
         public string outcode { get; set; }
 
         public string postcode { get; set; }
-  
+                  
         public float rating { get; set; }
 
         public string type_of_food {get; set;} 
