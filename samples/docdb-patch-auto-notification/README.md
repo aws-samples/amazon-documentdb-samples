@@ -1,83 +1,70 @@
-# DocumentDB Patch Auto Notification
-**Automatically query available DocumentDB Patch**
-## Architecture Diagram：
+# Build serverless automatic email notification for Amazon DocumentDB, Amazon Aurora, and Amazon Neptune patch events 
 
-<img width="422" alt="image" src="images/architecture_diagram.png">
+## Introduction
+Amazon DocumentDB (with MongoDB compatibility), Amazon Aurora, and Amazon Neptune are scalable, highly durable, and fully managed cloud-native document, relational, and graph databases for operating mission-critical workloads that simplify the process of setting up, managing operations, and scaling databases in the cloud.
 
-## Create an IAM Policy for Lambda
-**Policy name: query-pending-maintenance**
+Periodically, Amazon DocumentDB, Aurora, and Neptune perform maintenance on resources. Maintenance most often involves updates to the DB cluster's underlying hardware, operating system (OS), or database engine version. It is necessary to apply database patches in a timely manner and update the OS or database engine version to better protect your cloud database.
 
-**Policy  Json definition：**
+For security and instance reliability, Amazon DocumentDB, Aurora, and Neptune require your DB clusters to do required OS or database patching as part of certain maintenance projects. Such patching occurs infrequently (typically once every few months) and seldom requires more than a fraction of your maintenance window. 
 
-**Please refer to Policy Json defefinition from the file deploy/policy.json**
-## Create Role for Lambda
-**Role Name: lambda-query-maintenance**
-
-**Policy: query-pending-maintenance**
-## Configure SNS service
-1. **Create sns topic**
-
-**docdb-patch-notification**
-
-<img width="422" alt="image" src="images/create_sns_topic.png">
-
-2. **Create topic subscription**
-<img width="422" alt="image" src="images/create_topic_subscription.png">
+we introduce a serverless solution to get notification when a required patch is scheduled for your cluster. 
 
 
-<img width="422" alt="image" src="images/create_topic_subscription_detail.png">
+To accomplish solution goal, we use the following services:
 
-3. **Confirm subscription in the email：**
+1. AWS Lambda: Deploy a Lambda function to query scheduled patches of Amazon DocumentDB, Aurora and Neptune
+2. Amazon EventBridge: Schedule the Lambda function run one time a day
+3. Amazon SNS:Send email notification for scheduled Amazon DocumentDB, Aurora and Neptune patches
 
-<img width="468" alt="image" src="images/confirm_subscription.png">
+We use the AWS Serverless Application Model (AWS SAM) to deploy this stack because it is the preferred approach when developing serverless applications such as this one. 
 
 
-## Create Lambda
-**Lambda Configuration：**
+## Requirements
 
-**Lambda name:** 
-**query_docdb_maintenance**
+    1. Amazon EC2 Linux 2 Bastion Host
+    2. AWS CLI already configured with Administrator permission
+    3. AWS SAM CLI installed 
+    4. Git Already installed and Configured
+    5. Python 3.10 installed
 
-**Lambda role:** 
-**lambda-query-maintenance**
 
-**Lambda Timeout:  7 Minutes（Change default timeout:  from 3 seconds to 7 minutes）：**
+## Inputs
+The following are the inputs to the SAM template:
+- Stack Name
+- EmailAddress for receiving email
 
-<img width="422" alt="image" src="images/set_lambda_timeout.png">
 
-**Lambda Runtime: Python 3.7**
+## Build
+To validate the SAM template run:
 
-**Lambda Code:**
+```
+sam validate
+```
 
-**Please refer to Lambda Python Code from the file deploy/lamda.py**
+To build the SAM template run:
 
-**Change the python code：TargetArn = "arn:aws:sns:us-east-1:02818***:docdb-patch-notification" 
-**change Account id to your Account id)**
+```
+sam build
+```
 
-## Create event bridge
-1. **Create event rule:**
+or 
 
-**Rule_name: docdb-patch-notification_rule**
+```
+make build
+```
 
-**Rule type: schedule**
+## Deploy
+To deploy, run
 
-<img width="422" alt="image" src="images/create_event_rules.png">
+```
+sam deploy --capabilities CAPABILITY_NAMED_IAM --guided
+```
 
-2.	**Create event schedule:**
+or 
 
-**Schedule_name: docdb-patch-notification-schedule (executed once a day)**
+```
+make sam
+```
 
-<img width="422" alt="image" src="images/create_events_schedule.png">
 
-**Schedule Targe: Select the created Lambda function (invoke)**
-
-<img width="422" alt="image" src="images/schedule_target_lambda.png">
-
-**Create successfully：**
-
-**Once create successfully, the lambda function would be executed, then executed once a day**
-
-## Email Notification Example：
-
-<img width="422" alt="image" src="images/email_notification_example.png">
 
