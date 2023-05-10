@@ -1,0 +1,61 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Description: 'AWS SAM template for scheduling Lambda function using EventBridge and sending database patch notifications by SNS'
+
+
+Parameters:
+  EmailAddress:
+    Type: String
+    Description: 'Email address to subscribe to the SNS topic'
+
+Resources:
+  SNSTopic:
+    Type: 'AWS::SNS::Topic'
+    Properties:
+      DisplayName: 'My SNS topic'
+      TopicName: 'db-patch-notification'
+      Subscription:
+        - Protocol: 'email'
+          Endpoint: !Ref EmailAddress
+ 
+  LambdaFunction:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      CodeUri: './lambda/'
+      Handler: index.lambda_handler
+      Runtime: python3.10
+      MemorySize: 128
+      Timeout: 420
+      Policies: 
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - 'sns:Publish'
+                - 'ec2:DescribeRegions'
+                - 'rds:DescribeDBInstances'
+                - 'rds:DescribePendingMaintenanceActions'
+                - 'rds:DescribeDBClusters'
+                - 'logs:CreateLogGroup'
+                - 'logs:CreateLogStream'
+                - 'logs:PutLogEvents'
+              Resource: '*'
+      Environment:
+        Variables:
+          SNS_TOPIC_ARN: !Ref SNSTopic
+      Events:
+        ScheduledEvent:
+          Type: 'Schedule'
+          Properties:
+            Enabled: true
+            Name: 'db-patch-notice-Schedule'
+            Description: 'Schedule for scanning database patches'
+            Schedule: 'cron(0 0 * * ? *)' # Replace with desired schedule expression
+
+Outputs:
+  LambdaFunctionName:
+    Value: !Ref LambdaFunction
+  SNSTopicName:
+    Value: !Ref SNSTopic
+
+
