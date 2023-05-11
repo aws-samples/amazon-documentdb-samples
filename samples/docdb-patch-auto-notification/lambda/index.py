@@ -4,7 +4,7 @@ import os
 
 description_list=['Bug Fixes']
 action_list=['db-upgrade']
-notification = "This is notification for Aurora and DocumentDB patch \n"
+notification = "This is notification for Aurora,DocumentDB and Neptune patch \n"
 
 def query_docdb():
     global notification
@@ -61,7 +61,7 @@ def lambda_handler(event, context):
 
     sns_response = sns_client.publish (
         TargetArn = sns_arn,
-        Subject = "DocumentDB Patch Notification",
+        Subject = "Database Patch Notification",
         Message = json.dumps({'default': notification}),
         MessageStructure = 'json'
      )
