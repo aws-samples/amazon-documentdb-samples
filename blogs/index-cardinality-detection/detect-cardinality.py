@@ -3,100 +3,133 @@ import boto3
 import json
 from datetime import datetime
 import csv
+import argparse, sys
+import certifi
+import traceback
+import pandas as pd 
+import numpy as np
 
-def sample_documents_based_on_index(collection, key):
-    documents = collection.distinct(key)
-    return documents
+global args
 
-def main(connection_string='', max_collections=100, threshold=0.01):
-    """main functions takes two arguments (uses default values if args not provided)"""
 
-    if not connection_string:
-        raise ValueError('Connection String missing!')
+def get_param():
+    global args
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-s", "--connection_string", action="store", default=None, help="DocumentDB connnection string")
+    parser.add_argument("-m", "--max_collections", action="store", default=100, help="Maximum number of collections to scan per database. Default 100")
+    parser.add_argument("-t", "--threshold", action="store", default="1", help="Percetage of Cardinality threshold. Default 1%")
+    parser.add_argument("-d", "--databases", action="store", default="All", help="Comma separated list of database names. Default=All")
+    parser.add_argument("-c", "--collections", action="store", default="All", help="Comma separated list of collection names. Default=All")
+    
+    args = parser.parse_args()
+
+    if args.connection_string is None:
+        print("Connection string is required")
+        sys.exit(1)    
+    
+
+def print_output(results):
+    print("\n------------------------------------------")
+    print("Total Databases Found: {}".format(args.db_counter))
+    print("Total collections Found across {} database(s): {}".format(args.db_counter, args.coll_counter))
+    print("Total indexes found : {}".format(args.index_counter))
+    print("------------------------------------------")
+    
+    print("\n------------------------------------------")
+    low_cardinal_results = results[results["isLowCardinality"]=="Y"]
+    low_cardinal_results = low_cardinal_results.sort_values('cardinality', ascending=True)
+
+    print("######Found {} indexes that may have low cardinality values.".format( len(low_cardinal_results) ))
 
     
-    client = pymongo.MongoClient(connection_string)
-
+    #sorted_results = sorted(results, key=lambda x: x['cardinality'], reverse=False)
+    #sorted_results = results.sort_values('cardinality', ascending=True)
     
-    indexes_count = 0
-    collections_count = 0
-    database_count = 0
-    indexes_with_below_threshold_cardinality = 0
+    top_indexes = []
+    for index, row in low_cardinal_results.iterrows():
+        top_indexes.append( '{} : {}%'.format( row['index_name'], row['cardinality']))
+    
+    print("Top index(es) with lowest cardinality : {}".format(top_indexes) )
+    print("------------------------------------------")
+    
+def save_file(results):
+    date_now = str(datetime.now().isoformat())
+    file_name = 'cardinality_output_'+date_now+'.csv'
+    
+    results.sort_values('cardinality', ascending=True).to_csv(file_name, index=False)
+    print("Detailed report is generated and saved at `{}`".format(file_name))
+    print("##### Done #####")
+
+def start_cardinality_check():
+    global args
+    results = []
+    connection_string = args.connection_string
+    max_collections = args.max_collections
+    threshold = float(args.threshold) 
+    
     try:
-        databases = client.list_database_names()
-        database_count = len(databases)
-        results = []
-        for database_name in databases:
-            database = client[database_name]
-            collections = database.list_collection_names()
-            collections_count = collections_count + len(collections)
-            
-            for collection_name in collections[:max_collections]:
-                collection = database[collection_name]
-                indexes = list(collection.list_indexes())
-                #indexes_count = indexes_count + len(indexes)
-                for index in indexes:
-                    for key in index['key']:
-                        if key != '_id':
-                            distinct_values = sample_documents_based_on_index(
-                                collection, key)
-                            distinct_count = len(distinct_values)
-                            total_count = collection.count_documents({})
-                            if total_count == 0:
-                                continue
-
-                            cardinality = distinct_count / total_count
-                            rounded_cardinality = round(cardinality, 4)
-                            unique_records = distinct_values[:10]
-                            indexes_count = indexes_count + 1
-                            # threshold_breached set to either true or false
-                            threshold_breached = cardinality < threshold
-
-                            # if it's true, then set the variable to Y otherwise N
-                            if threshold_breached:
-                                threshold_breached = 'Y'
-                                indexes_with_below_threshold_cardinality = indexes_with_below_threshold_cardinality + 1
-                            else:
-                                threshold_breached = 'N'
-
-                            # print statement to help debug
-                            print('cardinality=', cardinality,
-                                  'hence threshold breached = ', threshold_breached)
-
-                            result_dict = {
-                                'colname': key, 'index name': index['name'],
-                                'cardinality %': rounded_cardinality,
-                                'date sampled': datetime.now().isoformat(),
-                                'List of Unique records ( max 10 )': unique_records,
-                                'threshold breached (Y/N)': threshold_breached}
-
-                            #print('result_dict', result_dict)
-                            results.append(result_dict)
-
-        keys = results[0].keys()
-        date_now = str(datetime.now().isoformat())
-        csv_file_name = f'results-{date_now}.csv'
-        with open(csv_file_name, 'w', newline='') as output_file:
-            dict_writer = csv.DictWriter(output_file, keys)
-            dict_writer.writeheader()
-            dict_writer.writerows(results)
+        client = pymongo.MongoClient(connection_string)
         
-        print('\n')
-        print('----------------------------------------')
-        print(f'Total Databases Found: {database_count}')
-        print(f'Total Collections across Databases Found: {collections_count}')
-        print(f'Total Indexes across Collections: {indexes_count}')
-        print('----------------------------------------')
-        print(f'Found {indexes_with_below_threshold_cardinality} index(es) with cardinality <= {threshold * 100}% across {collections_count} collection(s) and {database_count} database(s).')
-        print(f'Check the CSV file generated at {csv_file_name} for details.')
-
-      
-
+        databases = client.list_database_names()
+        if args.databases != "All":
+            databases = args.databases.split(",")
+        
+        db_counter = 0
+        coll_counter = 0
+        index_counter = 0
+        for db_name in databases:
+            db_counter = db_counter + 1
+            database = client[db_name]
+            coll_names = database.list_collection_names()
+            if args.collections != "All":
+                coll_names = args.collections.split(",")
+            for coll_name in coll_names[:max_collections]:
+                coll_counter = coll_counter + 1
+                collection = database[coll_name]
+                indexes = collection.list_indexes()
+                for index in indexes:
+                    result_row = {}
+                    if index['name'] != '_id_':
+                        index_name = list(index['key'].keys())[0]
+                        total = collection.count_documents({index_name:{"$exists":True}})
+                        distinct = len(collection.distinct(index_name))
+                        cardinality = 0
+                        isLowCardinality = 'N'
+                        if total > 0 and distinct > 0:
+                            index_counter = index_counter + 1
+                            cardinality = (distinct / total) * 100
+                            result_row['index_name'] = index_name
+                            result_row['collection_name'] = index['ns']
+                            result_row['cardinality'] = round(cardinality,4)
+                            if cardinality < threshold:
+                                isLowCardinality = 'Y'
+                            result_row['isLowCardinality'] = isLowCardinality
+                            result_row['totalDocsWithIndexValue'] = total
+                            result_row['totalDistinctValues'] = distinct
+                            results.append(result_row)
+                        
+                        
+            args.db_counter = db_counter
+            args.coll_counter = coll_counter
+            args.index_counter = index_counter
+        
+        return pd.DataFrame(results)
+        
+        
+        
     except Exception as e:
-        print("An error occurred:", e)
-
+        traceback.print_exception(*sys.exc_info())
+        print(e)
+        
+def main():
+    output = {}
+    get_param()
+    print("\nStarting Cardinality Check. Script may take few mins to finish.")
+    print("Finding indexes where Cardinality/Distinct Values are less than ( {}% )...\n".format(args.threshold))
+    results = start_cardinality_check()
+    print_output(results)
+    save_file(results)
 
 # insert two parameters here if not using the defaults
 if __name__ == "__main__":
-    conn_string = ''
-    main(conn_string)
+    main()
