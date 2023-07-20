@@ -8,7 +8,7 @@ import logging
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
-# Set these Environment variables in Lambda Configuration
+## Set the following 2 Environment variables in your Lambda Configuration
 DOCDB_SECRET_NAME = os.environ['DOCDB_SECRET_NAME']  
 THRESHOLD_SECONDS = int(os.environ['THRESHOLD_SECONDS']) 
 

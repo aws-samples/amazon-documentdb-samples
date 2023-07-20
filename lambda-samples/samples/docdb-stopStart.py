@@ -1,7 +1,7 @@
 import boto3
 import os
 
-# REMINDER: Set the following environment variable depending on which action the function should take
+## Set the following environment variable depending on which action the function should take
 # ACTION = stop | start  
 
 docdb_client = boto3.client('docdb')

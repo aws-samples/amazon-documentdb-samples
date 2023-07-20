@@ -8,7 +8,7 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 headers = {"X-Aws-Parameters-Secrets-Token": os.environ.get('AWS_SESSION_TOKEN')}
 
-# REMINDER: Set the following 3 environment variables in your Lambda function configuration
+## Set the following 3 environment variables in your Lambda function configuration
 # 1. DOCDB_SECRET_NAME: The name of the secret in AWS Secrets Manager containing DocumentDB credentials.
 # 2. DOCDB_DATABASE: The name of DocumentDB database.
 # 3. DOCDB_COLLECTION: The name of the DocumentDB collection.
