@@ -12,7 +12,9 @@ To create a layer that contains the Pymongo library (for Python), or the MongoDB
 A role allows you to define the necessary permissions and access rights that the Lambda function requires to interact with other AWS services and resources. 
  - Open the Identity and Access Management (IAM) console at https://console.aws.amazon.com/iamv2/
  - Create a policy that allows read access to `AWS Secrets Manager`. From the Access Management left-hand menu, choose Policies and then "Create Policy". Choose JSON and add the definition below. In the next step give the policy the name `AWSSecretsManagerReadAccess` and create it. 
- **Note**: This policy allows read access to all secrets, modify accordingly to permit access only to required secrets.
+
+**Note**: This policy allows read access to all secrets, modify accordingly to permit access only to required secrets.
+
 ```
 {
     "Version": "2012-10-17",
@@ -50,7 +52,13 @@ To allow access from the Lambda function, you need to update the security group 
 - Open the Amazon VPC console at https://console.aws.amazon.com/vpc/ and in the navigation pane choose `Security groups`, then select the security group attached with the Amazon DocumentDB cluster.
 - Edit inbound rules and add a new rule, Type Custom TCP, for port range enter 27017 (or the port configured for Amazon DocumentDB), source Custom and select the security group created at step 3.
 
-### 5. Create the Lambda function
+
+### 5. Create a VPC Endpoint for Secrets Manager
+To retrieve the credentials to the database securely, it is recommended to establish a private connection between the VPC used by Lambda and Secrets Manager, by creating an interface VPC endpoint.
+- Follow the steps to [Create an interface endpoint](https://docs.aws.amazon.com/vpc/latest/privatelink/create-interface-endpoint.html#create-interface-endpoint-aws). For AWS Service choose `com.amazonaws.<region name>.secretsmanager` and select the VPC used by Lambda and Amazon DocumentDB.
+- You'll attach a security group with the VPC endpoint. It's important to update the security group inbound rules, add a rule to allow TCP traffic on port 443 (https) with source the security group attached with the Lambda function. This will allow the Lambda function to connect to Secrets Manager and retrieve the credentials.
+
+### 6. Create the Lambda function
 
 - Open the Lambda console at https://console.aws.amazon.com/lambda/home#/functions and choose `Create function`.
 - Leave `Author from scratch` selected, and in Basic information enter a name for the function, for example `LambdaFunctionWithDocDB`.
@@ -58,3 +66,6 @@ To allow access from the Lambda function, you need to update the security group 
 - In the `Change default execution role` drop down select `Use an existing role` and choose the role created at step 2, `LambdaDocDBRole`.
 - In `Advanced Settings` select `Enable VPC` and choose the VPC where Amazon DocumentDB cluster is deployed, select the same `Subnets` as DocumentDB and for the Security group choose the one created at step 3.
 - Choose `Create function`.
+
+
+Finally, explore the [samples](https://github.com/aws-samples/amazon-documentdb-samples/tree/master/lambda-samples/samples) to experiment with several Lambda functions.
