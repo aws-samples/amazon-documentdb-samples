@@ -1,6 +1,7 @@
 # Lambda with Amazon DocumentDB
 
-Follow these steps in order to execute a Lambda function that interacts with an Amazon DocumentDB cluster
+Follow the steps below to properly configure and execute a Lambda function that interacts with an Amazon DocumentDB cluster.
+Explore the [samples](https://github.com/aws-samples/amazon-documentdb-samples/tree/master/lambda-samples/samples) to experiment with several Lambda functions.
 
 ### 1. Create a Lambda layer
 A Lambda layer is a package of custom code or libraries that can be added to your Lambda functions. It helps you avoid duplicating code and allows you to manage and share code and libraries across multiple Lambda functions.
@@ -66,6 +67,3 @@ To retrieve the credentials to the database securely, it is recommended to estab
 - In the `Change default execution role` drop down select `Use an existing role` and choose the role created at step 2, `LambdaDocDBRole`.
 - In `Advanced Settings` select `Enable VPC` and choose the VPC where Amazon DocumentDB cluster is deployed, select the same `Subnets` as DocumentDB and for the Security group choose the one created at step 3.
 - Choose `Create function`.
-
-
-Finally, explore the [samples](https://github.com/aws-samples/amazon-documentdb-samples/tree/master/lambda-samples/samples) to experiment with several Lambda functions.
