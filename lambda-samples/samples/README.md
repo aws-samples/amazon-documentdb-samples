@@ -35,35 +35,21 @@ Python 3.x
 
 ```
 {
-  "Version": "2012-10-17",
-  "Statement": [
-      {
-          "Sid": "VisualEditor0",
-          "Effect": "Allow",
-          "Action": [
-              "rds:DescribeDBClusterParameters",
-              "rds:StartDBCluster",
-              "rds:StopDBCluster",
-              "rds:DescribeDBEngineVersions",
-              "rds:DescribeGlobalClusters",
-              "rds:DescribePendingMaintenanceActions",
-              "rds:DescribeDBLogFiles",
-              "rds:StopDBInstance",
-              "rds:StartDBInstance",
-              "rds:DescribeReservedDBInstancesOfferings",
-              "rds:DescribeReservedDBInstances",
-              "rds:ListTagsForResource",
-              "rds:DescribeValidDBInstanceModifications",
-              "rds:DescribeDBInstances",
-              "rds:DescribeSourceRegions",
-              "rds:DescribeDBClusterEndpoints",
-              "rds:DescribeDBClusters",
-              "rds:DescribeDBClusterParameterGroups",
-              "rds:DescribeOptionGroups"
-          ],
-          "Resource": "*"
-      }
-  ]
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "rds:StartDBCluster",
+                "rds:StopDBCluster",
+                "rds:StopDBInstance",
+                "rds:StartDBInstance",
+                "rds:ListTagsForResource",
+                "rds:DescribeDBClusters"
+            ],
+            "Resource": "*"
+        }
+    ]
 }
 ```
 
