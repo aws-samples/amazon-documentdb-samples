@@ -1,25 +1,32 @@
 import pymongo
-import boto3
-import json
 from datetime import datetime
-import csv
 import argparse, sys
-import certifi
 import traceback
 import pandas as pd 
-import numpy as np
+
 
 global args
+global client
 
 
+def init_conn():
+    global client
+    try:
+        client = pymongo.MongoClient(args.connection_string)
+    except Exception as e:
+        traceback.print_exception(*sys.exc_info())
+        print(e)
+        
+    
 def get_param():
     global args
     parser = argparse.ArgumentParser()
     parser.add_argument("-s", "--connection_string", action="store", default=None, help="DocumentDB connnection string")
-    parser.add_argument("-m", "--max_collections", action="store", default=100, help="Maximum number of collections to scan per database. Default 100")
+    parser.add_argument("-m", "--max_collections", action="store", default="100", help="Maximum number of collections to scan per database. Default 100")
     parser.add_argument("-t", "--threshold", action="store", default="1", help="Percetage of Cardinality threshold. Default 1%")
     parser.add_argument("-d", "--databases", action="store", default="All", help="Comma separated list of database names. Default=All")
     parser.add_argument("-c", "--collections", action="store", default="All", help="Comma separated list of collection names. Default=All")
+    parser.add_argument("-sample", "--sample_count", action="store", default="100000", help="Numbers of documents to sample in a collection. Increasing this may increase the execution time for this script.")
     
     args = parser.parse_args()
 
@@ -60,15 +67,34 @@ def save_file(results):
     print("Detailed report is generated and saved at `{}`".format(file_name))
     print("##### Done #####")
 
+def get_index_cardinality(db_name, coll_name, index_name):
+    global client
+    sample_count = int(args.sample_count)
+    pipeline = [  
+        { "$sample" : { "size" : sample_count } },
+        { "$group" : { "_id": "$"+index_name, "count" : {"$sum" : 1}  } }
+        ]
+    
+    #print(f"Finding distinct values for {index_name} {db_name} {coll_name}")    
+    values = client[db_name][coll_name].aggregate( pipeline )
+    df = pd.DataFrame(values)
+    distinct = len(df)
+    if distinct > 0:    
+        total = df['count'].sum()
+        return { "total": total, "distinct": distinct, "cardinality": ( distinct / total ) * 100  }
+    else:
+        return {"total": 0}
+    
+
 def start_cardinality_check():
     global args
+    global client
     results = []
     connection_string = args.connection_string
-    max_collections = args.max_collections
+    max_collections = int(args.max_collections)
     threshold = float(args.threshold) 
     
     try:
-        client = pymongo.MongoClient(connection_string)
         
         databases = client.list_database_names()
         if args.databases != "All":
@@ -91,21 +117,22 @@ def start_cardinality_check():
                     result_row = {}
                     if index['name'] != '_id_':
                         index_name = list(index['key'].keys())[0]
-                        total = collection.count_documents({index_name:{"$exists":True}})
-                        distinct = len(collection.distinct(index_name))
+
+                        
                         cardinality = 0
                         isLowCardinality = 'N'
-                        if total > 0 and distinct > 0:
-                            index_counter = index_counter + 1
-                            cardinality = (distinct / total) * 100
+                       
+                        index_counter = index_counter + 1
+                        rs = get_index_cardinality(db_name, coll_name, index_name)
+                        if rs['total'] > 0:
                             result_row['index_name'] = index_name
                             result_row['collection_name'] = index['ns']
-                            result_row['cardinality'] = round(cardinality,4)
-                            if cardinality < threshold:
+                            result_row['cardinality'] = round(rs['cardinality'],4)
+                            if rs['cardinality'] < threshold:
                                 isLowCardinality = 'Y'
                             result_row['isLowCardinality'] = isLowCardinality
-                            result_row['totalDocsWithIndexValue'] = total
-                            result_row['totalDistinctValues'] = distinct
+                            result_row['totalDocsWithIndexValue'] = rs['total']
+                            result_row['totalDistinctValues'] = rs['distinct']
                             results.append(result_row)
                         
                         
@@ -122,13 +149,18 @@ def start_cardinality_check():
         print(e)
         
 def main():
-    output = {}
-    get_param()
-    print("\nStarting Cardinality Check. Script may take few mins to finish.")
-    print("Finding indexes where Cardinality/Distinct Values are less than ( {}% )...\n".format(args.threshold))
-    results = start_cardinality_check()
-    print_output(results)
-    save_file(results)
+    try:
+        output = {}
+        get_param()
+        init_conn()
+        print("\nStarting Cardinality Check. Script may take few mins to finish.")
+        print("Finding indexes where Cardinality/Distinct Values are less than ( {}% )...\n".format(args.threshold))
+        results = start_cardinality_check()
+        print_output(results)
+        save_file(results)
+    except Exception as e:
+        traceback.print_exception(*sys.exc_info())
+        print(e)        
 
 # insert two parameters here if not using the defaults
 if __name__ == "__main__":
