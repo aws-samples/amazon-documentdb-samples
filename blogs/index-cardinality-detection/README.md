@@ -14,11 +14,12 @@ Amazon DocumentDB uses a B-tree data structure for its indexes. A B-tree index u
 
 | Parameter        | Details          | Default  | Supported Values |
 | ------------- |:-------------:| -----:| -----: |
-| -c, --connection_string      | Connection String of Amazon DocumentDB Instance |  | |
+| -s, --connection_string      | Connection String of Amazon DocumentDB Instance |  | |
 | -m, --max_collections     | Maximum number of collections to scan in a database     | 100   | |
 | -t, --threshold | Index Cardinality threshold percentage. Indexes with less than this % will be reported | 1 | |
 | -d, --databases | Command separated list of databases to check cardinality | All | |
 | -c, --collections | Command separated list of collections to check cardinality | All | |
+| -sample, --sample_count | Max documents to sample for each index. Increasing this limit may result in higher IOPS cost and extended execution time | 100000 | |
 
 ### How to run the script 
 1. Download CA cert file
