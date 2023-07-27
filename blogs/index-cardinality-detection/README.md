@@ -1,14 +1,14 @@
 # Detecting low cardinality indexes for DocumentDB Performance 
 
-Amazon DocumentDB uses a B-tree data structure for its indexes. A B-tree index uses a hierarchical structure that stores data in its nodes in a sorted order. B-Trees are excellent data structure for fast retrievals when index cardinality is high. As a rule of thumb Amazon DocumnetDB indexes should have less than 1% selectivity. This script accepts documentdb cluster endpoint as a parameter and generates a report across all the databases and collections for indexes lower than threshold ( Default 1% ) provided. 
+Amazon DocumentDB uses a B-tree data structure for its indexes. A B-tree index uses a hierarchical structure that stores data in its nodes in a sorted order. B-Trees are excellent data structure for fast retrievals when index cardinality is high. As a rule of thumb Amazon DocumentDB indexes should have less than 1% selectivity. This script accepts documentdb cluster endpoint as a parameter and generates a report across all the databases and collections for indexes lower than threshold ( Default 1% ) provided. 
 
 ### Supported Parameters 
 
 ### Requirements 
 * Python 3.9+ installed 
-* Boto3 
+* Pandas 
 * Mongo Client 4.0+ 
-* AWS Cli and Amazon DocumnetDB 
+* AWS Cli and Amazon DocumentDB 
 
 ### Supported Parameters 
 

@@ -10,6 +10,9 @@ global client
 
 
 def init_conn():
+    """
+    initialize connection to documentdb    
+    """     
     global client
     try:
         client = pymongo.MongoClient(args.connection_string)
@@ -19,14 +22,19 @@ def init_conn():
         
     
 def get_param():
+    """
+    Accepts command line parameters from users. Parameters are described in README.md and --help of cli
+
+    """     
     global args
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-s", "--connection_string", action="store", default=None, help="DocumentDB connnection string")
-    parser.add_argument("-m", "--max_collections", action="store", default="100", help="Maximum number of collections to scan per database. Default 100")
-    parser.add_argument("-t", "--threshold", action="store", default="1", help="Percetage of Cardinality threshold. Default 1%")
-    parser.add_argument("-d", "--databases", action="store", default="All", help="Comma separated list of database names. Default=All")
-    parser.add_argument("-c", "--collections", action="store", default="All", help="Comma separated list of collection names. Default=All")
-    parser.add_argument("-sample", "--sample_count", action="store", default="100000", help="Numbers of documents to sample in a collection. Increasing this may increase the execution time for this script.")
+    parser = argparse.ArgumentParser(prog='python detect-cardinality.py',
+                    description='This program samples documents in each collection to find index cardinality. Sample count is set at default 100K and can be changed with --sample_count parameter. ')
+    parser.add_argument("-s", "--connection_string",  help="DocumentDB connnection string", required=True)
+    parser.add_argument("-m", "--max_collections",default="100", help="Maximum number of collections to scan per database. Default 100")
+    parser.add_argument("-t", "--threshold",default="1", help="Percetage of Cardinality threshold. Default 1 percent")
+    parser.add_argument("-d", "--databases",default="All", help="Comma separated list of database names. Default=All")
+    parser.add_argument("-c", "--collections",default="All", help="Comma separated list of collection names. Default=All")
+    parser.add_argument("-sample", "--sample_count",default="100000", help="Numbers of documents to sample in a collection. Increasing this may increase the execution time for this script.")
     
     args = parser.parse_args()
 
@@ -36,6 +44,12 @@ def get_param():
     
 
 def print_output(results):
+    """
+    Prints the summarized output of cardinality test. Shows the location of detail summary csv
+
+    :param results: Dataframe containing cardinality results for each index
+    :return: prints the output on the console. 
+    """     
     print("\n------------------------------------------")
     print("Total Databases Found: {}".format(args.db_counter))
     print("Total collections Found across {} database(s): {}".format(args.db_counter, args.coll_counter))
@@ -47,10 +61,6 @@ def print_output(results):
     low_cardinal_results = low_cardinal_results.sort_values('cardinality', ascending=True)
 
     print("######Found {} indexes that may have low cardinality values.".format( len(low_cardinal_results) ))
-
-    
-    #sorted_results = sorted(results, key=lambda x: x['cardinality'], reverse=False)
-    #sorted_results = results.sort_values('cardinality', ascending=True)
     
     top_indexes = []
     for index, row in low_cardinal_results.iterrows():
@@ -60,6 +70,11 @@ def print_output(results):
     print("------------------------------------------")
     
 def save_file(results):
+    """
+    function saves dataframe of results into a csv file with current date in the working directory. 
+    :param results: dataframe containing row for each index and cardinality calculation
+    :return: Saves the file to working directory. 
+    """     
     date_now = str(datetime.now().isoformat())
     file_name = 'cardinality_output_'+date_now+'.csv'
     
@@ -68,6 +83,14 @@ def save_file(results):
     print("##### Done #####")
 
 def get_index_cardinality(db_name, coll_name, index_name):
+    """
+    Calculates the cardinality for a given database, collection and index_name. This function is called for each index in the database. 
+
+    :param db_name: database name 
+    :param coll_name: collection name to find index in
+    :param index_name: check if index is low cardinality. 
+    :return: json object containing total values, distinct values and cardinality % for that index
+    """     
     global client
     sample_count = int(args.sample_count)
     pipeline = [  
@@ -75,7 +98,6 @@ def get_index_cardinality(db_name, coll_name, index_name):
         { "$group" : { "_id": "$"+index_name, "count" : {"$sum" : 1}  } }
         ]
     
-    #print(f"Finding distinct values for {index_name} {db_name} {coll_name}")    
     values = client[db_name][coll_name].aggregate( pipeline )
     df = pd.DataFrame(values)
     distinct = len(df)
@@ -87,6 +109,17 @@ def get_index_cardinality(db_name, coll_name, index_name):
     
 
 def start_cardinality_check():
+    """
+    function does the following:
+    1. Gets lists of databases
+    2. For each database gets lists of collection
+    3. For each collection gets list of indexes 
+    4. For each index runs cardinality check for sample_count set 
+
+    User can optionally pass database or collection name to reduce the scope of cardinality check. 
+
+    :return: Returns pandas dataframe containing rows for each index and cardinality calculation. 
+    """     
     global args
     global client
     results = []
@@ -149,6 +182,10 @@ def start_cardinality_check():
         print(e)
         
 def main():
+    """
+    main function kicks off parameter collection, initialization of connection and calling cardinality detection.    
+    :return: prints output of cardinality check and saves results to csv file
+    """     
     try:
         output = {}
         get_param()
@@ -162,6 +199,8 @@ def main():
         traceback.print_exception(*sys.exc_info())
         print(e)        
 
-# insert two parameters here if not using the defaults
+"""
+Cardinality check script starts here
+"""
 if __name__ == "__main__":
     main()
