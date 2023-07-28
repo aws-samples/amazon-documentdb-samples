@@ -8,7 +8,6 @@ Amazon DocumentDB uses a B-tree data structure for its indexes. A B-tree index u
 * Python 3.9+ installed 
 * Pandas 
 * Mongo Client 4.0+ 
-* AWS Cli and Amazon DocumentDB 
 
 ### Supported Parameters 
 
@@ -28,7 +27,7 @@ Amazon DocumentDB uses a B-tree data structure for its indexes. A B-tree index u
     ```
 2. Install python dependencies 
     ```
-    sudo pip3 install pymongo boto3
+    sudo pip3 install requirements.txt
     ```
 3. Install mongo client and mongoimport util. This command requires an update if running on non-linux environments
     ```
@@ -76,8 +75,7 @@ Amazon DocumentDB uses a B-tree data structure for its indexes. A B-tree index u
 5. Clone this repository locally 
     ```
     git clone https://github.com/aws-samples/amazon-documentdb-samples.git
-    cd amazon-documentdb-samples/blogs/index-cardinality-detection
-    pip install -r requirements.txt
+    cd amazon-documentdb-samples/blogs/index-cardinality-detection    
     ```
 5. Run  cardinality detection using the following code and review the results. 
     ```
