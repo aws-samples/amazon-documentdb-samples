@@ -1,6 +1,6 @@
 # Detecting low cardinality indexes for DocumentDB Performance 
 
-Amazon DocumentDB uses a B-tree data structure for its indexes. A B-tree index uses a hierarchical structure that stores data in its nodes in a sorted order. B-Trees are excellent data structure for fast retrievals when index cardinality is high. As a rule of thumb Amazon DocumentDB indexes should have less than 1% selectivity. This script accepts documentdb cluster endpoint as a parameter and generates a report across all the databases and collections for indexes lower than threshold ( Default 1% ) provided. 
+Amazon DocumentDB indexes are a data structure using a hierarchical and sorted organisation, also known as B-tree. B-tree indexes are highly effective data structures for rapid data retrieval when the cardinality is high (a large number of unique values).  As a best practice, it is recommended to limit the creation of indexes to fields where the number of duplicate values is less than 1% of the total number of documents in the collection.  The following script analyses the collections in all or a specified database, by taking a sample of documents and identifies indexes where the total number of distinct values is less than a threshold (default 1%) 
 
 ### Requirements 
 * Python 3.9+ installed 
@@ -25,7 +25,7 @@ Amazon DocumentDB uses a B-tree data structure for its indexes. A B-tree index u
     ```
 2. Install python dependencies 
     ```
-    sudo pip3 install requirements.txt
+    sudo pip3 install -r requirements.txt
     ```
 3. Install mongo client and mongoimport util. This command requires an update if running on non-linux environments
     ```
@@ -79,7 +79,11 @@ Amazon DocumentDB uses a B-tree data structure for its indexes. A B-tree index u
     ```
     python3 detect-cardinality.py --connection_string "[DOCDB-CONNECTING-STRING]"
     ```
-    * Update [DOCDB-CONNECTING-STRING] with the connection string format available in DocumentDB AWS Console
+    * Update `[DOCDB-CONNECTING-STRING]` with the connection string format available in DocumentDB AWS Console. With python 4+ `ssl` has been replaced with `tls` and `ssl_ca_certs` has been replace with `tlsCAFile` in parameters. 
+    e.g. replace [USERNAME], [PASSWORD], [CLUSTER-ENDPOINT] 
+    ```
+    mongodb://[USERNAME]:[PASSWORD]@[CLUSTER-ENDPOINT]:27017/?tls=true&tlsCAFile=global-bundle.pem
+    ```
 
 
     This will produce the results similar to this:

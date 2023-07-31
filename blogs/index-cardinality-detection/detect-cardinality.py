@@ -24,14 +24,13 @@ def init_conn():
 def get_param():
     """
     Accepts command line parameters from users. Parameters are described in README.md and --help of cli
-
     """     
     global args
     parser = argparse.ArgumentParser(prog='python detect-cardinality.py',
                     description='This program samples documents in each collection to find index cardinality. Sample count is set at default 100K and can be changed with --sample_count parameter. ')
     parser.add_argument("-s", "--connection_string",  help="DocumentDB connnection string", required=True)
     parser.add_argument("-m", "--max_collections",default="100", help="Maximum number of collections to scan per database. Default 100")
-    parser.add_argument("-t", "--threshold",default="1", help="Percetage of Cardinality threshold. Default 1 percent")
+    parser.add_argument("-t", "--threshold",default="1", help="Percentage of Cardinality threshold. Default 1 percent")
     parser.add_argument("-d", "--databases",default="All", help="Comma separated list of database names. Default=All")
     parser.add_argument("-c", "--collections",default="All", help="Comma separated list of collection names. Default=All")
     parser.add_argument("-sample", "--sample_count",default="100000", help="Numbers of documents to sample in a collection. Increasing this may increase the execution time for this script.")
