@@ -142,7 +142,7 @@ def start_cardinality_check():
             if args.collections != "All":
                 coll_names = args.collections.split(",")
             for coll_name in coll_names[:max_collections]:
-                print("### Staring cardinality check for collection - {}".format(coll_name)) 
+                print("### Starting cardinality check for collection - {} .... ".format(coll_name)) 
                 coll_counter = coll_counter + 1
                 collection = database[coll_name]
                 indexes = collection.list_indexes()
@@ -168,7 +168,7 @@ def start_cardinality_check():
                             result_row['totalDistinctValues'] = rs['distinct']
                             results.append(result_row)
                         
-                print("### Finished collecting data for collection - {}\n".format(coll_name))        
+                print("### Finished cardinality check for collection - {}\n".format(coll_name))        
             args.db_counter = db_counter
             args.coll_counter = coll_counter
             args.index_counter = index_counter
