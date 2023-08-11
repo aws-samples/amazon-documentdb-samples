@@ -11,12 +11,12 @@ Amazon DocumentDB indexes are a data structure using a hierarchical and sorted o
 
 | Parameter        | Details          | Default  | Supported Values |
 | ------------- |:-------------:| -----:| -----: |
-| -s, --connection_string      | Connection String of Amazon DocumentDB Instance |  | |
-| -m, --max_collections     | Maximum number of collections to scan in a database     | 100   | |
+| -s, --url      | Connection String of Amazon DocumentDB Instance |  | |
+| -m, --max-collections     | Maximum number of collections to scan in a database     | 100   | |
 | -t, --threshold | Index Cardinality threshold percentage. Indexes with less than this % will be reported | 1 | |
 | -d, --databases | Command separated list of databases to check cardinality | All | |
 | -c, --collections | Command separated list of collections to check cardinality | All | |
-| -sample, --sample_count | Max documents to sample for each index. Increasing this limit may result in higher IOPS cost and extended execution time | 100000 | |
+| -sample, --sample-count | Max documents to sample for each index. Increasing this limit may result in higher IOPS cost and extended execution time | 100000 | |
 
 ### How to run the script 
 1. Download CA cert file
@@ -77,7 +77,7 @@ Amazon DocumentDB indexes are a data structure using a hierarchical and sorted o
     ```
 5. Run  cardinality detection using the following code and review the results. 
     ```
-    python3 detect-cardinality.py --connection_string "[DOCDB-CONNECTING-STRING]"
+    python3 detect-cardinality.py --url "[DOCDB-CONNECTING-STRING]"
     ```
     * Update `[DOCDB-CONNECTING-STRING]` with the connection string format available in DocumentDB AWS Console. With python 4+ `ssl` has been replaced with `tls` and `ssl_ca_certs` has been replace with `tlsCAFile` in parameters. 
     e.g. replace [USERNAME], [PASSWORD], [CLUSTER-ENDPOINT] 

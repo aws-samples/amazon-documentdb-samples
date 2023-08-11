@@ -15,7 +15,7 @@ def init_conn():
     """     
     global client
     try:
-        client = pymongo.MongoClient(args.connection_string)
+        client = pymongo.MongoClient(args.url)
     except Exception as e:
         traceback.print_exception(*sys.exc_info())
         print(e)
@@ -27,17 +27,17 @@ def get_param():
     """     
     global args
     parser = argparse.ArgumentParser(prog='python detect-cardinality.py',
-                    description='This program samples documents in each collection to find index cardinality. Sample count is set at default 100K and can be changed with --sample_count parameter. ')
-    parser.add_argument("-s", "--connection_string",  help="DocumentDB connnection string", required=True)
-    parser.add_argument("-m", "--max_collections",default="100", help="Maximum number of collections to scan per database. Default 100")
+                    description='This program samples documents in each collection to find index cardinality. Sample count is set at default 100K and can be changed with --sample-count parameter. ')
+    parser.add_argument("-s", "--url",  help="DocumentDB connnection string", required=True)
+    parser.add_argument("-m", "--max-collections",default="100", help="Maximum number of collections to scan per database. Default 100")
     parser.add_argument("-t", "--threshold",default="1", help="Percentage of Cardinality threshold. Default 1 percent")
     parser.add_argument("-d", "--databases",default="All", help="Comma separated list of database names. Default=All")
     parser.add_argument("-c", "--collections",default="All", help="Comma separated list of collection names. Default=All")
-    parser.add_argument("-sample", "--sample_count",default="100000", help="Numbers of documents to sample in a collection. Increasing this may increase the execution time for this script.")
+    parser.add_argument("-sample", "--sample-count",default="100000", help="Numbers of documents to sample in a collection. Increasing this may increase the execution time for this script.")
     
     args = parser.parse_args()
 
-    if args.connection_string is None:
+    if args.url is None:
         print("Connection string is required")
         sys.exit(1)    
     
@@ -56,6 +56,8 @@ def print_output(results):
     print("------------------------------------------")
     
     print("\n------------------------------------------")
+    
+    
     low_cardinal_results = results[results["isLowCardinality"]=="Y"]
     low_cardinal_results = low_cardinal_results.sort_values('cardinality', ascending=True)
 
@@ -107,6 +109,9 @@ def get_index_cardinality(db_name, coll_name, index_name):
         return {"total": 0}
     
 
+def _print_collection_max_msg(coll_count, db_name):
+    print(" ### This script will scan maximum {} of total {} in database: {} \n Consider increase --max-collection to include more collections.".format(args.max_collections, coll_count, db_name))        
+
 def start_cardinality_check():
     """
     function does the following:
@@ -122,7 +127,7 @@ def start_cardinality_check():
     global args
     global client
     results = []
-    connection_string = args.connection_string
+    connection_string = args.url
     max_collections = int(args.max_collections)
     threshold = float(args.threshold) 
     
@@ -139,6 +144,12 @@ def start_cardinality_check():
             db_counter = db_counter + 1
             database = client[db_name]
             coll_names = database.list_collection_names()
+            
+            coll_count = len(coll_names)
+            
+            if coll_count > max_collections:
+                _print_collection_max_msg(coll_count, db_name)
+            
             if args.collections != "All":
                 coll_names = args.collections.split(",")
             for coll_name in coll_names[:max_collections]:
@@ -193,8 +204,11 @@ def main():
         print("\nStarting Cardinality Check. Script may take few mins to finish.")
         print("Finding indexes where Cardinality/Distinct Values are less than ( {}% )...\n".format(args.threshold))
         results = start_cardinality_check()
-        print_output(results)
-        save_file(results)
+        if results.empty:
+            print("All indexes are in good health. Cardinality detection script did not find any low cardinality indexes. ")
+        else:
+            print_output(results)
+            save_file(results)
     except Exception as e:
         traceback.print_exception(*sys.exc_info())
         print(e)        
