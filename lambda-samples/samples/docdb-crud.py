@@ -49,7 +49,7 @@ def connect_to_docdb():
                 cluster_uri,
                 tls=True,
                 retryWrites=False,
-                tlsCAFile='/opt/python/global-bundle.pemm',
+                tlsCAFile='/opt/python/global-bundle.pem',
                 username=secret_username,
                 password=secret_password,
                 authSource='admin')
