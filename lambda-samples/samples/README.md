@@ -13,7 +13,7 @@ The `docdb-crud.py` Lambda function exemplify CRUD (Create, Read, Update, Delete
 Python 3.x
 
 **Dependencies:**
-- pymongo: Required to establish connections and perform operations with the Amazon DocumentDB cluster. Add a layer that contains the Python module.
+- pymongo: Required to establish connections and perform operations with the Amazon DocumentDB cluster. Add a layer that contains the Python module and the CA certificate (https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem).
 
 **Environment variables:**
 - DOCDB_SECRET_NAME: The name of the secret in AWS Secrets Manager containing DocumentDB credentials.
@@ -65,7 +65,7 @@ The `docdb-killLongOp.py` Lambda function will identify and terminate long-runni
 Python 3.x
 
 **Dependencies:**
-- pymongo: Required to establish connections and interact with the MongoDB cluster. Add a layer that contains the Python module.
+- pymongo: Required to establish connections and interact with the Amazon DocumentDB cluster. Add a layer that contains the Python module.
 
 **Environment variables:**
  - DOCDB_SECRET_NAME: The name of the secret in AWS Secrets Manager containing DocumentDB credentials.
