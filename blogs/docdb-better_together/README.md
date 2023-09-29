@@ -1,108 +1,108 @@
-## Requirement:
+# Amazon ElastiCache Caching for Amazon DocumentDB (with MongoDB compatibility)
+__Optimize cost, increase throughput and boost performance of Amazon RDS workloads using Amazon ElastiCache__
 
-A suitable Elastic Compute Cloud or EC2 environment with sufficient CPU and RAM with Python version 3.8.
+The purpose of this project is to help you reproduce test harness of DocumentDB [Amazon DocumentDB ](https://aws.amazon.com/documentdb/) with and without a Caching service such as [Amazon ElastiCache](https://aws.amazon.com/elasticache/).
 
-1. Setup on Amazon EC2:
+In-memory caching improves application performance by storing frequently accessed data items in memory, so that subsequent reads can be served significantly faster than reading from the primary database that may default to disk-based storage.
 
-Update the setup_lab.sh script by adding your environment specific endpoints, username, password, and other environment specific parameters.
-You can find the values in your AWS console by navigating to the service.
+### Sample dataset
 
-Source the file so that the configuration values are exported to the current shell.
+For practical purposes the data used for this test was 10 million auto generated JSON documents where the _id filed was an increasing numeric value. 
 
-	source setup_lab.sh
+You can bring your own databaset and run this harness as long at the document id filed numeric as we randomly generate numeric values.
 
-Create a lab directory
+### Architecture
 
-	mkdir better-together
+The following Architecture diagram shows the test environment using [Amazon Elastic Compute Cloud](https://aws.amazon.com/pm/ec2/) (EC2) as the compute layer where 1 or more instances can be used to send requests to our databases DocumentDB + ElastiCache. For this particular test [Amazon ElastiCache for Redis](https://aws.amazon.com/elasticache/redis/) is used, but note that a similar test can be done using [Amazon ElastiCache for Memcached](https://aws.amazon.com/elasticache/memcached/). 
 
-2. Copy the necessary files to your lab.
+![Architecture diagram of test environment](docs/DOCDB_cache.png)
 
-Copy the 4 files from the repo or clone the entire repo.
-Make sure you have the following files and directories in your lab environment's home directory:
+## Deploy Infrastructure
 
-load_test/
-logs/
-plot_better_together_results.ipynb
-README
-requirements.txt
+### Run tests on your existing infrastructure
 
-Under load_test direcotry you need the following two Python scripts:
+__Prerequisites__
 
-ls -1 load_test/
-scenario01_docdb_test.py
-scenario02_docdb_test.py
+- [Python 3.8+](https://www.python.org/)
+- DocumentDB service that you have access to
+- ElastiCache instance that you have access to
+- EC2 Instace with access to an ElastiCache and DocumentDB clusters and a public IP.
+- For the security group your EC2 host belongs to update the inbound rules to allow cutom TCP on port 8888 from your computer IP only. i.e IP/32. 
 
-3.  Python virtual environment
+1. Log into the Bastion Host EC2 instance
 
-Create a virtual environment in your lab directory
+2. Clone this repository
+```bash
+git clone https://github.com/aws-samples/amazon-documentdb-samples/tree/master
+cd better-together
+```
 
-	python3 -m venv $PWD/.venv
+## Run Performance Tests
 
-Activate it and verify the version:
+1. Configure performance test
 
-	$ source .venv/bin/activate
-    $ python -V
-	$ Python 3.8.16
+```bash
+cd better-together
+# Create a Python environment
+python3 -m venv .venv
+source .venv/bin/activate
+# Check version
+python -V
+# Install required packages
+pip install -r requirements.txt
+cp .env.example .env
+```
 
-Install required packages:
+2. Configure `ElastiCache` and `DocumentDB` details by updating the `.env` file
+```
+export DOCDB_HOST=<your documentdb endpoint>
+export DOCDB_DB="better_together"
+export DOCDB_COL="test_data"
+export DOCDB_USER="docdbadmin"
+export DOCDB_PASS="<your password>"
+export DOCDB_PORT=27017
 
-	pip install -r requirements.txt
+export ELASTICACHE_ENDPOINT=<your elasticache endpoint>
+export ELASTICACHE_PORT=6379
+```
 
-4.  Execution
+3. Run intial load test Without ElastiCache
+```bash
+python load_test/scenario01_docdb_test.py --threads 25 --queries 10000
+```
 
-There are two scenarios: scenario01 using AWS DocumentDB only and 2 DocumentDB paired with AWS ElastiCache
+The output in the console should look similar to the following screenshot:
 
-Sample Execution:
-Both scripts take the same parameters.
-1 The number of threads
-2 The number of executions per thread
-3 Logfile identifier
+![DOCDB_Test](docs/DOCDB_Test.png)
 
-All parameters are optional and they default to the following values:
+For different loads adjust the number of threads and/or number of queries to be execute. 
+The default are 4 threads and 10 execution. Use --log-tag to use specific log string else it default to a random string. You can increase the load by executing multiple scripts in parallel. Make sure to use the same log_tag for easy of analysis.
 
-number of threads 25
-number of execution 10000
-logfile identifier a random generated string
+4. Run loat test With ElastiCache
 
-For example, one thread executing 10 queries, and random generated log identifier:
+```bash
+python load_test/scenario02_docdb_test.py --threads 25 --queries 10000
+```
 
-	python load_test/scenario02_docdb_test.py 1 10
-	Connected to DocumentDB and found a random document
-	Connected to ElastiCache
-	Cache hits: 10
-	Cache misses: 0
-	Logfile located here: logs/1/scenario02_DOCDB_9929_37zczgu8.json
+The output in the console should look similar to the following screenshot:
 
-5.  Analyze and visualize results via the included Jupyter notebook.
+![DOCDB-ElastiCache_Test](docs/DOCDB-ElastiCache_Test.png)
 
-To start Jupyter lab in your virtual envirnment execute:
+5. Analyze performance metrics via the included Jutyter notebook
 
-  	jupyter lab --ip 0.0.0.0
+```bash
+jupyter lab --ip 0.0.0.0
+```
+The output in the console should look similar to the following screenshot:
 
-From your AWS console or similar open a browser to the EC2's public IP address. Change the URL from https to http and the port to 8888.
-Make sure that you have opened ingress rules only for your computer IP address on port 8888.
+![DOCDB_Test](docs/Jupyter.png)
 
-example URL:
+Capture the token and use it in your browser to have access to the Jupyter notebook.
 
-    <http://1.2.3.4:8888/>
-
-Once Jupyter starts up it will display the access as one of the last messages.
-
-	<http://127.0.0.1:8888/lab?token=58b4cbaa7202f3bf8757310d9b2b8548555b508c815479b1>
-
-Copy the string after the equal sign and paste it into the newly opened tab on your browser. The notebook will load.
-
-Once the notebook is loaded select the file plot_better_together_results.ipynb if not already selected.
-Update the value of the scenario variable with the logfile name displayed after the execution.
-
+In your browser enter the bastion host public IP. Make sure your VPC security group  Remove the "s" from the URL as this note book is not secure. Update the port to 8888. For example: http://1.2.3.4:8888/
+Enter the logfile name you captured during the execution in the notebook cell and run all cells.
 For example:
 
-    scenario = 'scenario02_DOCDB_929_37zczgu8.json'
+![DOCDB_Test](docs/Update_log.png)
 
-Then select Run->Run All Cells
-
-Note: ElastiCache is designed for ultra-high speed.
-Small execution sets are not going to generate meaningful results that is why the default values are set to 25 threads and 10000 execution per thread.
-We suggest to start with a smaller workload and gradually increase it. Perhaps start with 2 threads and 5000 executions.
-
-
+### Credits

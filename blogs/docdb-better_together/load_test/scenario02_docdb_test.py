@@ -10,23 +10,24 @@ from decouple import config
 import pymongo
 import string
 from redis import RedisCluster as Redis
-from redis.commands.json.path import Path
+#from redis.commands.json.path import Path
 
 cache_hit = 0
 cache_miss = 0
 
 # Set the test execution parameters or use defaults
-max_threads = 25
-if len(sys.argv) > 1:
-  max_threads = int(sys.argv[1])
+import argparse
+parser = argparse.ArgumentParser(description=f"AWS Samples - Harness test for RDBMS and Cache")
+parser.add_argument('--threads', type=int, default=4, help='Number of threads to spawn.')
+parser.add_argument('--queries', type=int, default=10, help='Number of queries to be run by each thread.')
+# parser.add_argument('--read_rate', type=int, default=80, help='Number of queries to be run by each thread.')
+parser.add_argument('--log_tag', type=str, help='A unique string to be applided to the logfile.')
 
-max_queries = 10000
-if len(sys.argv) > 2:
-  max_queries = int(sys.argv[2])
+args = parser.parse_args()
 
-log_ext = ''.join(random.choices(string.ascii_lowercase + string.digits, k=8))
-if len(sys.argv) > 3:
-  log_ext = str(sys.argv[3])
+if not args.log_tag:
+    args.log_tag = ''.join(random.choices(string.ascii_lowercase + string.digits, k=8))
+
 
 # Define a thread-local storage object to hold connections
 thread_local = threading.local()
@@ -53,14 +54,18 @@ try:
     if document:
        print("Connected to DocumentDB and found a random document")
 
-    # Create two connections to ElastiCache distribute reads from writes
+    # Create two ElastiCache connection to distribute reads from writes
     # Since EC is configured in cluster mode enabled the single endpoint connection is used
-    ec_write = Redis(host=params['ec_host'], port=params['ec_port'], decode_responses=False)
-    ec_read = Redis(host=params['ec_host'], port=params['ec_port'], read_from_replicas=True, decode_responses=True)
+    # If encryption in transit is enabled:
+    # ec_write = Redis(host=params['ec_host'], port=params['ec_port'], ssl=True, decode_responses=False, socket_connect_timeout = 5)
+    # ec_read = Redis(host=params['ec_host'], port=params['ec_port'], ssl=True, read_from_replicas=True, decode_responses=True, socket_connect_timeout = 5)
+    # If encryption in transit is not enabled
+    ec_write = Redis(host=params['ec_host'], port=params['ec_port'], decode_responses=False, socket_connect_timeout = 5)
+    ec_read = Redis(host=params['ec_host'], port=params['ec_port'], read_from_replicas=True, decode_responses=True, socket_connect_timeout = 5)
     print("Connected to ElastiCache")
 
 except Exception as e:
-  print("DocumentDB exception occurred")
+  print("Connection exception occurred")
   print(e)
   exit(1)
 
@@ -72,12 +77,12 @@ def metrics_by_time():
     """
     global thread_metrics, cache_hit, cache_miss
 
-    for q in range(max_queries):
+    for q in range(args.queries):
         
         # Generate a random document ID and a key
         document_id = random.randrange(1,500000)
         key = f"tdoc:{document_id}"
-
+        
         start_time = time.time()
         document = ec_read.get(key)
         end_time = time.time()
@@ -92,10 +97,10 @@ def metrics_by_time():
             document = col.find_one({"_id": document_id})
             end_time = time.time()
 
-            # To store document in cache without an expiration time 
+            # Store document in cache without an expiration time 
             ec_write.set(key, str(document))
 
-            # To store it with an expiration time or 3600 seconds
+            # Store it with an expiration time or 3600 seconds
             # ec_write.setex(key, 3600, str(document))
 
             cache_miss += 1
@@ -122,7 +127,20 @@ def metrics_by_time():
 threads = list()
 thread_metrics = dict()
 
-for i in range(max_threads):
+# Hydrate the cache
+#missing = 0
+#for i in range(500000):
+#    key = f"tdoc:{i}"
+#    document = ec_read.get(key)
+#    if not document: 
+#        document = col.find_one({"_id": i})
+#        ec_write.set(key, str(document))
+#        missing += 1
+
+#print("Missing count: " + str(missing))
+#exit(1)
+
+for i in range(args.threads):
     # Create and start a thread
     thread = threading.Thread(target=metrics_by_time)
     threads.append(thread)
@@ -132,13 +150,14 @@ for i, thread in enumerate(threads):
     # Wait for the thread to finish
     thread.join()
 
-print("Cache hists: " + str(cache_hit))
+print("Cache hits: " + str(cache_hit))
 print("Cache misses: " + str(cache_miss))
 
 if not os.path.exists('logs/1'):
    os.makedirs('logs/1')
 
-file_name = f"logs/1/scenario02_DOCDB_{os.getpid()}_{log_ext}.json"
+file_name = f"logs/1/scenario02_DOCDB_{os.getpid()}_{args.log_tag}.json"
+
 with open(file_name, "w") as f:
     f.write(json.dumps(thread_metrics, indent=2))
 print("Logfile located here: " + file_name)
