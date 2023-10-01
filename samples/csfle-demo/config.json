@@ -1,0 +1,10 @@
+{
+    "variables_description": {
+        "SECRET_NAME": "Name of the secret in Secrets Manager containing credentials for Amazon DocumentDB",
+        "AWS_REGION": "AWS Region where your resources are located, e.g. eu-west-1",
+        "KMS_KEY_ARN": "The ARN of the Master key stored in AWS KMS, this will be used to encrypt the data keys"
+    },
+    "SECRET_NAME": "my-docdb-secret",
+    "AWS_REGION": "eu-west-1",
+    "KMS_KEY_ARN": "arn:aws:kms:"
+}
