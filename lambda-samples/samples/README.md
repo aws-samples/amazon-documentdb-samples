@@ -70,3 +70,43 @@ Python 3.x
 **Environment variables:**
  - DOCDB_SECRET_NAME: The name of the secret in AWS Secrets Manager containing DocumentDB credentials.
  - THRESHOLD_SECONDS: The number of seconds the operation is running for to be considered long running and stopped
+
+### 4. docdb-scaleOnSchedule.py
+
+**Description:**  
+The `docdb-scaleOnSchedule.py` Lambda function will let you add or remove instances from your cluster. You can use the Eventbridge rule to schedule the addition or deletion of instances. You can [create Eventbridge rules](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-run-lambda-schedule.html#eb-schedule-create-rule) to schedule how often the Lambda functions to add and delete the instances. 
+
+**Runtime:**  
+Python 3.x
+
+**Dependencies:**
+- Add a lambda layer that contains the logger Python module.
+- Lambda IAM role requires necessary permission to list, add, and delete instances
+```
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "rds:DeleteDBInstance",
+                "rds:CreateDBInstance",
+                "rds:ListTagsForResource",
+                "rds:AddTagsToResource",
+                "rds:DescribeDBClusters"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+```
+- Configure the lambda timeout to a higher value than the default 3 seconds.
+
+**Environment variables:**
+- CLUSTER_IDENTIFIER: This is your Amazon DocumentDB cluster identifier.
+- INSTANCE_CLASS: The instance class of your instance, for example: r6g.large, r5.large, e.t.c.
+- INSTANCE_PROMOTION_TIER: The value that specifies the order in which an Amazon DocumentDB replica instance is promoted to the primary in the cluster after a failure of the existing primary instance. It is recommended to use a value greater than 1 with this script.
+- INSTANCE_NAME_SUFFIX : An instance name suffix to help you identify instances easily. Instances launched by this script would have this suffix followed by a random string. This value should not be greater than 56 characters.
+- INSTANCES_TO_ADD : Number of instances to add to the cluster at a time. 
+- INSTANCES_TO_DELETE: Number of instances to add to the cluster at a time. 
+- Set the Lambda event variable depending on which action to perform (Add or Delete).
