@@ -80,7 +80,6 @@ The `docdb-scaleOnSchedule.py` Lambda function will let you add or remove instan
 Python 3.x
 
 **Dependencies:**
-- Add a lambda layer that contains the logger Python module.
 - Lambda IAM role requires necessary permission to list, add, and delete instances
 ```
 {
@@ -100,13 +99,11 @@ Python 3.x
     ]
 }
 ```
-- Configure the lambda timeout to a higher value than the default 3 seconds.
+- Configure the lambda timeout to 10 seconds or more from the default 3 seconds.
 
 **Environment variables:**
 - CLUSTER_IDENTIFIER: This is your Amazon DocumentDB cluster identifier.
 - INSTANCE_CLASS: The instance class of your instance, for example: r6g.large, r5.large, e.t.c.
-- INSTANCE_PROMOTION_TIER: The value that specifies the order in which an Amazon DocumentDB replica instance is promoted to the primary in the cluster after a failure of the existing primary instance. It is recommended to use a value greater than 1 with this script.
-- INSTANCE_NAME_SUFFIX : An instance name suffix to help you identify instances easily. Instances launched by this script would have this suffix followed by a random string. This value should not be greater than 56 characters and should be alphanumeric.
 - INSTANCES_TO_ADD : Number of instances to add to the cluster at a time. 
 - INSTANCES_TO_DELETE: Number of instances to add to the cluster at a time. 
 - Set the Lambda event variable depending on which action to perform (Add or Delete).
