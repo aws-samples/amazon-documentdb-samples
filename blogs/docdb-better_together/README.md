@@ -104,7 +104,7 @@ In your browser enter the bastion host's public IP. Make sure your VPC security 
 Enter the logfile name you captured during the execution in the notebook cell and run all cells.
 For example:
 
-![DOCDB_Test](docs/Update_log.png)
+![DOCDB_Test](docs/Update_Log.png)
 
 Repeat the test but this time execute scenario02 to use ElastiCache in addition to DocumentDB. You will need to execute it more than once with a sufficiently high total thread and query number to warm up the cache. The test output will indicate the number of cache hits and misses. As the cache misses decrease the better the performance will get. 
 For example:
