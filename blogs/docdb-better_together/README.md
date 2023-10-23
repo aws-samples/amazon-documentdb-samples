@@ -34,7 +34,7 @@ __Prerequisites__
 2. Clone this repository
 ```bash
 git clone https://github.com/aws-samples/amazon-documentdb-samples/tree/master
-cd better-together
+cd blogs/better-together
 ```
 
 ## Run Performance Tests
@@ -99,10 +99,16 @@ The output in the console should look similar to the following screenshot:
 
 Capture the token and use it in your browser to have access to the Jupyter notebook.
 
-In your browser enter the bastion host public IP. Make sure your VPC security group  Remove the "s" from the URL as this note book is not secure. Update the port to 8888. For example: http://1.2.3.4:8888/
+In your browser enter the bastion host's public IP. Make sure your VPC security group was updated to allow inbound traffic on port 888 from you IP only. Remove the "s" from the URL as this notebook is not secure. Add port 8888 to the URL. For example: http://1.2.3.4:8888/
 Enter the logfile name you captured during the execution in the notebook cell and run all cells.
 For example:
 
 ![DOCDB_Test](docs/Update_log.png)
 
+Repeat the test but this time execute scenario02 to use ElastiCache in addition to DocumentDB. You will need to execute it more than once with a sufficiently high total thread and query number to warm up the cache. The test output will indicate the number of cache hits and misses. As the cache misses decrease the better the performance will get. 
+For example:
+
+![DOCDB_Test](docs/Cache_hit.png)
+
+Copy the logfile into the notebook as before and compare the performance results.
 ### Credits
