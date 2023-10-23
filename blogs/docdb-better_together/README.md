@@ -26,7 +26,8 @@ __Prerequisites__
 - [Python 3.8+](https://www.python.org/)
 - DocumentDB service that you have access to
 - ElastiCache instance that you have access to
-- EC2 Instace with access to an ElastiCache and DocumentDB clusters and a public IP.
+- EC2 Instace, bastion host, with access to an ElastiCache and DocumentDB clusters and a public IP.
+- For the bastion host to have easy access to DocumentDB and ElastiCache place all services in the same VPC Security Group and grant ingress on ports 27017 and 6379 from the same security group.
 - For the security group your EC2 host belongs to update the inbound rules to allow cutom TCP on port 8888 from your computer IP only. i.e IP/32. 
 
 1. Log into the Bastion Host EC2 instance
