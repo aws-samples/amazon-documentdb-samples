@@ -5,3 +5,4 @@ blogs/docdb-springboot/.mvn/wrapper/maven-wrapper.properties
 blogs/docdb-springboot/.mvn/wrapper/maven-wrapper.jar
 *.jar
 *.jar
+samples/.DS_Store
