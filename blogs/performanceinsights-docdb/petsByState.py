@@ -6,7 +6,7 @@ import time
 username = os.environ.get("docdbUser")
 password = os.environ.get("docdbPass")
 clusterendpoint = os.environ.get("docdbEndpoint")
-client = pymongo.MongoClient(clusterendpoint, username=username, password=password, tls='true', tlsCAFile='rds-combined-ca-bundle.pem', retryWrites='false', appName='petsByState-py')
+client = pymongo.MongoClient(clusterendpoint, username=username, password=password, tls='true', tlsCAFile='global-bundle.pem', retryWrites='false', appName='petsByState-py')
 db = client["pi"]
 states = db["customers"].find({"_id":"states"})[0]
 
