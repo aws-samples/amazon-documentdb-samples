@@ -2,8 +2,7 @@
 This sample applications performs an insert-only workload on Amazon DocumentDB instance-based clusters and elastic clusters with several configurable parameters.
 
 ## Requirements
-Python 3.6 or later
-pymongo
+Python 3.6 or later, pymongo
 
 ## Installation
 Clone the repository and go to the application folder:
