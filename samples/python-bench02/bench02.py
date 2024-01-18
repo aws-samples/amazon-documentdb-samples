@@ -52,6 +52,22 @@ def reportCollectionInfo(appConfig):
     client.close()
 
 
+def cleanup(appConfig):
+    databaseName = appConfig['databaseName']
+    collectionName = appConfig['collectionName']
+    client = pymongo.MongoClient(appConfig['uri'])
+    db = client[databaseName]
+    adminDb = client['admin']
+    nameSpace = "{}.{}".format(databaseName,collectionName)
+
+    # change streams
+    if appConfig['changeStream']:
+        printLog("Disabling change streams on {}".format(nameSpace),appConfig)
+        adminDb.command({'modifyChangeStreams':1,'enable':False,'database':databaseName,'collection':collectionName})
+
+    client.close()
+
+
 def setup(appConfig):
     databaseName = appConfig['databaseName']
     collectionName = appConfig['collectionName']
@@ -59,6 +75,7 @@ def setup(appConfig):
 
     client = pymongo.MongoClient(appConfig['uri'])
     db = client[databaseName]
+    adminDb = client['admin']
     col = db[collectionName]
     nameSpace = "{}.{}".format(databaseName,collectionName)
 
@@ -106,6 +123,13 @@ def setup(appConfig):
             thisIndexName = 'idx_productId_orderDate'
             printLog("Creating index {}".format(thisIndexName),appConfig)
             col.create_index([('productId', pymongo.ASCENDING),('orderDate', pymongo.ASCENDING)], name=thisIndexName, background=False, unique=False)
+
+    # change streams
+    if appConfig['changeStream']:
+        printLog("Enabling change streams on {}".format(nameSpace),appConfig)
+        adminDb.command({'modifyChangeStreams':1,'enable':True,'database':databaseName,'collection':collectionName})
+    elif not appConfig['shard']:
+        adminDb.command({'modifyChangeStreams':1,'enable':False,'database':databaseName,'collection':collectionName})
 
     # get existing count of documents
     numExistingDocuments = col.estimated_document_count()
@@ -315,6 +339,7 @@ def main():
     parser.add_argument('--seconds-date-range',required=False,type=int,default=87400*90,help='Number of seconds for range of orderDate field')
     parser.add_argument('--num-secondary-indexes',required=False,type=int,default=3,choices=[0,1,2,3],help='Number of secondary indexes')
     parser.add_argument('--file-name',required=False,type=str,default='benchmark',help='Starting name of the created CSV and log files')
+    parser.add_argument('--change-stream',required=False,action='store_true',help='Enable change streams')
 
     args = parser.parse_args()
     
@@ -324,6 +349,10 @@ def main():
 
     if args.shard and not args.drop_collection:
         printLog("Collection must be dropped to enable sharding, add --drop-collection",appConfig)
+        sys.exit(1)
+
+    if args.shard and args.change_stream:
+        printLog("Change streams are not currently supported on sharded collections",appConfig)
         sys.exit(1)
 
     appConfig = {}
@@ -347,6 +376,7 @@ def main():
     appConfig['numSecondaryIndexes'] = int(args.num_secondary_indexes)
     appConfig['logFileName'] = "{}.log".format(args.file_name)
     appConfig['csvFileName'] = "{}.csv".format(args.file_name)
+    appConfig['changeStream'] = args.change_stream
     
     numExistingDocuments = 0
 
@@ -392,6 +422,8 @@ def main():
     t.join()
     
     reportCollectionInfo(appConfig)
+
+    cleanup(appConfig)
     
     printLog("Created {} and {} with results".format(appConfig['logFileName'],appConfig['csvFileName']),appConfig)
 
