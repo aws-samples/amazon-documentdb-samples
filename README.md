@@ -5,32 +5,24 @@ This GitHub repository contains code samples that demonstrate how to use Amazon 
   
 ## Samples
 
-This repository includes end-to-end samples for - 
+This repository includes samples for - 
 
-- [Connect and query](https://github.com/aws-samples/amazon-documentdb-samples/tree/master/samples/connect-and-query)
+- [Connect and query](https://github.com/aws-samples/amazon-documentdb-samples/tree/master/samples/connect-and-query) - Sample code for connecting to Amazon DocumentDB from Python, PHP, Node.js and Ruby (more coming soon)
 
-  Sample code for connecting to Amazon DocumentDB from Python, PHP, Node.js and Ruby (more coming soon)
+- [Change streams](https://github.com/aws-samples/amazon-documentdb-samples/tree/master/samples/change-streams) - Sample code that shows how to use AWS DocumentDB change streams to stream events to ElasticSearch, Amazon Managed Stream for Kafka (or any other Apache Kafka distro), AWS Kinesis Streams, AWS SQS, and S3 using AWS Lambda
 
-- [Change streams](https://github.com/aws-samples/amazon-documentdb-samples/tree/master/samples/change-streams)
+- [Lambda layers](https://github.com/aws-samples/amazon-documentdb-samples/tree/master/lambda-layers) - Sample AWS Lambda Layers
 
-  Sample code that shows how to use AWS DocumentDB change streams to stream events to ElasticSearch, Amazon Managed Stream for Kafka (or any other Apache Kafka distro), AWS Kinesis Streams, AWS SQS, and/or S3 using AWS Lambda
+- [Lambda samples](https://github.com/aws-samples/amazon-documentdb-samples/tree/master/lambda-samples) - Sample AWS Lambda code for Amazon DocumentDB
 
-- [Templates](https://github.com/aws-samples/amazon-documentdb-samples/tree/master/samples/templates)
+- [Templates](https://github.com/aws-samples/amazon-documentdb-samples/tree/master/samples/templates) - Sample AWS CloudFormation stacks
 
-  Sample AWS CloudFormation stacks
+- [Vector search](https://github.com/aws-samples/amazon-documentdb-samples/tree/master/samples/vector-search) - Samples of vector search functionality
 
-- [Lambda Layers](https://github.com/aws-samples/amazon-documentdb-samples/tree/master/lambda-layers)
-
-  Sample AWS Lambda Layers
-
-## Security
+## Get Involved
 
 See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more information.
 
 ## License
 
 This library is licensed under the MIT-0 License. See the LICENSE file.
-
-## Questions/feature requests?
-
-Email questions to: documentdb-feature-request@amazon.com
