@@ -2,7 +2,6 @@ from datetime import datetime, timedelta
 import sys
 import random
 import json
-import bson
 import pymongo
 import time
 import threading
@@ -128,8 +127,6 @@ def setup(appConfig):
     if appConfig['changeStream']:
         printLog("Enabling change streams on {}".format(nameSpace),appConfig)
         adminDb.command({'modifyChangeStreams':1,'enable':True,'database':databaseName,'collection':collectionName})
-    elif not appConfig['shard']:
-        adminDb.command({'modifyChangeStreams':1,'enable':False,'database':databaseName,'collection':collectionName})
 
     # get existing count of documents
     numExistingDocuments = col.estimated_document_count()
