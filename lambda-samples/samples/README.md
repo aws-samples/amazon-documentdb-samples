@@ -107,3 +107,40 @@ Python 3.x
 - INSTANCES_TO_ADD : Number of instances to add to the cluster at a time. 
 - INSTANCES_TO_DELETE: Number of instances to add to the cluster at a time. 
 - Set the Lambda event variable depending on which action to perform (Add or Delete).
+
+### 5. docdb-add-delete-targetedReplica.py
+
+**Description:**  
+The `docdb-add-delete-targetedReplica.py` Lambda function will let you add or delete a single instance with a specified instance name from your cluster. You can [create Eventbridge rules](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-run-lambda-schedule.html#eb-schedule-create-rule) to schedule the addition or deletion of this instance. 
+
+**Runtime:**  
+Python 3.x
+
+**Dependencies:**
+- Lambda IAM role requires necessary permission to list, add, and delete instances
+```
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "rds:DeleteDBInstance",
+                "rds:CreateDBInstance",
+                "rds:ListTagsForResource",
+                "rds:AddTagsToResource",
+                "rds:DescribeDBClusters"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+```
+- Configure the lambda timeout to 10 seconds or more from the default 3 seconds.
+
+**Environment variables:**
+- CLUSTER_IDENTIFIER: This is your Amazon DocumentDB cluster identifier.
+- INSTANCE_CLASS: The instance class of your instance, for example: r6g.large, r5.large, e.t.c.
+- INSTANCE_NAME: The name of the instance to add and delete
+- Set the Lambda event variable depending on which action to perform (Add or Delete).
+
