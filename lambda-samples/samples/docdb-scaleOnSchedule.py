@@ -32,10 +32,10 @@ supportedInstanceClasses = [
     "db.r5.4xlarge",
     "db.r5.8xlarge",
     "db.r5.12xlarge",
-    "db.r5.16xlarge	",
+    "db.r5.16xlarge",
     "db.r5.24xlarge",
     "db.t3.medium",
-    "db.t4g.medium",
+    "db.t4g.medium"
 ]
 
 
