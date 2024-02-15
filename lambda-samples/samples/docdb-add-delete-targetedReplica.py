@@ -30,7 +30,7 @@ supportedInstanceClasses = [
     "db.r5.16xlarge",
     "db.r5.24xlarge",
     "db.t3.medium",
-    "db.t4g.medium",
+    "db.t4g.medium"
 ]
 
 client = boto3.client("docdb")
