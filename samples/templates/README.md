@@ -5,14 +5,14 @@ This folder contains templates for deploying Amazon DocumentDB topologies.
 
 Amazon DocumentDB is secure by design:
 
-- Amazon DocumentDB is VPC-only, meaning that, by default, when we you launch an Amazon DocumentDB cluster you will have strict network isolation and your cluster will not be accessible from the Internet.
+- Amazon DocumentDB is VPC-only, meaning that, by default, when you launch an Amazon DocumentDB cluster you will have strict network isolation and your cluster will not be accessible from the Internet.
 - By default, Amazon DocumentDB encrypts all of your data in-transit with TLS and at-rest with KMS.
 - By default, authentication is enabled on Amazon DocumentDB and it cannot be disabled. Amazon DocumentDB clusters launch with the most secure defaults and you can optionally choose to modify those defaults if you choose.
 - Amazon DocumentDB allows you to encrypt your databases using keys you create and control through AWS Key Management Service (KMS). 
 
 ### Amazon DocumentDB baseline
 
-Since Amazon DocumentDB is VPC-only and will not be accessible from the Internet, it is not the best approach to launch a cluster within the default VPC because all its subnets are public. Therefore, it is recommended to deploy a VPC with a more appropiate network topology for DocumentDB
+Since Amazon DocumentDB is VPC-only and will not be accessible from the Internet, it is not the best approach to launch a cluster within the default VPC because all its subnets are public. Therefore, it is recommended to deploy a VPC with a more appropiate network topology for DocumentDB.
 
 This Cloudformation template deploys:  
 - A VPC with 3 public and 3 private subnets. 
@@ -27,7 +27,7 @@ sudo yum install -y mongodb-org-shell
 wget https://s3.amazonaws.com/rds-downloads/rds-combined-ca-bundle.pem
 ```
 
-To get the connection string, go the Amazon DocumentDB console. Then under Clusters, select the cluster you deployed. It will show detail information of you cluster, under the 'Connect' section you can copy the connnection string. Paste it in the workspace, include the cluster password and connect to your DocumentDB cluster. 
+To get the connection string, go the Amazon DocumentDB console. Then under Clusters, select the cluster you deployed. It will show detailed information about your cluster. Under the 'Connect' section you can copy the connnection string. Paste it in the workspace. Include the cluster password and connect to your DocumentDB cluster. 
 
 ## Security
 
