@@ -43,7 +43,7 @@ java -jar nb5.jar run driver=mongodb yaml=better_together.yaml connection="<<doc
 5. Clone this repository to copy the test harness code.
 ```bash
 git clone https://github.com/aws-samples/amazon-documentdb-samples/tree/master
-cd blogs/better-together
+cd amazon-documentdb-samples\blogs\elasticache_docdb_better_together
 ```
 
 5. Prepare EC2 instance
