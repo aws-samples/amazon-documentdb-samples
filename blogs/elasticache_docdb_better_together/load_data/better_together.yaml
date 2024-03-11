@@ -1,0 +1,55 @@
+
+description: |
+  This workload emulates write operations for the DocumentDB.
+  It generates a simple JSON document to be used for writes.
+
+scenarios:
+  default:
+    write:    run driver=mongodb tags==block:"write.*", cycles===TEMPLATE(write-cycles,TEMPLATE(docscount,10)) threads=auto errors=timer,warn
+
+bindings:
+  seq_key: Uniform(0,<<docscount:10000000>>); ToString() -> String
+  user_id: ToHashedUUID(); ToString() -> String
+  created_on: Uniform(1262304000,1577836800) -> long
+  gender: WeightedStrings('M:10;F:10;O:1')
+  full_name: FullNames()
+  married: ModuloToBoolean()
+  city: Cities()
+  country_code: CountryCodes()
+  lat: Uniform(-180d, 180d)
+  lng: Hash() -> long; Uniform(-180d, 180d)
+  friend_id: Add(-1); ToHashedUUID(); ToString() -> String
+
+blocks:
+  write:
+    ops:
+      write-document: >2
+        {
+          insert: "<<better_together:test_data>>",
+          documents: [
+            {
+              "_id":          "{seq_key}",
+              "user_id":      "{user_id}",
+              "created_on":   {created_on},
+              "gender":       "{gender}",
+              "full_name":    "{full_name}",
+              "married":      {married},
+              "address": {
+                "primary": {
+                  "city":   "{city}",
+                  "cc":     "{country_code}"
+                },
+                "secondary":  {}
+              },
+              "coordinates": [
+                {lat},
+                {lng}
+              ],
+              "children": [],
+              "friends": [
+                "{friend_id}"
+              ],
+              "debt": null
+            }
+          ]
+        }
