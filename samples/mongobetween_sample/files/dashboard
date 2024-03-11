@@ -1,0 +1,156 @@
+{
+    "widgets": [
+        {
+            "height": 6,
+            "width": 6,
+            "y": 0,
+            "x": 0,
+            "type": "metric",
+            "properties": {
+                "metrics": [
+                    [ "AWS/DocDB", "DatabaseConnections", "DBInstanceIdentifier", "mongobetween-cluster", { "region": "us-west-2" } ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "stat": "Average",
+                "period": 1,
+                "title": "Primary DatabaseConnections (Count) ",
+                "unit": "Count",
+                "region": "us-west-2"
+            }
+        },
+        {
+            "height": 6,
+            "width": 6,
+            "y": 6,
+            "x": 0,
+            "type": "metric",
+            "properties": {
+                "metrics": [
+                    [ "AWS/DocDB", "DatabaseConnections", "DBInstanceIdentifier", "mongobetween-cluster2", { "region": "us-west-2" } ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "stat": "Average",
+                "period": 1,
+                "title": "Replica DatabaseConnections (Count) ",
+                "unit": "Count",
+                "region": "us-west-2"
+            }
+        },
+        {
+            "height": 6,
+            "width": 6,
+            "y": 6,
+            "x": 6,
+            "type": "metric",
+            "properties": {
+                "metrics": [
+                    [ "AWS/DocDB", "OpcountersQuery", "DBInstanceIdentifier", "mongobetween-cluster2", { "region": "us-west-2" } ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "stat": "Average",
+                "period": 1,
+                "title": "Replica OpcountersQuery (Count) ",
+                "unit": "Count",
+                "region": "us-west-2"
+            }
+        },
+        {
+            "height": 6,
+            "width": 6,
+            "y": 6,
+            "x": 12,
+            "type": "metric",
+            "properties": {
+                "metrics": [
+                    [ "AWS/DocDB", "DocumentsReturned", "DBInstanceIdentifier", "mongobetween-cluster2", { "period": 1, "region": "us-west-2" } ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "stat": "Average",
+                "period": 60,
+                "title": "Replica DocumentsReturned (Count) ",
+                "unit": "Count",
+                "region": "us-west-2"
+            }
+        },
+        {
+            "height": 6,
+            "width": 6,
+            "y": 0,
+            "x": 12,
+            "type": "metric",
+            "properties": {
+                "metrics": [
+                    [ "AWS/DocDB", "DocumentsReturned", "DBInstanceIdentifier", "mongobetween-cluster", { "period": 1, "region": "us-west-2" } ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "stat": "Average",
+                "period": 60,
+                "title": "Primary DocumentsReturned (Count) ",
+                "unit": "Count",
+                "region": "us-west-2"
+            }
+        },
+        {
+            "height": 6,
+            "width": 6,
+            "y": 0,
+            "x": 6,
+            "type": "metric",
+            "properties": {
+                "metrics": [
+                    [ "AWS/DocDB", "OpcountersQuery", "DBInstanceIdentifier", "mongobetween-cluster", { "region": "us-west-2" } ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "stat": "Average",
+                "period": 1,
+                "title": "Primary OpcountersQuery (Count) ",
+                "unit": "Count",
+                "region": "us-west-2"
+            }
+        },
+        {
+            "height": 6,
+            "width": 6,
+            "y": 0,
+            "x": 18,
+            "type": "metric",
+            "properties": {
+                "view": "timeSeries",
+                "stacked": false,
+                "stat": "Average",
+                "period": 60,
+                "metrics": [
+                    [ "AWS/DocDB", "OpcountersInsert", "DBInstanceIdentifier", "mongobetween-cluster" ]
+                ],
+                "title": "Primary OpcountersInsert (Count) ",
+                "unit": "Count",
+                "region": "us-west-2"
+            }
+        },
+        {
+            "type": "metric",
+            "x": 18,
+            "y": 6,
+            "width": 6,
+            "height": 6,
+            "properties": {
+                "view": "timeSeries",
+                "stacked": false,
+                "stat": "Average",
+                "period": 60,
+                "metrics": [
+                    [ "AWS/DocDB", "OpcountersInsert", "DBInstanceIdentifier", "mongobetween-cluster2", { "period": 1, "region": "us-west-2" } ]
+                ],
+                "title": "Replica OpcountersInsert (Count) ",
+                "unit": "Count",
+                "region": "us-west-2"
+            }
+        }
+    ]
+}
