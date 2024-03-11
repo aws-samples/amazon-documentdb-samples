@@ -19,9 +19,9 @@ More resources :
 
 To implement this solution, you must have the following prerequisites:
     
-* An [Amazon EC2 Instance](https://aws.amazon.com/pm/ec2/) where you can run Python scripts to generate database connections. You can use an existing Amazon EC2 Instance or [create a new one](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EC2_GetStarted.html). Use a c5.4xlarge instance type for this test - so that we have enough CPU for effective multi-processing. Configure appropiate network settings so that you are able to SSH into the instance.
+* An [Amazon EC2 Instance](https://aws.amazon.com/pm/ec2/) where you can run Python scripts to generate database connections. You can use an existing Amazon EC2 Instance or [create a new one](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EC2_GetStarted.html). Use a c5.18xlarge instance type for this test - so that we have enough CPU for effective multi-processing. Configure appropiate network settings so that you are able to SSH into the instance.
 
-* An Amazon DocumentDB cluster with at least two t3.medium instances. You can use an existing Amazon DocumentDB cluster or [create a new one](https://docs.aws.amazon.com/documentdb/latest/developerguide/db-cluster-create.html). This post assumes the default values for port (27017) and TLS (enabled) settings.
+* An Amazon DocumentDB cluster with at least two db.r6g.large instances. You can use an existing Amazon DocumentDB cluster or [create a new one](https://docs.aws.amazon.com/documentdb/latest/developerguide/db-cluster-create.html). This post assumes the default values for port (27017) and TLS (enabled) settings.
 
 * A security group that enables you to connect to your Amazon DocumentDB 
 cluster from your Amazon EC2 Instance. You can use an existing security group or [create a new one](https://docs.aws.amazon.com/documentdb/latest/developerguide/get-started-guide.html#cloud9-security).You  may also use the [Connect using Amazon EC2](https://docs.aws.amazon.com/documentdb/latest/developerguide/connect-ec2.html) feature to connect your Amazon DocumentDB cluster to your Amazon EC2 Instance. 
