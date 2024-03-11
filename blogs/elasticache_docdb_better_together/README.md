@@ -119,7 +119,7 @@ For convenience reasons (this configuration is not intended for production) the 
 
 For example:
 
-![DOCDB_Test](docs/Update_log.png)
+![DOCDB_Test](docs/Update_Log.png)
 
 The last cell will display performance charts plotting the average number of request per second and the average response time in two separate charts.
 
