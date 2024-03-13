@@ -86,7 +86,7 @@ Open the ```~/.bashrc``` file in your editor of choice, add the following lines 
             MongoDB username
 ```
 
-## Create the test environment.
+## Create the test environment
 
 1. Create a directory for executing the test script.
 
