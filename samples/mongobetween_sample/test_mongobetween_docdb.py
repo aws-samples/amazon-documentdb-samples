@@ -13,25 +13,25 @@ def info(title):
     print('parent process:', os.getppid())
     print('process id:', os.getpid())
 
-logging.basicConfig(filename=datetime.now().strftime('logs/mongobetween_test_%H_%M_%d_%m_%Y.log'), encoding='utf-8', level=logging.DEBUG)
+logging.basicConfig(filename=datetime.now().strftime('logs/mongobetween_test_%H_%M_%d_%m_%Y.log'), level=logging.DEBUG)
 
 
 def thread_function(process_counter,conn_str,start):
     print("process starting - ", process_counter)
     try:
-     client = pymongo.MongoClient(conn_str)
-     collection_name = 'mongobetween_test_coll_'+str(process_counter)
-     db = client['mongobetween_test_db']
-     coll = db.get_collection(collection_name)
-     coll.delete_many({})
-     for count in range(1000):
-      coll.insert_one({"_id":count})
-     for count in range(1000):
-      coll.find_one({"_id":count})
-     end = time.time()
-     logging.info("time taken by process {} is {} milliseconds".format(process_counter,round((end - start)*1000)))
+        client = pymongo.MongoClient(conn_str)
+        collection_name = 'mongobetween_test_coll_'+str(process_counter)
+        db = client['mongobetween_test_db']
+        coll = db.get_collection(collection_name)
+        coll.delete_many({})
+        for count in range(1000):
+            coll.insert_one({"_id":count})
+        for count in range(1000):
+            coll.find_one({"_id":count})
+        end = time.time()
+        logging.info("time taken by process {} is {} milliseconds".format(process_counter,round((end - start)*1000)))
     except Exception as e:
-     logging.error("exception in mongo client {} : {}".format(process_counter,str(e)))
+        logging.error("exception in mongo client {} : {}".format(process_counter,str(e)))
 
 
 if __name__ == '__main__':

@@ -19,12 +19,11 @@ More resources:
 
 To implement this solution, you must have the following prerequisites:
     
-* An [Amazon EC2 Instance](https://aws.amazon.com/pm/ec2/) where you can run Python scripts to generate database connections. You can use an existing Amazon EC2 instance or [create a new one] (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EC2_GetStarted.html). Use a c5.18xlarge instance type for this test so that we have enough CPU for effective multi-processing. Configure appropriate network settings so that you are able to SSH into the instance.
+* An [Amazon EC2 Instance](https://aws.amazon.com/pm/ec2/) where you can run Python scripts to generate database connections. You can use an existing Amazon EC2 instance or [create a new one](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EC2_GetStarted.html). Use a c5.18xlarge instance type for this test so that we have enough CPU for effective multi-processing. Configure appropriate network settings so that you are able to SSH into the instance.
 
 * An Amazon DocumentDB cluster with at least two db.r6g.large instances. You can use an existing Amazon DocumentDB cluster or [create a new one](https://docs.aws.amazon.com/documentdb/latest/developerguide/db-cluster-create.html). This post assumes the default values for port (27017) and TLS (enabled) settings.
 
-* A security group that enables you to connect to your Amazon DocumentDB 
-cluster from your Amazon EC2 instance. You can use an existing security group or [create a new one](https://docs.aws.amazon.com/documentdb/latest/developerguide/get-started-guide.html#cloud9-security).You may also use the [Connect using Amazon EC2](https://docs.aws.amazon.com/documentdb/latest/developerguide/connect-ec2.html) feature to connect your Amazon DocumentDB cluster to your Amazon EC2 instance. 
+* A security group that enables you to connect to your Amazon DocumentDB cluster from your Amazon EC2 instance. You can use an existing security group or [create a new one](https://docs.aws.amazon.com/documentdb/latest/developerguide/get-started-guide.html#cloud9-security). You may also use the [Connect using Amazon EC2](https://docs.aws.amazon.com/documentdb/latest/developerguide/connect-ec2.html) feature to connect your Amazon DocumentDB cluster to your Amazon EC2 instance. 
 
 * Python 3+. Modules pymongo
 
@@ -37,8 +36,8 @@ pip install pymongo
 1.Install and Setup Mongobetween
 
 * SSH into your EC2 instance
-* Copy the files [```install_mongobetween.sh```](files/install_monogbetween.sh),[```mongo.go```](files/mongo.go),[```operations.go```](files/operations.go) to the EC2 instance home directory.The go files are needed to make the current main branch of Mongobetween( as of [commit](https://github.com/coinbase/mongobetween/commit/ca3d8d78d99847afc747b56c5b4ea31b85bff013)) to work with read preferences passed in connection URI string.
-* Run the following command to make the ```install_mongobetweeb.sh``` file executable: 
+* Copy the files [```install_mongobetween.sh```](install_monogbetween.sh),[```mongo.go```](mongo.go),[```operations.go```](operations.go) to the EC2 instance home directory.The go files are needed to make the current main branch of Mongobetween( as of [commit](https://github.com/coinbase/mongobetween/commit/ca3d8d78d99847afc747b56c5b4ea31b85bff013)) to work with read preferences passed in connection URI string.
+* Run the following command to make the ```install_mongobetween.sh``` file executable: 
 
         chmod 700 install_mongobetween.sh
 
@@ -60,7 +59,7 @@ Open the ```~/.bashrc``` file in your editor of choice, add the following lines 
 * Log out of your ec2 terminal and SSH back in.
 * Execute the  command ```mongobetween -h``` and check if you see the follwing output
 ```
-    [ec2-user@ip-172-31-29-240 ~]$ mongobetween -h
+    mongobetween -h
     Usage: mongobetween [OPTIONS] address1=uri1 [address2=uri2] ...
     -dynamic string
             File or URL to query for dynamic configuration
