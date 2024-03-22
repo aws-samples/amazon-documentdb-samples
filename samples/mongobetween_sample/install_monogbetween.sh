@@ -10,6 +10,7 @@ do
 	esac
 done
 
+echo "starting steps to install"
 
 sudo yum install golang -y
 sudo yum install git -y
