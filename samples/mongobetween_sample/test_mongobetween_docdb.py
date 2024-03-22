@@ -33,20 +33,20 @@ def thread_function(process_counter,conn_str,start):
     except Exception as e:
         logging.error("exception in mongo client {} : {}".format(process_counter,str(e)))
 
-
-if __name__ == '__main__':
+def main():
     parser = argparse.ArgumentParser(description='Create connections to Amazon DocumentDB cluster .')
     parser.add_argument('--mongo-clients-count', type=int, default=100, help='Number of Mongo Clients to create (optional, default: 100)')
     parser.add_argument('--docdb-uri', type=str, required=True, help='Amazon DocumentDB cluster URI (required)')
     args = parser.parse_args()
     info('main line')
     procs = []
-
     for i in range(args.mongo_clients_count):
         proc = Process(target=thread_function, args=(i,args.docdb_uri,time.time()))
         procs.append(proc)
         proc.start()
-    # complete the processes
     for proc in procs:
         proc.join()
     print("Completed execution of script. Checks logs directory for results.")
+
+if __name__ == '__main__':
+    main()

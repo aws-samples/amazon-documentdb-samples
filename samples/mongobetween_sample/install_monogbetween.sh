@@ -1,6 +1,15 @@
 #!/bin/bash
 
- echo "starting steps to install"
+echo "Disclaimer: This code sample might include components from open-source projects. It is officially not supported by AWS. There's a possibility that future maintenance and updates may not be available."
+
+enableSecondaryReads=0
+while getopts "installCustomVersion" opt
+do
+	case "$opt" in
+		a ) enableSecondaryReads=1 ;;
+	esac
+done
+
 
 sudo yum install golang -y
 sudo yum install git -y
@@ -13,18 +22,20 @@ mkdir -p $GOPATH/pkg
 mkdir -p $GOPATH/src/github.com
 mkdir -p $GOPATH/src/github.com/coinbase/
 
- cd $GOPATH/src/github.com/coinbase/
- git clone https://github.com/coinbase/mongobetween.git
- cd mongobetween/
+cd $GOPATH/src/github.com/coinbase/
+git clone https://github.com/coinbase/mongobetween.git
+cd mongobetween/
  
- echo "copy files required to enable secondary reads"
+if [ $enableSecondaryReads -eq 1 ]
+then
+	echo "copy files required to enable secondary reads"
+	cp ~/operations.go mongo/ 
+	cp ~/mongo.go mongo/
+fi
  
- cp ~/operations.go mongo/
- cp ~/mongo.go mongo/
+echo  "installing mongobetween"
+go mod tidy
+go clean -modcache
+go install github.com/coinbase/mongobetween
  
- echo  "installing mongobetween"
- go mod tidy
- go clean -modcache
- go install github.com/coinbase/mongobetween
- 
- echo "completed script"
+echo "completed script"
