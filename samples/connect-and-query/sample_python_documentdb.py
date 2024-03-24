@@ -18,7 +18,7 @@ clusterendpoint = os.environ.get("docdbEndpoint")
 
 def main(args):
     #Establish DocumentDB connection
-    client = pymongo.MongoClient(clusterendpoint, username=username, password=password, tls='true', tlsCAFile='rds-combined-ca-bundle.pem',retryWrites='false')
+    client = pymongo.MongoClient(clusterendpoint, username=username, password=password, tls='true', tlsCAFile='global-bundle.pem',retryWrites='false')
     db = client.sample_database
     profiles = db['profiles']
 
