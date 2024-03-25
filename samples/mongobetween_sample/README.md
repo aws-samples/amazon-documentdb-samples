@@ -25,7 +25,7 @@ To implement this solution, you must have the following prerequisites:
 
 * A security group that enables you to connect to your Amazon DocumentDB cluster from your Amazon EC2 instance. You can use an existing security group or [create a new one](https://docs.aws.amazon.com/documentdb/latest/developerguide/get-started-guide.html#cloud9-security). You may also use the [Connect using Amazon EC2](https://docs.aws.amazon.com/documentdb/latest/developerguide/connect-ec2.html) feature to connect your Amazon DocumentDB cluster to your Amazon EC2 instance. 
 
-* Python 3+. Modules pymongo
+* Python 3+ ( This sample was tested with version Python 3.9.16). Modules pymongo
 
 ```
 pip install pymongo
@@ -39,19 +39,20 @@ pip install pymongo
 * Copy the files [```install_mongobetween.sh```](install_monogbetween.sh),[```mongo.go```](mongo.go),[```operations.go```](operations.go) to the EC2 instance home directory.The go files are needed to make the current main branch of Mongobetween( as of [commit](https://github.com/coinbase/mongobetween/commit/ca3d8d78d99847afc747b56c5b4ea31b85bff013)) to work with read preferences passed in connection URI string.
 * Run the following command to make the ```install_mongobetween.sh``` file executable: 
 
-        chmod 700 install_mongobetween.sh
+	```chmod 700 install_mongobetween.sh```
 
 * Execute the script - this may take a while.
 
-        ./install_mongobetween.sh
+	```./install_mongobetween.sh```
 
 2.Add ```mongobetween``` executable to the path.
 
 Open the ```~/.bashrc``` file in your editor of choice, add the following lines to the end of the file, and save it.
 
-
-    export GOPATH="$HOME/go"
-    PATH="$GOPATH/bin:$PATH"
+```
+	export GOPATH="$HOME/go"
+	PATH="$GOPATH/bin:$PATH"
+```
 
 
 3.Check if Mongobetween has been installed. 
@@ -88,15 +89,15 @@ Open the ```~/.bashrc``` file in your editor of choice, add the following lines 
 ## Create the test environment
 
 1. Create a directory for executing the test script.
-
+```
         mkdir working_directory
         cd working_directory
-
+```
 2. Create a log directory for the output of the script.
-
+```
         mkdir logs
-
-3. Copy the file ```test_mongobetween.py``` to the working directory. This file contains Python code that spins off a number of processes, as provided by the argument ```--mongo-clients-count```. Each process creates its own collection, inserts 1000 documents into the primary instance of Amazon DocumentDB, as provided by the argument ```--docdb-uri```, and then reads the 1000 documents back from a replica.
+```
+3. Copy the file [```test_mongobetween_docdb.py```](test_mongobetween_docdb.py) to the working directory. This file contains Python code that spins off a number of processes, as provided by the argument ```--mongo-clients-count```. Each process creates its own collection, inserts 1000 documents into the primary instance of Amazon DocumentDB, as provided by the argument ```--docdb-uri```, and then reads the 1000 documents back from a replica.
 
 3. Download the file ```global-bundle.pem``` in the working directory.
 
@@ -108,7 +109,7 @@ wget https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem
 4. Run a test with 200 concurrent processes.
 
 ```
-python3 test_mongobetween.py  --mongo-clients-count 200  --docdb-uri '<<documentdb_uri>>'
+python3 test_mongobetween_docdb.py  --mongo-clients-count 200  --docdb-uri '<<documentdb_uri>>'
 ```
 
 * Wait for the following lines to be printed.
@@ -144,7 +145,7 @@ cat  "$(ls -drt logs/* | tail -1)" |grep "time taken by process" | wc -l
 5. Now run the test with 900 concurrent processes.
 
 ```
-python3  test_mongobetween.py  --mongo-clients-count 900  --docdb-uri '<<documentdb_uri>>'
+python3  test_mongobetween_docdb.py  --mongo-clients-count 900  --docdb-uri '<<documentdb_uri>>'
 ```
 * Wait for the following lines to be printed:
 ```process starting -  899
@@ -178,7 +179,7 @@ The maximum number of connections a pool may establish concurrently. The default
 
 1. Start the Mongobetween connection proxy process with a maximum of 300 connections to the Amazon DocumentDB cluster.
 
-```mongobetween -username <<documentdb_user>> -password <<documentdb_password>> ":27016=<<documentdb_uri>>**&maxPoolSize=250**" &```
+```mongobetween  ":27016=<<documentdb_uri>>&maxPoolSize=250" &```
 
 2. Open a new terminal and connect your EC2 instance. 
 
@@ -193,9 +194,9 @@ The maximum number of connections a pool may establish concurrently. The default
 cd working_directory
 ```
 
-5. Run the test with 900 concurrent processes, but the uri points to the Mongobetween proxy; note that the proxy uses port '''27016'''.
+5. Run the test with 900 concurrent processes, but the uri points to the Mongobetween proxy; note that the proxy uses port ```27016```.
 
-```python3  test_mongobetween.py  --mongo-clients-count 900  --docdb-uri 'mongodb://<<documentdb_user>>:<<documentdb_password>> @localhost:27016/?readPreference=secondaryPreferred&retryWrites=false'```
+```python3  test_mongobetween_docdb.py  --mongo-clients-count 900  --docdb-uri 'mongodb://<<documentdb_user>>:<<documentdb_password>>@localhost:27016/?readPreference=secondaryPreferred&retryWrites=false'```
 
 * Wait for the following line to be printed:
 ```
@@ -235,4 +236,4 @@ Note: This dashboard was created for a cluster with a topology of one primary an
 
 ## Conclusion
 
-If you can use Mongobetween effectively with your containerized applications, this will let you handle unplanned scaling events gracefully without exceptions being generated in the application. Please note that whenever you are sending more connections to Mongobetween than what is established to the DocumentDB cluster from MongoBetwen, you will notice increased latencies in the application. This is a trade-off that you need to consider in your application design, timeout settings, and exception handling.
+Using Mongobetween effectively with your containerized applications will let you handle unplanned scaling events gracefully without exceptions being generated in the application. Please note that whenever you are sending more connections to Mongobetween than what is established to the DocumentDB cluster from MongoBetwen, you will notice increased latencies in the application. This is a trade-off that you need to consider in your application design, timeout settings, and exception handling.

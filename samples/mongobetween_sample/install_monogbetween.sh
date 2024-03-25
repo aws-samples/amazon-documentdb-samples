@@ -1,13 +1,28 @@
 #!/bin/bash
 
-echo "Disclaimer: This code sample might include components from open-source projects. It is officially not supported by AWS. There's a possibility that future maintenance and updates may not be available."
+echo "Disclaimer: This code sample includes components from open-source projects with some custom code to enable reads from secondary to work with Mongobetween . It is officially not supported by AWS. There is a possibility that future maintenance and updates may not be available.Please choose how you would like to proceed"
 
-enableSecondaryReads=0
-while getopts "installCustomVersion" opt
+
+options=("Use custom code to enable secondary reads" "Install current main branch from Github" "Quit")
+select opt in "${options[@]}"
 do
-	case "$opt" in
-		a ) enableSecondaryReads=1 ;;
-	esac
+    case $opt in
+        "Use custom code to enable secondary reads")
+            echo "you chose to use custom code to enable secondary reads"
+			enableSecondaryReads=1
+			break
+            ;;
+        "Install current main branch from Github")
+            echo "you chose to install current main branch from Github"
+			enableSecondaryReads=0
+			break
+            ;;
+        "Quit")
+            echo "exiting script"
+			exit 1
+            ;;
+        *) echo "invalid option $REPLY";;
+    esac
 done
 
 echo "starting steps to install"
