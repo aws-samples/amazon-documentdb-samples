@@ -12,7 +12,7 @@ This is an example of how to create a chatbot that can query your large language
 - [LangChain chat model for Bedrock API](https://api.python.langchain.com/en/latest/chat_models/langchain_community.chat_models.bedrock.BedrockChat.html)
 - An [Amazon DocumentDB cluster](https://docs.aws.amazon.com/documentdb/latest/developerguide/db-cluster-create.html) running engine version 5 with [credentials stored in AWS Secrets Manager](https://aws.amazon.com/blogs/security/how-to-rotate-amazon-documentdb-and-amazon-redshift-credentials-in-aws-secrets-manager/). 
 - Jupyter notebook deployed to the same VPC as your Amazon DocumentDB cluster. You can follow this instructions covered in [this AWS Database Blog](https://aws.amazon.com/blogs/database/getting-started-with-amazon-documentdb-with-mongodb-compatibility-part-4-using-amazon-sagemaker-notebooks/), use [this sample](https://github.com/aws-samples/documentdb-sagemaker-example) from the asws-samples repository, or follow the instructions in the [Developer Guide](https://docs.aws.amazon.com/sagemaker/latest/dg/infrastructure-connect-to-resources.html). 
-- Your Notebook instance will need [LangChain](https://pypi.org/project/langchain/) and [PyMongo](https://pypi.org/project/pymongo/) installed. 
+- Your Notebook instance will need [LangChain](https://pypi.org/project/langchain/), [PyMongo](https://pypi.org/project/pymongo/),[Gradio](https://pypi.org/project/gradio/), and [Boto3](https://boto3.amazonaws.com/v1/documentation/api/latest/index.html) installed. 
 - If you cluster is configured using default security settings for data in transit, the notebook will need local access to the [global-bundle.pem](https://docs.aws.amazon.com/documentdb/latest/developerguide/connect_programmatically.html#connect_programmatically-tls_enabled) in order to make a secure connection to your cluster. 
 - This example utilizes a copy of the [Amazon DocumentDB Developer Guide](https://docs.aws.amazon.com/pdfs/documentdb/latest/developerguide/developerguide.pdf); your notebook will need local access to this as well.
 
@@ -21,7 +21,7 @@ This is an example of how to create a chatbot that can query your large language
 ![](./media/architecture_diagram.png)
 
 1. Using the embeddings model you've selected, Amazon Bedrock generates embeddings for the source data stored in Amazon DocumentDB
-2. User sends question - the question is forwarded to the same embeddings model for conversion into vector embeddings
+2. User sends question - the question is forwarded to the same embeddings model for conversion into Vector Embeddings
 3. Embeddings model responds with embeddings
 4. Embeddings sent to DocumentDB for searching similar documents with vector search
 5. Search results sent to Large Language Model in Amazon Bedrock for meaningful response construction
@@ -65,14 +65,7 @@ To modify the question you would like to ask, change the values of `<query>`.
     output = qa.invoke({"query": "What is the total amount of data I can store in DocumentDB?"})
 ```
 
-#### *Cell 14*
-To modify the question you would like to ask, change the values of `<query>`.
-
-```
-    query = "What is the total amount of data I can store in DocumentDB?"
-```
-
-#### *Cell 15*
+#### *Cell 16*
 To modify the question you would like to ask, change the values of `<query>`.
 
 ```
