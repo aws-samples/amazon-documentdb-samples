@@ -87,6 +87,10 @@ The output should show the current quarkus version
 
 ```3.9.2```
 
+9. Install git 
+
+```sudo yum install git```
+
 ## Prepare and Test Application Code
 
 1. Download the code from repository
@@ -121,7 +125,7 @@ public class Person {
 
 3. Run script to load DocumetnDB TLS certificates to default Java truststore for the local build
 
-```files/docdbcerts_loc.sh```
+```files/docdbcerts_local.sh```
 
 4. Change the property in file src/main/resources/application.properties
 ```
