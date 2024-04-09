@@ -41,11 +41,15 @@ To implement this solution, you must have the following prerequisites:
 1. [SSH](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/connect-to-linux-instance.html) into the EC2 instance
 2. Install Java 17
 
-```sudo yum install java-17-amazon-corretto-devel```
+```
+    sudo yum install java-17-amazon-corretto-devel
+```
 
 3. Check java version
 
-```java --version```
+```
+    java --version
+```
 
 The output should show jdk 17
 
@@ -70,40 +74,52 @@ Note : the EC2 instance will reboot after these steps
 5. [SSH](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/connect-to-linux-instance.html) into the EC2 instance
 6. Install Quarkus framework
 
-    ```
-	curl -Ls https://sh.jbang.dev | bash -s - trust add https://repo1.maven.org/maven2/io/quarkus/quarkus-cli/
+```
+    curl -Ls https://sh.jbang.dev | bash -s - trust add https://repo1.maven.org/maven2/io/quarkus/quarkus-cli/
     curl -Ls https://sh.jbang.dev | bash -s - app install --fresh --force quarkus@quarkusio
-	sudo reboot
-	```
+    sudo reboot
+```
 Note : the EC2 instance will reboot after these steps
 
 7. [SSH](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/connect-to-linux-instance.html) into the EC2 instance
 
 8. Check quarkus version
 
-```quarkus --version```
+```
+    quarkus --version
+```
 
 The output should show the current quarkus version
 
-```3.9.2```
+```
+    3.9.2
+```
 
 9. Install git 
 
-```sudo yum install git```
+```
+    sudo yum install git
+```
 
 ## Prepare and Test Application Code
 
 1. Download the code from repository
 
-```git clone https://github.com/aws-samples/amazon-documentdb-samples.git```
+```
+    git clone https://github.com/aws-samples/amazon-documentdb-samples.git
+```
 
 2. Make code executable 
 
-```chmod -R 700 amazon-documentdb-samples/samples/docdb-docker-quarkus-panache/documentdb-quarkus-quickstart/```
+```
+    chmod -R 700 amazon-documentdb-samples/samples/docdb-docker-quarkus-panache/documentdb-quarkus-quickstart/
+```
 
 2. Change directory
 
-```cd amazon-documentdb-samples/samples/docdb-docker-quarkus-panache/documentdb-quarkus-quickstart/```
+```
+    cd amazon-documentdb-samples/samples/docdb-docker-quarkus-panache/documentdb-quarkus-quickstart/
+```
 
 This Java code has two packages :
 
@@ -115,17 +131,21 @@ This Java code has two packages :
 Both packages have the Person class which defines the structure of the document to be stored in collection "person"
 
 ```
-@MongoEntity(collection = "person")
-public class Person {			
+    @MongoEntity(collection = "person")
+    public class Person {			
 ```
 
 3. Run script to load DocumetnDB TLS certificates to custom Java truststore for the docker image
 
-```files/docdbcerts.sh```
+```
+    ./files/docdbcerts.sh
+```
 
 3. Run script to load DocumetnDB TLS certificates to default Java truststore for the local build
 
-```files/docdbcerts_local.sh```
+```
+    ./files/docdbcerts_local.sh
+```
 
 4. Change the property in file src/main/resources/application.properties
 ```
@@ -139,7 +159,9 @@ public class Person {
 ```
 6. Run Quarkus test
 
-```./mvnw compile quarkus:dev -Djavax.net.ssl.trustStore=/tmp/certs/rds-truststore.jks -Djavax.net.ssl.trustStorePassword=password -Dquarkus.http.host=0.0.0.0```
+```
+    ./mvnw compile quarkus:dev -Djavax.net.ssl.trustStore=/tmp/certs/rds-truststore.jks -Djavax.net.ssl.trustStorePassword=password -Dquarkus.http.host=0.0.0.0
+```
 
 The output in the console would pause in the following screen
 
@@ -172,19 +194,25 @@ Enter "r" - the tests will execute and print the following lines on the console
 
 2. Run command to to build docker image
 
-```docker build -f src/main/docker/Dockerfile.jvm -t documentdb-quarkus-panache-quickstart-jvm .```
+```
+    docker build -f src/main/docker/Dockerfile.jvm -t documentdb-quarkus-panache-quickstart-jvm .
+```
 
 ## Test Docker Image
 
 3. Run command to create a local container running on this image we just created
 
-```docker run -i --rm -p 8080:8080 documentdb-quarkus-panache-quickstart-jvm```
+```
+    docker run -i --rm -p 8080:8080 documentdb-quarkus-panache-quickstart-jvm
+```
 
 1. [SSH](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/connect-to-linux-instance.html) into a new terminal of the EC2 instance
 
 3. Check if container is running
 
-```docker ps```
+```
+    docker ps
+```
 
 Output
 
@@ -193,19 +221,27 @@ Output
 
 1. Insert a document into person collection in DocumentDB using the repository methods
 
-```curl -d '{ "name" : "moncef", "birthDate" : "1993-05-19", "status" : "LIVING"}' -H "Content-Type: application/json" -X POST http://localhost:8080/repository/persons```
+```
+    curl -d '{ "name" : "moncef", "birthDate" : "1993-05-19", "status" : "LIVING"}' -H "Content-Type: application/json" -X POST http://localhost:8080/repository/persons
+```
 	
 2. Get all documents from person collection in DocumentDB using the repository methods. You will notice the document, we just inserted, in the response.
 
-```curl http://localhost:8080/repository/persons```
+```
+    curl http://localhost:8080/repository/persons
+```
 	
 3. Delete all documents from person collection in DocumentDB using the repository methods
 
-```curl -X DELETE http://localhost:8080/repository/persons```
+```
+    curl -X DELETE http://localhost:8080/repository/persons
+```
 	
 2. Get all documents from person collection in DocumentDB using the repository methods. This time the response should be empty.
 
-```curl http://localhost:8080/repository/persons```
+```
+    curl http://localhost:8080/repository/persons
+```
 
 
 
