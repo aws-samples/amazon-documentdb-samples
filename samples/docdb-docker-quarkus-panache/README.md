@@ -1,5 +1,5 @@
 
-# Steps to build a docker image using Quarkus framework and Panache ORM library to connect to Amazon DocumentDB
+# Steps to build a Docker image using Quarkus framework and Panache ORM library to connect to Amazon DocumentDB
 
 ## Introduction
 
@@ -7,14 +7,14 @@ In this sample we demonstrate
 
 1. How to create a sample Java application using Quarkus framework that connects to Amazon DocumentDB
 2. How to use Panache ORM library to interact with Amazon DocumentDB from the code
-3. How to build a sample docker image from the code
+3. How to build a sample Docker image from the code
 4. How to run a local container based on that image and test the endpoints
 
 ### What are Docker containers
 
-A container is a standard unit of software that packages up code and all its dependencies so the application runs quickly and reliably from one computing environment to another. A [Docker container](https://www.docker.com/resources/what-container/) image is a lightweight, standalone, executable package of software that includes everything needed to run an application: code, runtime, system tools, system libraries and settings.
+A container is a standard unit of software that packages up code and all its dependencies so the application runs quickly and reliably from one computing environment to another. A [Docker container](https://www.Docker.com/resources/what-container/) image is a lightweight, standalone, executable package of software that includes everything needed to run an application: code, runtime, system tools, system libraries and settings.
 
-To learn more about containerization and its benefits, please read (resource)[https://aws.amazon.com/what-is/containerization/)
+To learn more about containerization and its benefits, please read [resource](https://aws.amazon.com/what-is/containerization/)
 
 ### What is Quarkus?
 
@@ -42,10 +42,10 @@ To implement this solution, you must have the following prerequisites:
 2. Install Java 17
 
 ```
-    sudo yum install java-17-amazon-corretto-devel
+    sudo yum install Java-17-amazon-corretto-devel
 ```
 
-3. Check java version
+3. Check Java version
 
 ```
     java --version
@@ -65,7 +65,7 @@ The output should show jdk 17
     sudo yum update -y
     sudo yum install -y docker
     sudo service docker start
-    sudo usermod -a -G docker ec2-user
+    sudo usermod -a -G Docker ec2-user
     sudo reboot
 ```
 	
@@ -112,21 +112,21 @@ The output should show the current quarkus version
 2. Make code executable 
 
 ```
-    chmod -R 700 amazon-documentdb-samples/samples/docdb-docker-quarkus-panache/documentdb-quarkus-quickstart/
+    chmod -R 700 amazon-documentdb-samples/samples/docdb-Docker-quarkus-panache/documentdb-quarkus-quickstart/
 ```
 
 2. Change directory
 
 ```
-    cd amazon-documentdb-samples/samples/docdb-docker-quarkus-panache/documentdb-quarkus-quickstart/
+    cd amazon-documentdb-samples/samples/docdb-Docker-quarkus-panache/documentdb-quarkus-quickstart/
 ```
 
 This Java code has two packages :
 
-| Package              | Purpose |
-| :---------------- | :------: | 
-|com.aws.documentdb.panache.entity|src/main/java/com/aws/documentdb/panache/entity)|This provides the sample code for [using the active record pattern](https://quarkus.io/guides/mongodb-panache#solution-1-using-the-active-record-pattern)   | 
-|com.aws.documentdb.panache.repository|src/main/java/com/aws/documentdb/panache/repository)|Ths provides the sample code for [using the repository pattern](https://quarkus.io/guides/mongodb-panache#solution-2-using-the-repository-pattern)| 
+| Package              | Purpose                |
+| :---------------- |  :-------------------   
+|com.aws.documentdb.panache.entity|This provides the sample code for [using the active record pattern](https://quarkus.io/guides/mongodb-panache#solution-1-using-the-active-record-pattern)| 
+|com.aws.documentdb.panache.repository|This provides the sample code for [using the repository pattern](https://quarkus.io/guides/mongodb-panache#solution-2-using-the-repository-pattern)| 
 
 Both packages have the Person class which defines the structure of the document to be stored in collection "person"
 
@@ -135,7 +135,7 @@ Both packages have the Person class which defines the structure of the document 
     public class Person {			
 ```
 
-3. Run script to load DocumetnDB TLS certificates to custom Java truststore for the docker image
+3. Run script to load DocumetnDB TLS certificates to custom Java truststore for the Docker image
 
 ```
     ./files/docdbcerts.sh
@@ -160,7 +160,7 @@ Both packages have the Person class which defines the structure of the document 
 6. Run Quarkus test
 
 ```
-    ./mvnw compile quarkus:dev -Djavax.net.ssl.trustStore=/tmp/certs/rds-truststore.jks -Djavax.net.ssl.trustStorePassword=password -Dquarkus.http.host=0.0.0.0
+    ./mvnw compile quarkus:dev -DJavax.net.ssl.trustStore=/tmp/certs/rds-truststore.jks -DJavax.net.ssl.trustStorePassword=password -Dquarkus.http.host=0.0.0.0
 ```
 
 The output in the console would pause in the following screen
@@ -192,10 +192,10 @@ Enter "r" - the tests will execute and print the following lines on the console
 ./mvnw package
 ```
 
-2. Run command to to build docker image
+2. Run command to to build Docker image
 
 ```
-    docker build -f src/main/docker/Dockerfile.jvm -t documentdb-quarkus-panache-quickstart-jvm .
+    docker build -f src/main/Docker/Dockerfile.jvm -t documentdb-quarkus-panache-quickstart-jvm .
 ```
 
 ## Test Docker Image
@@ -217,7 +217,7 @@ Enter "r" - the tests will execute and print the following lines on the console
 Output
 
     CONTAINER ID   IMAGE                                       COMMAND                  CREATED             STATUS             PORTS                                                 NAMES
-    5efcc87496a9   quarkus/documentdb-panache-quickstart-jvm   "/bin/sh -c 'java -D…"   About an hour ago   Up About an hour   5005/tcp, 0.0.0.0:8080->8080/tcp, :::8080->8080/tcp   cool_booth
+    5efcc87496a9   quarkus/documentdb-panache-quickstart-jvm   "/bin/sh -c 'Java -D…"   About an hour ago   Up About an hour   5005/tcp, 0.0.0.0:8080->8080/tcp, :::8080->8080/tcp   cool_booth
 
 1. Insert a document into person collection in DocumentDB using the repository methods
 
