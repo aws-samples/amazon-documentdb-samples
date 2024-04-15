@@ -40,9 +40,9 @@ To insert the files into the database, run :
 ```
 python3 gridfs-demo.py insertFiles
 ```
-### Retrive files from Amazon DocumentDB: 
+### Retrieve files from Amazon DocumentDB: 
 To retrieve files from the database, run:
 ```
-python3 gridfs-demo.py retriveFiles
+python3 gridfs-demo.py retrieveFiles
 ```
 

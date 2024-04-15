@@ -73,7 +73,7 @@ def load_large_files_docdb():
 
     print(f"Total {filecount} files stored in the database")
 
-def retrive_files():
+def retrieve_files():
     db = client[docdb_dbname]
     fs = GridFS(db)
     filter_query = {"filename" :{"$regex": f"^{filename_prefix}"}}
@@ -94,8 +94,8 @@ def retrive_files():
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='GridFS demo on Amazon DocumentDB')
-    parser.add_argument('action', choices=['generateFiles', 'insertFiles', 'retriveFiles'],
-                        help='The action to perform: generateFiles, insertFiles, or retriveFiles')
+    parser.add_argument('action', choices=['generateFiles', 'insertFiles', 'retrieveFiles'],
+                        help='The action to perform: generateFiles, insertFiles, or retrieveFiles')
     
     args = parser.parse_args()
     #client = MongoClient('mongodb://' + docdb_username + ':' + docdb_password + '@' + docdb_cluster_endpoint + ':' + docdb_port + '/?replicaSet=rs0&directConnection=true')
@@ -104,5 +104,5 @@ if __name__ == "__main__":
         generate_textfiles()
     if args.action == 'insertFiles':
         load_large_files_docdb()
-    if args.action == 'retriveFiles':
-        retrive_files()
+    if args.action == 'retrieveFiles':
+        retrieve_files()
