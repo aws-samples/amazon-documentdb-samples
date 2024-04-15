@@ -9,9 +9,11 @@ Sample Python functions to:
 ## Prerequisites
 -	Python 3.x
 -	Pymongo
+  
 ### AWS Resources:
-•	An Amazon DocumentDB cluster, see Creating an Amazon DocumentDB Cluster
-•	Create a compression enabled collection for fs.chunks in the database
+- An Amazon DocumentDB cluster, see [Creating an Amazon DocumentDB Cluster](https://docs.aws.amazon.com/documentdb/latest/developerguide/db-cluster-create.html)
+- Create a [compression enabled collection](https://docs.aws.amazon.com/documentdb/latest/developerguide/doc-compression.html#enabling-compression) for fs.chunks in the database
+  
 ```
 db.createCollection( "fs.chunks",{
     storageEngine : {
@@ -23,10 +25,13 @@ db.createCollection( "fs.chunks",{
     }
 })
 ```
+
 ## Executing gridfs-demo.py
-Prior to executing the script, ensure that you have updated the variables in ```variables.json``` to set up the script.
+Prior to executing the script, ensure that you have updated the variables in `variables.json` .
+
 ### Create text files: 
-Creation of text files is optional, if you have files to insert into the database using Gridfs, you can place all files in a folder and set the input_file_dest to that folder.
+To create text files of your desired size and number in the `input_file_dest` folder, run:
+
 ```
 python3 gridfs-demo.py generateFiles
 ```
