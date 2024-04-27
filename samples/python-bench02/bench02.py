@@ -168,7 +168,7 @@ def reporter(perfQ,appConfig):
         while not perfQ.empty():
             qMessage = perfQ.get_nowait()
             if qMessage['name'] == "batchCompleted":
-                numLatencyBatches += 1
+                numLatencyBatches += qMessage['batches']
                 numLatencyMs += qMessage['latency']
                 numTotalInserts += qMessage['inserts']
             elif qMessage['name'] == "processCompleted":
@@ -301,7 +301,7 @@ def task_worker(threadNum,perfQ,appConfig):
         
         if time.time() > nextPerfReportTime:
             nextPerfReportTime = time.time() + perfReportInterval
-            perfQ.put({"name":"batchCompleted","operations":numInsertsPerBatch*numBatchesCompleted,"latency":batchElapsedMs,"inserts":thisBatchInserts})
+            perfQ.put({"name":"batchCompleted","batches":numBatchesCompleted,"latency":batchElapsedMs,"inserts":thisBatchInserts})
             numBatchesCompleted = 0
             batchElapsedMs = 0
             thisBatchInserts = 0
