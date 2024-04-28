@@ -21,19 +21,6 @@ from pymongo import MongoClient
 from gridfs import GridFS
 
 
-with open('variables.json', 'r') as variables_file:
-    vars = json.load(variables_file)
-
-num_files_to_create = vars["num_files_to_create"]
-file_size_mb = vars["file_size_mb"]
-input_file_dest = vars["input_file_dest"]
-filename_prefix = vars["filename_prefix"]
-
-output_folder = vars["output_folder"]
-
-docdb_uri = vars["docdb_uri"]
-docdb_dbname = vars["docdb_dbname"]
-
 def generate_textfiles():
     
     file_size = file_size_mb * 1024 * 1024
@@ -71,7 +58,7 @@ def load_large_files_docdb():
                 print(f'Completed storing the {file_name} in database at ' +  str(end_time) + ', took ' + str(duration) + ' to finish')
                 filecount =  filecount + 1
 
-    print(f"Total {filecount} files stored in the database")
+    print(f"Total {filecount} files with {filename_prefix} prefix  stored in the database")
 
 def retrieve_files():
     db = client[docdb_dbname]
@@ -90,19 +77,65 @@ def retrieve_files():
             duration =  end_time - start_time
         print('completed retrival file in DB at ' +  str(end_time) + ' completed in ' + str(duration))
 
-    print("Files retrieved from GridFS and saved to local store successfully in folder: {}".format(output_folder))
+    print(f"Files with prefix {filename_prefix} retrieved from GridFS and saved to local store successfully in folder: {output_folder}")
 
 if __name__ == "__main__":
+    
     parser = argparse.ArgumentParser(description='GridFS demo on Amazon DocumentDB')
-    parser.add_argument('action', choices=['generateFiles', 'insertFiles', 'retrieveFiles'],
-                        help='The action to perform: generateFiles, insertFiles, or retrieveFiles')
+    parser.add_argument('--action',required=True, choices=['generateFiles', 'insertFiles', 'retrieveFiles'],
+                        help='The action to perform: generateFiles, insertFiles, or retrieveFiles ')
+    
+    parser.add_argument('--uri', help = 'The URI for Amazon DocumentDB, e.g. mongodb://<insertYourUser>:<insertYourPassword>@<insertYourClusterEndpoint>:<Port>/?replicaSet=rs0&readPreference=secondaryPreferred&retryWrites=false')
+    parser.add_argument('--db', type=str, help = 'The name of the database that is used to store the files ')
+
+    parser.add_argument('--inputLoc', type=str, help = 'The directory path for the large files to be inserted into the database, and the location where generated files will be stored.')
+    parser.add_argument('--numFiles', type=int, default=5, help = '[Optional] Specify the number of text files to be generated in the location set for input file location. If not provided, the default is 5 files')
+    parser.add_argument('--fileSize', type=int, default=32, help = '[Optional] Specify the size of each file to be created. If not provided, the default size is 32 MB')
+    parser.add_argument('--filePrefix',type=str, default='demotext', help = '[Optional] Specify the prefix that will be used for the generated text files. If not provided, the default is demotext' )
+    
+    parser.add_argument('--outputLoc', help='The directory path to store the files retrieved from the database ')
     
     args = parser.parse_args()
-    #client = MongoClient('mongodb://' + docdb_username + ':' + docdb_password + '@' + docdb_cluster_endpoint + ':' + docdb_port + '/?replicaSet=rs0&directConnection=true')
+    
+    num_files_to_create = args.numFiles
+    file_size_mb = args.fileSize
+    input_file_dest = args.inputLoc
+    filename_prefix = args.filePrefix
+    output_folder = args.outputLoc
+
+    docdb_uri = args.uri
+    docdb_dbname= args.db
+
     client = MongoClient(docdb_uri)
     if args.action == 'generateFiles':
-        generate_textfiles()
+        if input_file_dest is not None: 
+            generate_textfiles()
+        if input_file_dest is None:
+            print(f'Missing option: --inputLoc')
+    
     if args.action == 'insertFiles':
-        load_large_files_docdb()
+        missing_options = []
+        if docdb_uri is None:
+            missing_options.append('--uri')
+        if docdb_dbname is None:
+            missing_options.append('--db')
+        if input_file_dest is None:
+            missing_options.append('--inputLoc')
+        if missing_options:
+            print(f'Missing options: {", ".join(missing_options)}')
+        else:
+            load_large_files_docdb()
+
     if args.action == 'retrieveFiles':
-        retrieve_files()
+        missing_options = []
+        if docdb_uri is None:
+            missing_options.append ('--uri')
+        if docdb_dbname is None:
+            missing_options.append('--db')
+        if output_folder is None:
+            missing_options.append('--outputLoc')
+        if missing_options:
+            print(f'Missing options: {", ".join(missing_options)}')
+        else:
+            retrieve_files()
+    

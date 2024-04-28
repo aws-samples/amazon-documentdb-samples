@@ -27,22 +27,53 @@ db.createCollection( "fs.chunks",{
 ```
 
 ## Executing gridfs-demo.py
-Prior to executing the script, ensure that you have updated the variables in `variables.json` .
+
+To see all the supported parameters:
+
+```
+python3 gridfs-demo.py --help
+```
 
 ### Create text files: 
-To create text files of your desired size and number in the `input_file_dest` folder, run:
+To create text files with the default options (5 text files of 32 MB size) in the specified location:
 
 ```
-python3 gridfs-demo.py generateFiles
+python3 gridfs-demo.py --action generateFiles --inputLoc 'files/'
 ```
+
+To create text files of your desired number, size and prefix in the specified location with:
+
+```
+python3 gridfs-demo.py --action generateFiles --numFiles 12 fileSize 48 --filePrefix test --inputLoc files/
+```
+
+**Note:** If you specify your prefix, make sure you pass this prefix when you insert files and retrieve files. 
+
 ### Insert large files into the Amazon DocumentDB: 
-To insert the files into the database, run :
+
+To insert the files into the database with the default file name prefix:
+
 ```
-python3 gridfs-demo.py insertFiles
-```
-### Retrieve files from Amazon DocumentDB: 
-To retrieve files from the database, run:
-```
-python3 gridfs-demo.py retrieveFiles
+python3 gridfs-demo.py --action insertFiles  --inputLoc "files/"  --uri " mongodb://demouser:demopass@demo-docdb.cluster-xxxxx.us-east 1.docdb.amazonaws.com:27017/?replicaSet=rs0&readPreference=secondaryPreferred&retryWrites=false"  --db griddb 
 ```
 
+To insert the files into the database with the specified file prefix:
+
+```
+python3 gridfs-demo.py --action insertFiles --filePrefix test  --inputLoc "files/"  --uri " mongodb://demouser:demopass@demo-docdb.cluster-xxxxx.us-east 1.docdb.amazonaws.com:27017/?replicaSet=rs0&readPreference=secondaryPreferred&retryWrites=false" --db griddb
+```
+
+### Retrieve files from Amazon DocumentDB: 
+To retrieve files from the database, with the default file prefix:
+
+```
+python3 gridfs-demo.py --action retrieveFiles --outputLoc outfiles/ 
+--uri "" mongodb://demouser:demopass@demo-docdb.cluster-xxxxx.us-east 1.docdb.amazonaws.com:27017/?replicaSet=rs0&readPreference=secondaryPreferred&retryWrites=false" --db griddb 
+```
+
+To retrieve files from the database, with the specified file prefix:
+
+```
+python3 gridfs-demo.py --action retrieveFiles --outputLoc outfiles/ --filePrefix test
+--uri "" mongodb://demouser:demopass@demo-docdb.cluster-xxxxx.us-east 1.docdb.amazonaws.com:27017/?replicaSet=rs0&readPreference=secondaryPreferred&retryWrites=false" --db griddb 
+```
