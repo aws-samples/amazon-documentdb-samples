@@ -386,7 +386,7 @@ def main():
     deleteCsv(appConfig)
     
     printLog('---------------------------------------------------------------------------------------',appConfig)
-    for thisKey in appConfig:
+    for thisKey in sorted(appConfig):
         if (thisKey == 'uri'):
             thisUri = appConfig[thisKey]
             thisParsedUri = pymongo.uri_parser.parse_uri(thisUri)
