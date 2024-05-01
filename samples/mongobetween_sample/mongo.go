@@ -304,7 +304,7 @@ func (m *Mongo) roundTrip(conn driver.Connection, req []byte, unacknowledged boo
 		return nil, nil
 	}
 
-	if res, err = conn.ReadWireMessage(m.roundTripCtx, req[:0]); err != nil {
+	if res, err = conn.ReadWireMessage(m.roundTripCtx); err != nil {
 		return nil, wrapNetworkError(err)
 	}
 

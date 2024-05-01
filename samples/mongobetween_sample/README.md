@@ -28,6 +28,7 @@ To implement this solution, you must have the following prerequisites:
 * Python 3+ ( This sample was tested with version Python 3.9.16). Modules pymongo
 
 ```
+sudo yum install pip
 pip install pymongo
 ```
 
