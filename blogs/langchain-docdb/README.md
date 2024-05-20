@@ -2,7 +2,7 @@
 
 ## Introduction
 
-This is an example of how to create a chatbot that can query your large language model (LLM) by using LangChain after loading your embeddings into Amazon DocumentDB. Visit the [AWS blog](https://aws.amazon.com/blogs/database/) to view more information.
+This is an example of how to create a chatbot that can query your large language model (LLM) by using LangChain after loading your embeddings into Amazon DocumentDB. Visit the [AWS blog](https://aws.amazon.com/blogs/database/use-langchain-and-vector-search-on-amazon-documentdb-to-build-a-generative-ai-chatbot/) to view more information.
 
 ## Requirements
 - An AWS account
