@@ -42,7 +42,7 @@ To implement this solution, you must have the following prerequisites:
 2. Install Java 17
 
 ```
-    sudo yum install Java-17-amazon-corretto-devel
+    sudo yum install java-17-amazon-corretto-devel
 ```
 
 3. Check Java version
@@ -65,7 +65,7 @@ The output should show jdk 17
     sudo yum update -y
     sudo yum install -y docker
     sudo service docker start
-    sudo usermod -a -G Docker ec2-user
+    sudo usermod -a -G docker ec2-user
     sudo reboot
 ```
 	
@@ -112,13 +112,13 @@ The output should show the current quarkus version
 2. Make code executable 
 
 ```
-    chmod -R 700 amazon-documentdb-samples/samples/docdb-Docker-quarkus-panache/documentdb-quarkus-quickstart/
+    chmod -R 700 amazon-documentdb-samples/samples/docdb-docker-quarkus-panache/documentdb-quarkus-quickstart/
 ```
 
 3. Change directory
 
 ```
-    cd amazon-documentdb-samples/samples/docdb-Docker-quarkus-panache/documentdb-quarkus-quickstart/
+    cd amazon-documentdb-samples/samples/docdb-docker-quarkus-panache/documentdb-quarkus-quickstart/
 ```
 
 This Java code has two packages :
@@ -135,13 +135,13 @@ Both packages have the Person class which defines the structure of the document 
     public class Person {			
 ```
 
-4. Run script to load DocumetnDB TLS certificates to custom Java truststore for the Docker image
+4. Run script to load DocumentDB TLS certificates to custom Java truststore for the Docker image
 
 ```
     ./files/docdbcerts.sh
 ```
 
-5. Run script to load DocumetnDB TLS certificates to default Java truststore for the local build
+5. Run script to load DocumentDB TLS certificates to default Java truststore for the local build
 
 ```
     ./files/docdbcerts_local.sh
