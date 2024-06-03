@@ -149,12 +149,12 @@ Both packages have the Person class which defines the structure of the document 
 
 6. Change the property in file src/main/resources/application.properties
 ```
-    quarkus.mongodb.connection-string = <documentdb_uri>>
+    quarkus.mongodb.connection-string = <<documentdb_uri>>
     quarkus.mongodb.database = <<databse_name>>
 ```
 7. Change the property in file src/test/resources/application.properties
 ```
-    quarkus.mongodb.connection-string = <documentdb_uri>>
+    quarkus.mongodb.connection-string = <<documentdb_uri>>
     quarkus.mongodb.database = <<databse_name>>
 ```
 8. Run Quarkus test
