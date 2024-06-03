@@ -200,13 +200,13 @@ Enter "r" - the tests will execute and print the following lines on the console
 
 ## Test Docker Image
 
-3. Run command to create a local container running on this image we just created
+1. Run command to create a local container running on this image we just created
 
 ```
     docker run -i --rm -p 8080:8080 documentdb-quarkus-panache-quickstart-jvm
 ```
 
-1. [SSH](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/connect-to-linux-instance.html) into a new terminal of the EC2 instance
+2. [SSH](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/connect-to-linux-instance.html) into a new terminal of the EC2 instance
 
 3. Check if container is running
 
@@ -219,25 +219,25 @@ Output
     CONTAINER ID   IMAGE                                       COMMAND                  CREATED             STATUS             PORTS                                                 NAMES
     5efcc87496a9   quarkus/documentdb-panache-quickstart-jvm   "/bin/sh -c 'Java -D…"   About an hour ago   Up About an hour   5005/tcp, 0.0.0.0:8080->8080/tcp, :::8080->8080/tcp   cool_booth
 
-1. Insert a document into person collection in DocumentDB using the repository methods
+4. Insert a document into person collection in DocumentDB using the repository methods
 
 ```
     curl -d '{ "name" : "moncef", "birthDate" : "1993-05-19", "status" : "LIVING"}' -H "Content-Type: application/json" -X POST http://localhost:8080/repository/persons
 ```
 	
-2. Get all documents from person collection in DocumentDB using the repository methods. You will notice the document, we just inserted, in the response.
+5. Get all documents from person collection in DocumentDB using the repository methods. You will notice the document, we just inserted, in the response.
 
 ```
     curl http://localhost:8080/repository/persons
 ```
 	
-3. Delete all documents from person collection in DocumentDB using the repository methods
+6. Delete all documents from person collection in DocumentDB using the repository methods
 
 ```
     curl -X DELETE http://localhost:8080/repository/persons
 ```
 	
-2. Get all documents from person collection in DocumentDB using the repository methods. This time the response should be empty.
+7. Get all documents from person collection in DocumentDB using the repository methods. This time the response should be empty.
 
 ```
     curl http://localhost:8080/repository/persons
