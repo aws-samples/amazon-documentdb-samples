@@ -115,7 +115,7 @@ The output should show the current quarkus version
     chmod -R 700 amazon-documentdb-samples/samples/docdb-Docker-quarkus-panache/documentdb-quarkus-quickstart/
 ```
 
-2. Change directory
+3. Change directory
 
 ```
     cd amazon-documentdb-samples/samples/docdb-Docker-quarkus-panache/documentdb-quarkus-quickstart/
@@ -135,29 +135,29 @@ Both packages have the Person class which defines the structure of the document 
     public class Person {			
 ```
 
-3. Run script to load DocumetnDB TLS certificates to custom Java truststore for the Docker image
+4. Run script to load DocumetnDB TLS certificates to custom Java truststore for the Docker image
 
 ```
     ./files/docdbcerts.sh
 ```
 
-3. Run script to load DocumetnDB TLS certificates to default Java truststore for the local build
+5. Run script to load DocumetnDB TLS certificates to default Java truststore for the local build
 
 ```
     ./files/docdbcerts_local.sh
 ```
 
-4. Change the property in file src/main/resources/application.properties
+6. Change the property in file src/main/resources/application.properties
 ```
     quarkus.mongodb.connection-string = <documentdb_uri>>
     quarkus.mongodb.database = <<databse_name>>
 ```
-5. Change the property in file src/test/resources/application.properties
+7. Change the property in file src/test/resources/application.properties
 ```
     quarkus.mongodb.connection-string = <documentdb_uri>>
     quarkus.mongodb.database = <<databse_name>>
 ```
-6. Run Quarkus test
+8. Run Quarkus test
 
 ```
     ./mvnw compile quarkus:dev -DJavax.net.ssl.trustStore=/tmp/certs/rds-truststore.jks -DJavax.net.ssl.trustStorePassword=password -Dquarkus.http.host=0.0.0.0
