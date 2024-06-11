@@ -200,7 +200,7 @@ Enter "r" - the tests will execute and print the following lines on the console
 2. Run command to to build Docker image
 
 ```
-    docker build -f src/main/Docker/Dockerfile.jvm -t documentdb-quarkus-panache-quickstart-jvm .
+    docker build -f src/main/docker/Dockerfile.jvm -t documentdb-quarkus-panache-quickstart-jvm .
 ```
 
 ## Test Docker Image
