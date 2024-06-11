@@ -153,6 +153,8 @@ Both packages have the Person class which defines the structure of the document 
     quarkus.mongodb.database = <<databse_name>>
 ```
 7. Change the property in file src/test/resources/application.properties
+
+*Note*: remove the parameter ``` readPreference=secondaryPreferred``` from the connection string
 ```
     quarkus.mongodb.connection-string = <<documentdb_uri>>
     quarkus.mongodb.database = <<databse_name>>
