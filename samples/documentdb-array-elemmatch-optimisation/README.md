@@ -340,4 +340,4 @@ Understanding the cardinality of your data and writing your query's prudently wi
 
 [Matt Shelton](https://www.linkedin.com/in/mashelton/)
 
-([Sourav Biswas](https://www.linkedin.com/in/biswassourav/)
+[Sourav Biswas](https://www.linkedin.com/in/biswassourav/)
