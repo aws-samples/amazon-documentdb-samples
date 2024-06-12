@@ -337,5 +337,7 @@ Note the overall execution time is in sub milliseconds.The FETCH stage had to ap
 Understanding the cardinality of your data and writing your query's prudently will lead to efficent queries with better performance when using multiple $elemMatch along with $and /$or operators on indexed arrays containing nested objects as elements.  As a best practice order your $elemMatch filters such that which have the most unique data are first in order in your query .
 
 ### Credits
+
 (Matt Shelton)[https://www.linkedin.com/in/mashelton/]
+
 (Sourav Biswas)[https://www.linkedin.com/in/biswassourav/]
