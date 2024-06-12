@@ -9,14 +9,9 @@ description: |
   the values for field "key" are either "cycle_number" or "registered" or "status"
   when  "key" == "cycle_number", "value" = unique value
   when  "key" == "registered", "value" = "YES/NO" in a 75:25 ratio
-  when  "key" == "status", "value" = "Activated/Active/Update in progress" in a 50:30:20 
 
 bindings:
-  _id :  Div(3);
-  entryTimestamp : StartingEpochMillis('2019-01-01 23:59:59'); AddHashRange(0L,31536000000L);
-  list_of_metadata : ListSizedHashed(HashRange(1,10),MapSizedHashed(FixedValue(2),FixedValue('key'),FixedValue('cycle_number'),FixedValue('value'),NumberNameToString())); ToJSON()-> String
-  metadata_update : MapSizedHashed(FixedValue(2),FixedValue('key'),FixedValue('registered'),FixedValue('value'),WeightedStrings('YES:0.75,NO:0.25')); ToJSON()-> String
-  metadata_update2 : MapSizedHashed(FixedValue(2),FixedValue('key'),FixedValue('status'),FixedValue('value'),WeightedStrings('Activated:0.50,Active:0.30,Update in progress:0.20')); ToJSON()-> String
+  list_of_metadata : ListSizedHashed(FixedValue(2),MapSizedHashed(FixedValue(2),FixedValue('key'),FixedValue('cycle_number'),FixedValue('value'),NumberNameToString()),MapSizedHashed(FixedValue(2),FixedValue('key'),FixedValue('registered'),FixedValue('value'),WeightedStrings('YES:0.75,NO:0.25'))); ToJSON()-> String
 blocks:
   rampup:
     ops:
@@ -26,37 +21,7 @@ blocks:
           insert: "index_optimization_coll",
           documents: [
                 {
-                _id : {_id},
-                entryTimestamp: "{entryTimestamp}",
                 metadata: {list_of_metadata}
-                }
-          ]
-        }
-  rampup2:
-    ops:
-      update-document: >2
-        {
-          
-          update: "index_optimization_coll",
-          updates: [
-                {
-                q : {_id : {_id}},
-                u : { $push: { metadata : {metadata_update} }},
-                multi : true
-                }
-          ]
-        }
-  rampup3:
-    ops:
-      update-document: >2
-        {
-          
-          update: "index_optimization_coll",
-          updates: [
-                {
-                q : {_id : {_id}},
-                u : { $push: { metadata : {metadata_update2} }},
-                multi : true
                 }
           ]
         }

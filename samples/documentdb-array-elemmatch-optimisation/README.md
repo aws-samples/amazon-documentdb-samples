@@ -6,28 +6,44 @@ You can elevate performance for workloads that query arrays by tailoring queries
 
 ### Sample dataset
 
-The data used for this test was 3.3 million auto generated JSON documents where the _id filed was an increasing numeric value with an array called metdata.
-The array field metadata contains multiple documents of the following structure
-                  {
-           "key" : "<<string>>"
-        "value" : "<<string>>"
-                  }
+The data used for this test was 1 million JSON documents each containing an array field called *metdata* .
+The array field *metadata* contains two documents of the following structure
 
-![Sample Document](./images/example_document.png)
+
+```bash
+{
+	"key" : "<<string>>"
+	"value" : "<<string>>"
+}
+```
 
 The values  for field "key" one of the following
 
 * "cycle_number" 
 * "registered" 
-* "status"
 
-The following table illustartes their possible value
+The following table illustrates their possible value in each nested document
 
 | Key | Value |
 | -------- | ------- 
 | "cycle_number" | unique value text
-| "registered"   | "YES" and "NO" in a 75:25 ratio
-| "status"       | "Activated","Active" and "Update in progress" in a 50:30:20 ratio
+| "registered"   | "YES" and "NO" in approximately 75:25 ratio
+
+The following an example of what a document would look like once loaded to DocumentDB
+
+```bash
+db.index_optimization_coll.findOne()
+{
+  _id: ObjectId('6669c18996ed7881a1104351'),
+  metadata: [
+    {
+      value: 'seven quintillion six hundred and sixty three quadrillion five hundred and fifty nine trillion seven hundred and seventy five billion four million five hundred and twenty thousand one hundred and seventy',
+      key: 'cycle_number'
+    },
+    { value: 'NO', key: 'registered' }
+  ]
+}
+```
 
 ## Deploy Infrastructure
 
@@ -35,7 +51,7 @@ The following table illustartes their possible value
 
 __Prerequisites__
 
-- DocumentDB cluster with at least two db.r6g.large isntances. You can use an existing DocumentDB cluster or create a new one.  This post assumes the default value for port (27017) and TLS (enabled) settings.
+- DocumentDB cluster with at least one db.r6g.large instance. You can use an existing DocumentDB cluster or create a new one.  This post assumes the default value for port (27017) and TLS (enabled) settings.
 - [Amazon Cloud9](https://aws.amazon.com/pm/cloud9/) or [Amazon EC2 Instance](https://aws.amazon.com/pm/ec2/) (Amazon Linux 2023) that you can install test scripts and generate database connections.  You can use an existing Cloud9 or Amazon EC2 instance or create a new one.  For this test, we have used a Cloud9 m5.large instance type with Amazon Linux 2023.
 - A security group that enables you to connect to your Amazon DocumentDB cluster from your Cloud9 environment. You can use an existing security group or [create a new one](https://docs.aws.amazon.com/documentdb/latest/developerguide/get-started-guide.html#cloud9-security).
 - [mongoshell](https://www.mongodb.com/docs/mongodb-shell/install/) utility
@@ -53,7 +69,7 @@ cd amazon-documentdb-samples/samples/documentdb-array-elemmatch-optimisation/
 ## Setup Test Environment
 
 
-1. Configure `DocumentDB` details by running the `set_env_docdb.sh` file
+1. Configure enviroment details by running the `set_env_docdb.sh` file
 
 
 Modify the *set_env_docdb.sh* file with your host and password
@@ -110,11 +126,6 @@ sudo yum install java-17-amazon-corretto-devel
     1. wget [https://github.com/nosqlbench/nosqlbench/releases/download/5.17.3-release/nb5.jar](https://github.com/nosqlbench/nosqlbench/releases/download/5.17.3-release/nb5.jar)
     2. chmod 777 nb5.jar
 
-The output in the console should look similar to the following screenshot:
-
-![Truststore Screenshot](./images/create_truststore_screenshot.png)
-
-
 ## Run tests
 
 
@@ -137,17 +148,65 @@ db.index_optimization_coll.createIndex({"metadata.key":1,"metadata.value":1})
 3. Load data with nosqlbench, replace value for placeholder <<password>> 
 
 ```bash
-java -Djavax.net.ssl.trustStore=/tmp/certs/rds-truststore.jks -Djavax.net.ssl.trustStorePassword=<<password>> -jar nb5.jar run driver=mongodb yaml=load_sample_data_array_optimization.yaml connection="mongodb://$DOCDB_USER:$DOCDB_PASS@$DOCDB_HOST:$DOCDB_PORT/?tls=true&tlsCAFile=global-bundle.pem&replicaSet=rs0&readPreference=secondaryPreferred&retryWrites=false" tags=block:"rampup.*" database=$DOCDB_DB cycles=10M threads=auto errors=timer,warn -v --report-csv-to ~/environment/tmp/charter_csv/$(date +%Y%m%d%H%M%S) --progress console:30s
+java -Djavax.net.ssl.trustStore=/tmp/certs/rds-truststore.jks -Djavax.net.ssl.trustStorePassword=<<password>> -jar nb5.jar run driver=mongodb yaml=load_sample_data_array_optimization.yaml connection="mongodb://$DOCDB_USER:$DOCDB_PASS@$DOCDB_HOST:$DOCDB_PORT/?tls=true&tlsCAFile=global-bundle.pem&replicaSet=rs0&readPreference=secondaryPreferred&retryWrites=false" tags=block:"rampup.*" database=$DOCDB_DB cycles=1M threads=auto errors=timer,warn -v --report-csv-to ~/environment/tmp/charter_csv/$(date +%Y%m%d%H%M%S) --progress console:30s
 ```
 
-Wait for the process to complete.
+Wait for the process to complete.Verify with mongoshell using the following command
 
+```bash
+db.index_optimization_coll.stats()
+{
+  ns: 'index_optimization_db.index_optimization_coll',
+  count: 1000000,
+  size: 380000000,
+  avgObjSize: 380.01765,
+  storageSize: 429768704,
+  compression: { enable: false },
+  capped: false,
+  nindexes: 2,
+  totalIndexSize: 537165824,
+  indexSizes: { _id_: 51838976, 'metadata.key_1_metadata.value_1': 485326848 },
+  collScans: 6,
+  idxScans: 0,
+  opCounter: { numDocsIns: 996811, numDocsUpd: 0, numDocsDel: 0 },
+  cacheStats: {
+    collBlksHit: 2487006,
+    collBlksRead: 1298,
+    collHitRatio: 99.9479,
+    idxBlksHit: 12418671,
+    idxBlksRead: 65371,
+    idxHitRatio: 99.4764
+  },
+  lastReset: '2024-06-12 15:39:47.794722+00',
+  ok: 1,
+  operationTime: Timestamp({ t: 1718207110, i: 1 })
+}
+```
+
+4. Find a value for query execution
+
+Execute the follwing query to get a valid *cycle_number* value for *key* equals *register*. **We will be using this value in all subsequent tests.**
+
+```
+db.index_optimization_coll.findOne( {"metadata": { "$elemMatch": { "key": "registered", "value": "YES" } }});
+{
+  _id: ObjectId('6669c18996ed7881a03d6741'),
+  metadata: [
+    {
+      value: 'eight quintillion nine hundred and forty seven quadrillion four hundred and sixty three trillion five hundred and nineteen billion nine hundred and twenty seven million one hundred and eighteen thousand three hundred and eighty six',
+      key: 'cycle_number'
+    },
+    { value: 'YES', key: 'registered' }
+  ]
+}
+```
+**Note** the value **"eight quintillion nine hundred and forty seven quadrillion four hundred and sixty three trillion five hundred and nineteen billion nine hundred and twenty seven million one hundred and eighteen thousand three hundred and eighty six"** might not exist in your dataset, substitute this value with whatever you get from the output  of your query.
 
 4. Run query 
 
 We run a query with two $elemMatch filters on the metadata array field, combined with an $and operator in following order 
 
-* key is "registered" and value is  "YES" which should result in about 2.5 million documents match.
+* key is "registered" and value is  "YES" which should result in ~750K documents match.
 * key is "cycle_number" and value is  "seven quintillion four hundred and ninety one quadrillion six hundred and eighty trillion two hundred and thirty five billion seven hundred and fourteen million five hundred and thirty nine thousand eight hundred and eighty five" which should result in 1 document match.
 
 ```mongosh
@@ -156,38 +215,71 @@ db.index_optimization_coll.explain("executionStats").aggregate([
 		{ 
 			"$and" :[
 						{ "metadata": { "$elemMatch": { "key": "registered", "value": "YES" } } },
-						{ "metadata": { "$elemMatch": { "key": "cycle_number", "value": "seven quintillion four hundred and ninety one quadrillion six hundred and eighty trillion two hundred and thirty five billion seven hundred and fourteen million five hundred and thirty nine thousand eight hundred and eighty five" } } }
+						{ "metadata": { "$elemMatch": { "key": "cycle_number", "value": "eight quintillion nine hundred and forty seven quadrillion four hundred and sixty three trillion five hundred and nineteen billion nine hundred and twenty seven million one hundred and eighteen thousand three hundred and eighty six" } } }
 					]
 		}
 	}
 ])
 ```
 
-Note that even though the query returned 1 document, it had to FETCH and apply "cycle_number" filter for all the ~2.5 million documents that the IXSCAN stage matched. This is not an efficient query execution path.
+The output in the console should look similar to the following 
 
 
-The output in the console should look similar to the following screenshot:
+```
+{
+  queryPlanner: {
+    plannerVersion: 1,
+    namespace: 'index_optimization_db.index_optimization_coll',
+    winningPlan: {
+      stage: 'FETCH',
+      inputStage: { stage: 'IXSCAN', indexName: 'metadata.key_1_metadata.value_1' }
+    }
+  },
+  executionStats: {
+    executionSuccess: true,
+    executionTimeMillis: '8238.725',
+    planningTimeMillis: '0.228',
+    executionStages: {
+      stage: 'FETCH',
+      nReturned: '1',
+      executionTimeMillisEstimate: '8238.131',
+      inputStages: [
+        {
+          stage: 'IXSCAN',
+          nReturned: '751069',
+          executionTimeMillisEstimate: '346.082',
+          indexName: 'metadata.key_1_metadata.value_1'
+        },
+        { nReturned: '1', executionTimeMillisEstimate: '0.005' },
+        { nReturned: '0', executionTimeMillisEstimate: '0.005' }
+      ]
+    }
+  },
+  serverInfo: { host: 'docdb-2024-06-05-16-29-08', port: 27017, version: '5.0.0' },
+  ok: 1,
+  operationTime: Timestamp({ t: 1718207761, i: 1 })
+}
+```
 
-![mongosh Screenshot](./images/mongosh_slowquery_screenshot.png)
-
+Note that even though the query returned 1 document, it had to FETCH and apply "cycle_number" filter for all the ~750K documents that the IXSCAN stage matched. This is not an efficient query execution path - total execution time is more than 3 seconds.
 
 - Query begins by using the index we created,doing a index lookup on all documents that match the condition  : key is "registered" and value is  "YES"
 - The selectivity of documents matching this filter is  75% of the  data.
-- As a result, the index scan selects approximately 75%, equivalent to around 2.5 million documents, and doing subsequent filters on the documents it looked up
+- As a result, the index scan selects approximately 75%, equivalent to around ~750K documents, and doing subsequent filters on the documents it looked up
 
 5. Run modified query
 
 We rerun the query with two $elemMatch filters on the metadata array field, combined with an $and operator in following order 
 
 * key is "cycle_number" and value is  "seven quintillion four hundred and ninety one quadrillion six hundred and eighty trillion two hundred and thirty five billion seven hundred and fourteen million five hundred and thirty nine thousand eight hundred and eighty five" which should result in 1 document match.
-* key is "registered" and valuThe output in the console should look similar to the following screenshot:
+* key is "registered" and value is  "YES" which should result in about ~750K documents match.
 
 ```mongosh
 db.index_optimization_coll.explain("executionStats").aggregate([ 
 	{ "$match": 
 		{ 
 			"$and" :[
-						{ "metadata": { "$elemMatch": { "key": "cycle_number", "value": "seven quintillion four hundred and ninety one quadrillion six hundred and eighty trillion two hundred and thirty five billion seven hundred and fourteen million five hundred and thirty nine thousand eight hundred and eighty five" } } },
+						{ "metadata": { "$elemMatch": { "key": "cycle_number", "value": "eight quintillion nine hundred and forty seven quadrillion four hundred and sixty three trillion five hundred and nineteen billion nine hundred and twenty seven million one hundred and eighteen thousand three hundred and eighty six" } } },
 						{ "metadata": { "$elemMatch": { "key": "registered", "value": "YES" } } } 
 					]
 		}
@@ -196,15 +288,49 @@ db.index_optimization_coll.explain("executionStats").aggregate([
 
 ```
 
-The output in the console should look similar to the following screenshot:
+The output in the console should look similar to the following 
 
-![mongosh Screenshot](./images/mongosh_fastquery_screenshot.png)
+```bash
+{
+  queryPlanner: {
+    plannerVersion: 1,
+    namespace: 'index_optimization_db.index_optimization_coll',
+    winningPlan: {
+      stage: 'FETCH',
+      inputStage: { stage: 'IXSCAN', indexName: 'metadata.key_1_metadata.value_1' }
+    }
+  },
+  executionStats: {
+    executionSuccess: true,
+    executionTimeMillis: '0.599',
+    planningTimeMillis: '0.466',
+    executionStages: {
+      stage: 'FETCH',
+      nReturned: '1',
+      executionTimeMillisEstimate: '0.061',
+      inputStages: [
+        {
+          stage: 'IXSCAN',
+          nReturned: '1',
+          executionTimeMillisEstimate: '0.024',
+          indexName: 'metadata.key_1_metadata.value_1'
+        },
+        { nReturned: '1', executionTimeMillisEstimate: '0.018' },
+        { nReturned: '1', executionTimeMillisEstimate: '0.010' }
+      ]
+    }
+  },
+  serverInfo: { host: 'docdb-2024-06-05-16-29-08', port: 27017, version: '5.0.0' },
+  ok: 1,
+  operationTime: Timestamp({ t: 1718207815, i: 1 })
+}
+```
 
-Note the overall execution time is in low milliseconds.The FETCH stage had to apply  "key" filter only on the one document that the IXSCAN stage matched. 
+Note the overall execution time is in sub milliseconds.The FETCH stage had to apply  filter only on the one document that the IXSCAN stage matched. 
 
 - Query execution begins by using the index we created,doing a index lookup on all documents that match the condition  : key is "cycle_number" and value is  "seven quintillion four hundred and ninety one quadrillion six hundred and eighty trillion two hundred and thirty five billion seven hundred and fourteen million five hundred and thirty nine thousand eight hundred and eighty five" .
 - The selectivity of documents matching this filter is  just 1 document.
-- As a result, the index scan selects approximately just 1 document and subsequent execution steps are very fast.
+- As a result, the index scan selects just 1 document and subsequent execution steps are very fast.
 
 ## Conclusion
 
