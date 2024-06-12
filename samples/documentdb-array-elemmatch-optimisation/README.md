@@ -145,7 +145,7 @@ use index_optimization_db
 db.index_optimization_coll.createIndex({"metadata.key":1,"metadata.value":1})
 ```
 
-3. Load data with nosqlbench, replace value for placeholder <<password>> 
+3. Load data with nosqlbench, replace value for placeholder for truststore password
 
 ```bash
 java -Djavax.net.ssl.trustStore=/tmp/certs/rds-truststore.jks -Djavax.net.ssl.trustStorePassword=<<password>> -jar nb5.jar run driver=mongodb yaml=load_sample_data_array_optimization.yaml connection="mongodb://$DOCDB_USER:$DOCDB_PASS@$DOCDB_HOST:$DOCDB_PORT/?tls=true&tlsCAFile=global-bundle.pem&replicaSet=rs0&readPreference=secondaryPreferred&retryWrites=false" tags=block:"rampup.*" database=$DOCDB_DB cycles=1M threads=auto errors=timer,warn -v --report-csv-to ~/environment/tmp/charter_csv/$(date +%Y%m%d%H%M%S) --progress console:30s
