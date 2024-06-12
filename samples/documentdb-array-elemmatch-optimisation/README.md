@@ -185,7 +185,7 @@ db.index_optimization_coll.stats()
 
 4. Find a value for query execution
 
-Execute the follwing query to get a valid *cycle_number* value for *key* equals *register*. **We will be using this value in all subsequent tests.**
+Execute the following query to get a valid *cycle_number* value for *key* equals *register* and *value* is *YES*. **We will be using this value in all subsequent tests.**
 
 ```
 db.index_optimization_coll.findOne( {"metadata": { "$elemMatch": { "key": "registered", "value": "YES" } }});
