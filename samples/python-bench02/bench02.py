@@ -9,6 +9,7 @@ import os
 import multiprocessing as mp
 import argparse
 import string
+import math
 
 
 def deleteLog(appConfig):
@@ -224,6 +225,8 @@ def task_worker(threadNum,perfQ,appConfig):
     numProducts = appConfig['numProducts']
     maxQuantity = appConfig['maxQuantity']
     numSecondsDateRange = appConfig['secondsDateRange']
+    numOperations = appConfig['numOperations']
+    numOperationsThisWorker = math.ceil(numOperations/numInsertProcesses)
 
     perfReportInterval = 1
 
@@ -255,6 +258,7 @@ def task_worker(threadNum,perfQ,appConfig):
     nextReportTime = startTime + intervalSeconds
     maxPerInterval = rateLimitPerThread * intervalSeconds
 
+    thisWorkerOps = 0
     thisIntervalOps = 0
     thisBatchInserts = 0
     batchElapsedMs = 0
@@ -293,6 +297,7 @@ def task_worker(threadNum,perfQ,appConfig):
             
             thisBatchInserts += 1
             thisIntervalOps += 1
+            thisWorkerOps += 1
         
         batchStartTime = time.time()
         result = col.bulk_write(insList, ordered=orderedBatches)
@@ -306,7 +311,10 @@ def task_worker(threadNum,perfQ,appConfig):
             batchElapsedMs = 0
             thisBatchInserts = 0
             
-        if (time.time() - startTime) >= runSeconds:
+        if ((time.time() - startTime) >= runSeconds) and (runSeconds > 0):
+            allDone = True
+
+        if (thisWorkerOps >= numOperationsThisWorker) and (numOperationsThisWorker > 0):
             allDone = True
         
     client.close()
@@ -321,7 +329,8 @@ def main():
     parser.add_argument('--processes',required=True,type=int,help='Degree of concurrency')
     parser.add_argument('--database',required=True,type=str,help='Database')
     parser.add_argument('--collection',required=True,type=str,help='Collection')
-    parser.add_argument('--run-seconds',required=True,type=int,help='Total number of seconds to run for')
+    parser.add_argument('--run-seconds',required=False,type=int,default=0,help='Total number of seconds to run for')
+    parser.add_argument('--num-operations',required=False,type=int,default=0,help='Total number of operations to run for')
     parser.add_argument('--batch-size',required=True,type=int,help='Number of documents to insert per batch')
     parser.add_argument('--rate-limit',required=False,type=int,default=9999999,help='Limit throughput (operations per second)')
     parser.add_argument('--text-size',required=False,type=int,default=1024,help='Size of text field (bytes)')
@@ -358,6 +367,7 @@ def main():
     appConfig['databaseName'] = args.database
     appConfig['collectionName'] = args.collection
     appConfig['runSeconds'] = int(args.run_seconds)
+    appConfig['numOperations'] = int(args.num_operations)
     appConfig['rateLimit'] = int(args.rate_limit)
     appConfig['batchSize'] = int(args.batch_size)
     appConfig['textSize'] = int(args.text_size)
@@ -374,6 +384,14 @@ def main():
     appConfig['logFileName'] = "{}.log".format(args.file_name)
     appConfig['csvFileName'] = "{}.csv".format(args.file_name)
     appConfig['changeStream'] = args.change_stream
+
+    if (appConfig['runSeconds'] == 0 and appConfig['numOperations'] == 0):
+        printLog("Must supply non-zero for one of --run-seconds or --num-operations",appConfig)
+        sys.exit(1)
+
+    if (appConfig['runSeconds'] > 0 and appConfig['numOperations'] > 0):
+        printLog("Cannot supply non-zero for both --run-seconds and --num-operations",appConfig)
+        sys.exit(1)
     
     numExistingDocuments = 0
 

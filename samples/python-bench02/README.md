@@ -19,8 +19,11 @@ Required parameters
   --processes PROCESSES                          Degree of concurrency
   --database DATABASE                            Database
   --collection COLLECTION                        Collection
-  --run-seconds RUN_SECONDS                      Total number of seconds to run for
   --batch-size BATCH_SIZE                        Number of documents to insert per batch
+
+  Must supply exactly 1 of the following
+    --run-seconds RUN_SECONDS                    Total number of seconds to run for
+    --num-operations NUM_OPERATIONS              Total number of operations (inserts) to perform
 
 Optional parameters
   --rate-limit RATE_LIMIT                        Limit throughput (operations per second), default=9999999
