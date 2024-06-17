@@ -42,7 +42,7 @@ To implement this solution, you must have the following prerequisites:
 2. Install Java 17
 
 ```
-    sudo yum install Java-17-amazon-corretto-devel
+    sudo yum install java-17-amazon-corretto-devel
 ```
 
 3. Check Java version
@@ -65,7 +65,7 @@ The output should show jdk 17
     sudo yum update -y
     sudo yum install -y docker
     sudo service docker start
-    sudo usermod -a -G Docker ec2-user
+    sudo usermod -a -G docker ec2-user
     sudo reboot
 ```
 	
@@ -112,13 +112,13 @@ The output should show the current quarkus version
 2. Make code executable 
 
 ```
-    chmod -R 700 amazon-documentdb-samples/samples/docdb-Docker-quarkus-panache/documentdb-quarkus-quickstart/
+    chmod -R 700 amazon-documentdb-samples/samples/docdb-docker-quarkus-panache/documentdb-quarkus-quickstart/
 ```
 
-2. Change directory
+3. Change directory
 
 ```
-    cd amazon-documentdb-samples/samples/docdb-Docker-quarkus-panache/documentdb-quarkus-quickstart/
+    cd amazon-documentdb-samples/samples/docdb-docker-quarkus-panache/documentdb-quarkus-quickstart/
 ```
 
 This Java code has two packages :
@@ -135,29 +135,34 @@ Both packages have the Person class which defines the structure of the document 
     public class Person {			
 ```
 
-3. Run script to load DocumetnDB TLS certificates to custom Java truststore for the Docker image
+4. Run script to load DocumentDB TLS certificates to custom Java truststore for the Docker image
 
 ```
     ./files/docdbcerts.sh
 ```
 
-3. Run script to load DocumetnDB TLS certificates to default Java truststore for the local build
+5. Run script to load DocumentDB TLS certificates to default Java truststore for the local build
 
 ```
     ./files/docdbcerts_local.sh
 ```
 
-4. Change the property in file src/main/resources/application.properties
+6. Change the property in file src/main/resources/application.properties
+
+Use a unique database name everytime you create a new image or drop the existing database if you want to reuse the name.
 ```
-    quarkus.mongodb.connection-string = <documentdb_uri>>
-    quarkus.mongodb.database = <<databse_name>>
+    quarkus.mongodb.connection-string = <<documentdb_uri>>
+    quarkus.mongodb.database = <<database_name>>
 ```
-5. Change the property in file src/test/resources/application.properties
+7. Change the property in file src/test/resources/application.properties
+
+Use a unique database name everytime you create a new image or drop the existing database if you want to reuse the name.
+*Note*: remove the parameter ``` readPreference=secondaryPreferred``` from the connection string
 ```
-    quarkus.mongodb.connection-string = <documentdb_uri>>
-    quarkus.mongodb.database = <<databse_name>>
+    quarkus.mongodb.connection-string = <<documentdb_uri>>
+    quarkus.mongodb.database = <<database_name>>
 ```
-6. Run Quarkus test
+8. Run Quarkus test
 
 ```
     ./mvnw compile quarkus:dev -DJavax.net.ssl.trustStore=/tmp/certs/rds-truststore.jks -DJavax.net.ssl.trustStorePassword=password -Dquarkus.http.host=0.0.0.0
@@ -195,18 +200,18 @@ Enter "r" - the tests will execute and print the following lines on the console
 2. Run command to to build Docker image
 
 ```
-    docker build -f src/main/Docker/Dockerfile.jvm -t documentdb-quarkus-panache-quickstart-jvm .
+    docker build -f src/main/docker/Dockerfile.jvm -t documentdb-quarkus-panache-quickstart-jvm .
 ```
 
 ## Test Docker Image
 
-3. Run command to create a local container running on this image we just created
+1. Run command to create a local container running on this image we just created
 
 ```
     docker run -i --rm -p 8080:8080 documentdb-quarkus-panache-quickstart-jvm
 ```
 
-1. [SSH](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/connect-to-linux-instance.html) into a new terminal of the EC2 instance
+2. [SSH](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/connect-to-linux-instance.html) into a new terminal of the EC2 instance
 
 3. Check if container is running
 
@@ -219,25 +224,25 @@ Output
     CONTAINER ID   IMAGE                                       COMMAND                  CREATED             STATUS             PORTS                                                 NAMES
     5efcc87496a9   quarkus/documentdb-panache-quickstart-jvm   "/bin/sh -c 'Java -D…"   About an hour ago   Up About an hour   5005/tcp, 0.0.0.0:8080->8080/tcp, :::8080->8080/tcp   cool_booth
 
-1. Insert a document into person collection in DocumentDB using the repository methods
+4. Insert a document into person collection in DocumentDB using the repository methods
 
 ```
     curl -d '{ "name" : "moncef", "birthDate" : "1993-05-19", "status" : "LIVING"}' -H "Content-Type: application/json" -X POST http://localhost:8080/repository/persons
 ```
 	
-2. Get all documents from person collection in DocumentDB using the repository methods. You will notice the document, we just inserted, in the response.
+5. Get all documents from person collection in DocumentDB using the repository methods. You will notice the document, we just inserted, in the response.
 
 ```
     curl http://localhost:8080/repository/persons
 ```
 	
-3. Delete all documents from person collection in DocumentDB using the repository methods
+6. Delete all documents from person collection in DocumentDB using the repository methods
 
 ```
     curl -X DELETE http://localhost:8080/repository/persons
 ```
 	
-2. Get all documents from person collection in DocumentDB using the repository methods. This time the response should be empty.
+7. Get all documents from person collection in DocumentDB using the repository methods. This time the response should be empty.
 
 ```
     curl http://localhost:8080/repository/persons
