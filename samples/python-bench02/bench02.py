@@ -164,7 +164,7 @@ def reporter(perfQ,appConfig):
         nowTime = time.time()
         
         numLatencyBatches = 0
-        numLatencyMs = 0
+        numLatencyMs = 0.0
         
         while not perfQ.empty():
             qMessage = perfQ.get_nowait()
@@ -189,9 +189,9 @@ def reporter(perfQ,appConfig):
         intervalInserts = numTotalInserts - lastNumTotalInserts
         intervalInsertsPerSecond = intervalInserts / intervalElapsedSeconds
         if numLatencyBatches > 0:
-            intervalLatencyMs = numLatencyMs // numLatencyBatches
+            intervalLatencyMs = numLatencyMs / numLatencyBatches
         else:
-            intervalLatencyMs = 0
+            intervalLatencyMs = 0.0
         
         # recent intervals
         if len(recentTps) == numIntervalsTps:
@@ -203,8 +203,8 @@ def reporter(perfQ,appConfig):
         avgRecentTps = totRecentTps / len(recentTps)
         
         logTimeStamp = datetime.utcnow().isoformat()[:-3] + 'Z'
-        printLog("[{}] elapsed {} | total ins {:16,d} at {:12,.2f} p/s | tot docs {:16,d} | last {} {:12,.2f} p/s | interval {:12,.2f} p/s | lat (ms) {:12}".format(logTimeStamp,thisHMS,numTotalInserts,insertsPerSecond,numTotalInserts+numExistingDocuments,numIntervalsTps,avgRecentTps,intervalInsertsPerSecond,intervalLatencyMs),appConfig)
-        csvData = "{},{},{:.2f},{},{:.2f},{},{:.2f},{:.2f},{}".format(logTimeStamp,thisHMS,elapsedSeconds,numTotalInserts,insertsPerSecond,numTotalInserts+numExistingDocuments,avgRecentTps,intervalInsertsPerSecond,intervalLatencyMs)
+        printLog("[{}] elapsed {} | total ins {:16,d} at {:12,.2f} p/s | tot docs {:16,d} | last {} {:12,.2f} p/s | interval {:12,.2f} p/s | lat (ms) {:8,.2f}".format(logTimeStamp,thisHMS,numTotalInserts,insertsPerSecond,numTotalInserts+numExistingDocuments,numIntervalsTps,avgRecentTps,intervalInsertsPerSecond,intervalLatencyMs),appConfig)
+        csvData = "{},{},{:.2f},{},{:.2f},{},{:.2f},{:.2f},{:.2f}".format(logTimeStamp,thisHMS,elapsedSeconds,numTotalInserts,insertsPerSecond,numTotalInserts+numExistingDocuments,avgRecentTps,intervalInsertsPerSecond,intervalLatencyMs)
         printCsv(csvData,appConfig)
         nextReportTime = nowTime + numSecondsFeedback
         
@@ -261,7 +261,7 @@ def task_worker(threadNum,perfQ,appConfig):
     thisWorkerOps = 0
     thisIntervalOps = 0
     thisBatchInserts = 0
-    batchElapsedMs = 0
+    batchElapsedMs = 0.0
     
     allDone = False
 
@@ -301,14 +301,14 @@ def task_worker(threadNum,perfQ,appConfig):
         
         batchStartTime = time.time()
         result = col.bulk_write(insList, ordered=orderedBatches)
-        batchElapsedMs += int((time.time() - batchStartTime) * 1000)
+        batchElapsedMs += (time.time() - batchStartTime) * 1000
         numBatchesCompleted += 1
         
         if time.time() > nextPerfReportTime:
             nextPerfReportTime = time.time() + perfReportInterval
             perfQ.put({"name":"batchCompleted","batches":numBatchesCompleted,"latency":batchElapsedMs,"inserts":thisBatchInserts})
             numBatchesCompleted = 0
-            batchElapsedMs = 0
+            batchElapsedMs = 0.0
             thisBatchInserts = 0
             
         if ((time.time() - startTime) >= runSeconds) and (runSeconds > 0):
