@@ -141,12 +141,10 @@ def setup(appConfig):
 
 def reporter(perfQ,appConfig):
     numSecondsFeedback = 10
-    numIntervalsTps = 5
+    numIntervalsTps = appConfig['numIntervalsAverage'] 
     numInsertProcesses = appConfig['numInsertProcesses']
     numExistingDocuments = appConfig['numExistingDocuments']
 
-    recentTps = []
-    
     startTime = time.time()
     lastTime = time.time()
     numTotalInserts = 0
@@ -155,8 +153,10 @@ def reporter(perfQ,appConfig):
     intervalLatencyMs = 0
     
     numThreadsCompleted = 0
+    recentTps = []
+    recentLatency = []
     
-    csvHeader = "timestamp,elapsed-time,elapsed-seconds,inserts,overall-ips,total-documents,last-{}-intervals-ips,this-interval-ips,interval-latency-ms"
+    csvHeader = "timestamp,elapsed-time,elapsed-seconds,inserts,overall-ips,total-documents,this-interval-ips,this-interval-latency-ms,last-{}-intervals-ips,last-{}-intervals-latency-ms".format(numIntervalsTps,numIntervalsTps)
     printCsv(csvHeader,appConfig)
     
     while (numThreadsCompleted < numInsertProcesses):
@@ -193,7 +193,7 @@ def reporter(perfQ,appConfig):
         else:
             intervalLatencyMs = 0.0
         
-        # recent intervals
+        # recent intervals - tps
         if len(recentTps) == numIntervalsTps:
             recentTps.pop(0)
         recentTps.append(intervalInsertsPerSecond)
@@ -201,10 +201,19 @@ def reporter(perfQ,appConfig):
         for thisTps in recentTps:
             totRecentTps += thisTps
         avgRecentTps = totRecentTps / len(recentTps)
+
+        # recent intervals - latency 
+        if len(recentLatency) == numIntervalsTps:
+            recentLatency.pop(0)
+        recentLatency.append(intervalLatencyMs)
+        totRecentLatency = 0.0
+        for thisLatency in recentLatency:
+            totRecentLatency += thisLatency
+        avgRecentLatency = totRecentLatency / len(recentLatency)
         
         logTimeStamp = datetime.utcnow().isoformat()[:-3] + 'Z'
-        printLog("[{}] elapsed {} | total ins {:16,d} at {:12,.2f} p/s | tot docs {:16,d} | last {} {:12,.2f} p/s | interval {:12,.2f} p/s | lat (ms) {:8,.2f}".format(logTimeStamp,thisHMS,numTotalInserts,insertsPerSecond,numTotalInserts+numExistingDocuments,numIntervalsTps,avgRecentTps,intervalInsertsPerSecond,intervalLatencyMs),appConfig)
-        csvData = "{},{},{:.2f},{},{:.2f},{},{:.2f},{:.2f},{:.2f}".format(logTimeStamp,thisHMS,elapsedSeconds,numTotalInserts,insertsPerSecond,numTotalInserts+numExistingDocuments,avgRecentTps,intervalInsertsPerSecond,intervalLatencyMs)
+        printLog("[{}] elapsed {} | total ins {:16,d} at {:12,.2f} p/s | tot docs {:16,d} | interval {:12,.2f} p/s @ {:8,.2f} ms | last {} is {:12,.2f} p/s @ {:8,.2f} ms ".format(logTimeStamp,thisHMS,numTotalInserts,insertsPerSecond,numTotalInserts+numExistingDocuments,intervalInsertsPerSecond,intervalLatencyMs,numIntervalsTps,avgRecentTps,avgRecentLatency),appConfig)
+        csvData = "{},{},{:.2f},{},{:.2f},{},{:.2f},{:.2f},{:.2f},{:.2f}".format(logTimeStamp,thisHMS,elapsedSeconds,numTotalInserts,insertsPerSecond,numTotalInserts+numExistingDocuments,intervalInsertsPerSecond,intervalLatencyMs,avgRecentTps,avgRecentLatency)
         printCsv(csvData,appConfig)
         nextReportTime = nowTime + numSecondsFeedback
         
@@ -346,6 +355,7 @@ def main():
     parser.add_argument('--num-secondary-indexes',required=False,type=int,default=3,choices=[0,1,2,3],help='Number of secondary indexes')
     parser.add_argument('--file-name',required=False,type=str,default='benchmark',help='Starting name of the created CSV and log files')
     parser.add_argument('--change-stream',required=False,action='store_true',help='Enable change streams')
+    parser.add_argument('--num-intervals-average',required=False,type=int,default=10,help='Number of intervals for averaging')
 
     args = parser.parse_args()
     
@@ -384,6 +394,7 @@ def main():
     appConfig['logFileName'] = "{}.log".format(args.file_name)
     appConfig['csvFileName'] = "{}.csv".format(args.file_name)
     appConfig['changeStream'] = args.change_stream
+    appConfig['numIntervalsAverage'] = int(args.num_intervals_average)
 
     if (appConfig['runSeconds'] == 0 and appConfig['numOperations'] == 0):
         printLog("Must supply non-zero for one of --run-seconds or --num-operations",appConfig)

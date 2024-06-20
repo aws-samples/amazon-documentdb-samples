@@ -39,5 +39,6 @@ Optional parameters
   --seconds-date-range SECONDS_DATE_RANGE        Number of seconds for range of orderDate field, default=90*87400
   --num-secondary-indexes {0,1,2,3}              Number of secondary indexes, default=3
   --file-name FILE_NAME                          Starting name of the created CSV and log files, default="bench02-output"
+  --num-intervals-average NUM_INTERVALS_AVERAGE  Number of intervals for averaging recent tps and latency, default=10
 ```
 
