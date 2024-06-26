@@ -1,8 +1,8 @@
 # Introduction and Use Case
 
-In  [Amazon DocumentDB](https://aws.amazon.com/documentdb/) ,for fields that have an array value, a multi-key index allows you to create an index key for each element in the array. The array can be scalar (strings or numbers) and nested documents. When using multiple $elemMatch along with $and /$or operators on indexed arrays containing nested objects as elements , Amazon DocumentDB query optimizer  can utilize indexes more efficiently when we arrange the query such that filters with low selectivity are at the very beginning of the query. This enables the narrowing down of the search scope of the first pass of the query execution to a fewer number of documents, leading to faster execution times.  
+In  [Amazon DocumentDB](https://aws.amazon.com/documentdb/) ,for fields that have an array value, a multi-key in for fields that have an array value, a multi-key index allows you to create an index key for each element in the array. The array can be scalar (strings or numbers) and nested documents. When using multiple $elemMatch along with $and /$or operators on indexed arrays containing nested objects as elements , Amazon DocumentDB query optimizer  can utilize indexes more efficiently when we arrange the query such that filters with low selectivity are at the very beginning of the query. This enables the narrowing down of the search scope of the first pass of the query execution to a fewer number of documents, leading to faster execution times.  
 
-You can elevate performance for workloads that query arrays by tailoring queries to the cardinality of your data. This project aims to facilitate the replication of test setups for Amazon DocumentDB, demonstrating performance enhancements through optimal rewriting of array queries. With insights into your dataset, crafting array queries tailored to DocumentDB's cloud native engin can significantly optimize execution.
+You can elevate performance for workloads that query arrays by tailoring queries to the cardinality of your data. This project aims to facilitate the replication of test setups for Amazon DocumentDB, demonstrating performance enhancements through optimal rewriting of array queries. With insights into your dataset, crafting array queries tailored to DocumentDB's cloud native engine can significantly optimize execution.
 
 ### Sample dataset
 
@@ -17,7 +17,7 @@ The array field *metadata* contains two documents of the following structure
 }
 ```
 
-The values  for field "key" one of the following
+The value for the field "key", can be one of the following
 
 * "cycle_number" 
 * "registered" 
@@ -94,9 +94,9 @@ Set your environment by running the *set_env_docdb.sh* file
 sudo yum install java-17-amazon-corretto-devel
 ```
 
-3. To connect to TLS enabled cluster (default setting) use steps to create java certificate file .Create a java trust-store using [_instructions_](https://docs.aws.amazon.com/documentdb/latest/developerguide/connect_programmatically.html)
+3. To connect to the TLS enabled DocumentDB cluster (default setting), use the following steps to create the java certificate file .Create a java trust-store using these  [_instructions_](https://docs.aws.amazon.com/documentdb/latest/developerguide/connect_programmatically.html)
     1. mkdir /tmp/certs
-    2. create a file *create-truststore.sh* and copy script,listed below, after filling in the placeholders
+    2. copy the script, listed below, fill in the place holders , into a file named create-truststore.sh.
 
         ```
         mydir=/tmp/certs
@@ -183,7 +183,7 @@ db.index_optimization_coll.stats()
 }
 ```
 
-4. Find a value for query execution
+4. Find a sample value for cycle_number for query execution.
 
 Execute the following query to get a valid *cycle_number* value for *key* equals *register* and *value* is *YES*. **We will be using this value in all subsequent tests.**
 
@@ -263,7 +263,7 @@ The output in the console should look similar to the following
 
 Note that even though the query returned 1 document, it had to FETCH and apply "cycle_number" filter for all the ~750K documents that the IXSCAN stage matched. This is not an efficient query execution path - total execution time is more than 3 seconds.
 
-- Query begins by using the index we created,doing a index lookup on all documents that match the condition  : key is "registered" and value is  "YES"
+- Query begins by using the index we created,doing an index lookup on all documents that match the condition : key is "registered" and value is "YES"
 - The selectivity of documents matching this filter is  75% of the  data.
 - As a result, the index scan selects approximately 75%, equivalent to around ~750K documents, and doing subsequent filters on the documents it looked up
 
@@ -326,15 +326,15 @@ The output in the console should look similar to the following
 }
 ```
 
-Note the overall execution time is in sub milliseconds.The FETCH stage had to apply  filter only on the one document that the IXSCAN stage matched. 
+Note that the overall execution time is in sub milliseconds.The FETCH stage had to apply  filter only on the one document that the IXSCAN stage matched. 
 
-- Query execution begins by using the index we created,doing a index lookup on all documents that match the condition  : key is "cycle_number" and value is  "seven quintillion four hundred and ninety one quadrillion six hundred and eighty trillion two hundred and thirty five billion seven hundred and fourteen million five hundred and thirty nine thousand eight hundred and eighty five" .
+- Query execution begins by using the index we created,doing an index lookup on all documents that match the condition  : key is "cycle_number" and value is  "seven quintillion four hundred and ninety one quadrillion six hundred and eighty trillion two hundred and thirty five billion seven hundred and fourteen million five hundred and thirty nine thousand eight hundred and eighty five" .
 - The selectivity of documents matching this filter is  just 1 document.
 - As a result, the index scan selects just 1 document and subsequent execution steps are very fast.
 
 ## Conclusion
 
-Understanding the cardinality of your data and writing your query's prudently will lead to efficent queries with better performance when using multiple $elemMatch along with $and /$or operators on indexed arrays containing nested objects as elements.  As a best practice order your $elemMatch filters such that which have the most unique data are first in order in your query .
+When using multiple $elemMatch along with $and/$or operators, on indexed arrays containing nested objects, in DocumentDB, you get better performance and efficient execution when you structure your query with a good understanding of the cardinality of your data. As a best practice, order your $elemMatch filters such that elements that have the most unique data, are first in order in your query.
 
 ### Credits
 
