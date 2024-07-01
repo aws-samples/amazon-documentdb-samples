@@ -263,7 +263,7 @@ The output in the console should look similar to the following
 
 Note that even though the query returned 1 document, it had to FETCH and apply "cycle_number" filter for all the ~750K documents that the IXSCAN stage matched. This is not an efficient query execution path - total execution time is more than 3 seconds.
 
-- Query begins by using the index we created,doing an index lookup on all documents that match the condition : key is "registered" and value is "YES"
+- Query begins by using the index we created, doing an index lookup on all documents that match the condition : key is "registered" and value is "YES"
 - The selectivity of documents matching this filter is  75% of the  data.
 - As a result, the index scan selects approximately 75%, equivalent to around ~750K documents, and doing subsequent filters on the documents it looked up
 
@@ -326,7 +326,7 @@ The output in the console should look similar to the following
 }
 ```
 
-Note that the overall execution time is in sub milliseconds.The FETCH stage had to apply  filter only on the one document that the IXSCAN stage matched. 
+Note that the overall execution time is in sub milliseconds. The FETCH stage had to apply  filter only on the one document that the IXSCAN stage matched. 
 
 - Query execution begins by using the index we created,doing an index lookup on all documents that match the condition  : key is "cycle_number" and value is  "seven quintillion four hundred and ninety one quadrillion six hundred and eighty trillion two hundred and thirty five billion seven hundred and fourteen million five hundred and thirty nine thousand eight hundred and eighty five" .
 - The selectivity of documents matching this filter is  just 1 document.
