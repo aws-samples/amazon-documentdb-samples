@@ -42,7 +42,7 @@ To implement this solution, you must have the following prerequisites:
 2. Install Java 17
 
 ```
-    sudo yum install java-17-amazon-corretto-devel
+    sudo yum install java-17-amazon-corretto-devel -y
 ```
 
 3. Check Java version
