@@ -72,7 +72,7 @@ To implement this solution, you must have the following prerequisites:
     3. chmod 777 **create-truststore.sh**
     4. ./create-truststore.sh
 3. Download the nb5 jar from Github
-    * [wget https://github.com/nosqlbench/nosqlbench/releases/download/5.17.3-release/nb5.jar](https://github.com/nosqlbench/nosqlbench/releases/download/5.17.3-release/nb5.jar)
+    * wget [https://github.com/nosqlbench/nosqlbench/releases/download/5.17.3-release/nb5.jar](https://github.com/nosqlbench/nosqlbench/releases/download/5.17.3-release/nb5.jar)
     * chmod 777 nb5.jar
 
 ## Gather testing requirements
