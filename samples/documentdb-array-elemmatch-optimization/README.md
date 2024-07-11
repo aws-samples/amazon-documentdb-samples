@@ -1,6 +1,6 @@
 # Introduction and Use Case
 
-In  [Amazon DocumentDB](https://aws.amazon.com/documentdb/) ,for fields that have an array value, a multi-key in for fields that have an array value, a multi-key index allows you to create an index key for each element in the array. The array can be scalar (strings or numbers) and nested documents. When using multiple $elemMatch along with $or operators on indexed arrays containing nested objects as elements , Amazon DocumentDB query optimizer  can utilize indexes more efficiently when we arrange the query such that a filter that matches a low number of documents are at the very beginning of the query. This enables the narrowing down of the search scope of the first pass of the query execution to a fewer number of documents, leading to faster execution times.  
+In  [Amazon DocumentDB](https://aws.amazon.com/documentdb/) ,for fields that have an array value, a multi-key in for fields that have an array value, a multi-key index allows you to create an index key for each element in the array. The array can be scalar (strings or numbers) and nested documents. When using multiple $elemMatch along with $and operator on indexed arrays containing nested objects as elements , Amazon DocumentDB query optimizer  can utilize indexes more efficiently when we arrange the query such that a filter that matches a low number of documents are at the very beginning of the query. This enables the narrowing down of the search scope of the first pass of the query execution to a fewer number of documents, leading to faster execution times.  
 
 You can elevate performance for workloads that query arrays by tailoring queries to the cardinality of your data. This project aims to facilitate the replication of test setups for Amazon DocumentDB, demonstrating performance enhancements through optimal rewriting of array queries. With insights into your dataset, crafting array queries tailored to DocumentDB's cloud native engine can significantly optimize execution.
 
@@ -334,7 +334,7 @@ Note that the overall execution time is in sub milliseconds. The FETCH stage had
 
 ## Conclusion
 
-When using multiple $elemMatch along with $or operators, on indexed arrays containing nested objects, in DocumentDB, you get better performance and efficient execution when you structure your query with a good understanding of the cardinality of your data. As a best practice, order your $elemMatch filters such that elements that have the most unique data, are first in order in your query.
+When using multiple $elemMatch along with $and operator, on indexed arrays containing nested objects, in DocumentDB, you get better performance and efficient execution when you structure your query with a good understanding of the cardinality of your data. As a best practice, order your $elemMatch filters such that elements that have the most unique data, are first in order in your query.
 
 ### Credits
 
