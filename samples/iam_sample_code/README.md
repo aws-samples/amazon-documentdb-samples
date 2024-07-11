@@ -38,7 +38,7 @@ ssh -i <<KeyPairName_Parameter>>.pem ec2-user@<<InstancePublicIp_Output>>
 
 ## Install dependencies
 
-1. Install mongo shell using the instructions in [Install mongosh](https://www.mongodb.com/docs/mongodb-shell/install/) using the options for Amazon Linux
+1. Install mongo shell using the instructions in [Install the mongo shell](https://docs.aws.amazon.com/documentdb/latest/developerguide/get-started-guide.html#cloud9-mongoshell).
 
 2. Install required python libraries for Amazon DocumentDB IAM authentication
 
@@ -80,7 +80,7 @@ Execute```show users``` command in mongoshell and confirm that the IAM Role has 
 Execute the Python script **test_iam_role_docdb.py**.  
 
 ```
-python3 test_iam_role_docdb.py --docdb-uri 'mongodb://<<DocDBEndpoint_Output>>:27017/?tls=true&tlsCAFile=global-bundle.pem&replicaSet=rs0&readPreference=secondaryPreferred&retryWrites=false&authSource=%24external&authMechanism=MONGODB-AWS'
+python test_iam_role_docdb.py --docdb-uri 'mongodb://<<DocDBEndpoint_Output>>:27017/?tls=true&tlsCAFile=global-bundle.pem&replicaSet=rs0&readPreference=secondaryPreferred&retryWrites=false&authSource=%24external&authMechanism=MONGODB-AWS'
 ```
 
 This script connects to the Amazon DocumentDB cluster with the IAM Role assumed by the EC2 instance we are running it from. The driver knows that it should autheticate using IAM credentials instead of native user credentials by a combination of the follwing three factors
