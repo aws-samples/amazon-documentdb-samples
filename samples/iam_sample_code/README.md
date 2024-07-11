@@ -8,7 +8,7 @@ Amazon DocumentDB users and applications can use IAM users and roles to authenti
 
 ## Prerequisites
 
-Create resources using the template file **iam_sample.yaml** using instructions in [Selecting a stack template](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-using-console-create-stack-template.html). 
+Create resources using the template file **iam_sample_cf.yaml** using instructions in [Selecting a stack template](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-using-console-create-stack-template.html). 
 
 ![iam_upload_template_file](files/iam_upload_template_file.jpg)
 
