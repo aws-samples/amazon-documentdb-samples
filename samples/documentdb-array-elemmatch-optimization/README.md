@@ -334,7 +334,7 @@ Note that the overall execution time is in sub milliseconds. The FETCH stage had
 
 ## Conclusion
 
-When using multiple $elemMatch along with $and/$or operators, on indexed arrays containing nested objects, in DocumentDB, you get better performance and efficient execution when you structure your query with a good understanding of the cardinality of your data. As a best practice, order your $elemMatch filters such that elements that have the most unique data, are first in order in your query.
+When using multiple $elemMatch along with $or operators, on indexed arrays containing nested objects, in DocumentDB, you get better performance and efficient execution when you structure your query with a good understanding of the cardinality of your data. As a best practice, order your $elemMatch filters such that elements that have the most unique data, are first in order in your query.
 
 ### Credits
 
