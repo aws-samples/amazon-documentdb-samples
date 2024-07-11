@@ -57,7 +57,7 @@ wget https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem
 Log into mongoshell using the admin user
 
 ```
-mongosh --ssl --host <<DocDBEndpoint_Output>>:27017 --sslCAFile global-bundle.pem --username labuser --password <<DocDBPassword_Parameter>> 
+mongo --ssl --host <<DocDBEndpoint_Output>>:27017 --sslCAFile global-bundle.pem --username labuser --password <<DocDBPassword_Parameter>> 
 ```
 Create user in Amazon DocumentDB to link the IAM role attached to the EC2 instance which can found in the **InstanceRole** Output variable.
 Once this command is execute, any AWS entity, which assumes the role identified by **InstanceRole** Output variable,permissions execute **read** and **write** operations on database **allowed_db** in this cluster.
