@@ -15,7 +15,7 @@ In the sample code, we  attach an IAM Role to an EC2 instance and run a Python c
 
 ## Prerequisites
 
-Create resources with the template file **iam_sample_cf.yaml** using instructions in [Selecting a stack template](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-using-console-create-stack-template.html). 
+Create resources with the template file **iam_role_sample_cf.yaml** using instructions in [Selecting a stack template](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-using-console-create-stack-template.html). 
 
 ![iam_upload_template_file](files/iam_upload_template_file.jpg)
 
