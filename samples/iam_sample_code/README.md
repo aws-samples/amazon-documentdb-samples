@@ -18,7 +18,7 @@ Replace the following paremeters in the stack details screenshot
 
 This will create resources needed for running this sample  including the following
     
-* An [Amazon EC2 Instance](https://aws.amazon.com/pm/ec2/).
+* An [Amazon EC2 Instance](https://aws.amazon.com/pm/ec2/) with an [IAM Role](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html) attached to it
 
 * An Amazon DocumentDB cluster with one db.r5.large instance.
 
