@@ -6,6 +6,13 @@
 
 Amazon DocumentDB users and applications can use IAM users and roles to authenticate into an Amazon DocumentDB cluster. Amazon DocumentDB IAM authentication is a password-less authentication method in which user passwords are not stored in the Amazon DocumentDB cluster. Also, client applications do not send the password secrets to the Amazon DocumentDB cluster. Instead, client connections are authenticated by AWS STS using temporary security tokens. 
 
+## Solution Overview
+
+In the sample code we in attach an IAM Role to an EC2 instance and run a Python code which authenticates connections to an Amazon DocumentDB cluster using the IAM Role instead of a username-password mechanism.
+
+![iam_solution_overview](files/iam_solution_overview.jpg)
+
+
 ## Prerequisites
 
 Create resources using the template file **iam_sample_cf.yaml** using instructions in [Selecting a stack template](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-using-console-create-stack-template.html). 

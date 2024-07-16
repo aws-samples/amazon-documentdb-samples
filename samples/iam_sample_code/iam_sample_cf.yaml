@@ -157,7 +157,7 @@ Resources:
     Type: AWS::DocDB::DBInstance
     Properties:
       DBClusterIdentifier: !Ref DocDBCluster
-      DBInstanceClass: db.r5.large
+      DBInstanceClass: db.r6g.large
       DBInstanceIdentifier: documentdb-iam-sample-instance-1
   DocDBCluster:
     DependsOn: 
@@ -223,10 +223,6 @@ Resources:
     Properties:
       SubnetId: !Ref PublicSubnetA
       RouteTableId: !Ref PublicRouteTable
-  ECSCluster:
-    Type: 'AWS::ECS::Cluster'
-    Properties:
-      ClusterName: DocDbECSCluster
   InstanceRole:
     Type: AWS::IAM::Role
     Properties:
@@ -240,7 +236,7 @@ Resources:
             Action: sts:AssumeRole
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
-        - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryFullAccess
+
   InstanceProfile:
     Type: AWS::IAM::InstanceProfile
     Properties:
