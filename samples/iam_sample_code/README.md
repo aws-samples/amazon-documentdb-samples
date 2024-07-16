@@ -8,18 +8,18 @@ Amazon DocumentDB users and applications can use IAM users and roles to authenti
 
 ## Solution Overview
 
-In the sample code we in attach an IAM Role to an EC2 instance and run a Python code which authenticates connections to an Amazon DocumentDB cluster using the IAM Role instead of a username-password mechanism.
+In the sample code, we  attach an IAM Role to an EC2 instance and run a Python code which authenticates connections to an Amazon DocumentDB cluster using the IAM Role instead of a username-password mechanism.
 
 ![iam_solution_overview](files/iam_solution_overview.jpg)
 
 
 ## Prerequisites
 
-Create resources using the template file **iam_sample_cf.yaml** using instructions in [Selecting a stack template](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-using-console-create-stack-template.html). 
+Create resources with the template file **iam_sample_cf.yaml** using instructions in [Selecting a stack template](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-using-console-create-stack-template.html). 
 
 ![iam_upload_template_file](files/iam_upload_template_file.jpg)
 
-Replace the following paremeters in the stack details screenshot
+Replace the following paremeters in the stack details screen
 
 ![iam_stack_details_params](files/iam_stack_details_params.jpg)
 
@@ -27,7 +27,7 @@ This will create resources needed for running this sample  including the followi
     
 * An [Amazon EC2 Instance](https://aws.amazon.com/pm/ec2/) with an [IAM Role](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html) attached to it
 
-* An Amazon DocumentDB cluster with one db.r5.large instance.
+* An Amazon DocumentDB cluster with one db.r6g.large instance.
 
 * A security group that enables you to connect to your Amazon DocumentDB cluster from your Amazon EC2 instance. 
 
