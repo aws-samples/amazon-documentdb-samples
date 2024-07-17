@@ -33,7 +33,7 @@ Parameters:
     NoEcho: true
     AllowedPattern: "[a-zA-Z0-9]{8,}"
   KeyPairName:
-    Description: KeyPairName for EC2 Login
+    Description: Existing KeyPairName for EC2 Login
     Type: String
   LoginIPRange:
     Description: CIDR range of IPs allowed to log in to EC2 instance
