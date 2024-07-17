@@ -1,0 +1,278 @@
+---
+## DBBLOG-4119 Build Kubernetes native applications with Amazon DocumentDB and Amazon ECS on AWS Fargate 
+## Creates VPC and Networking components, DocumentDB Cluster and ECR
+##
+## Changelog:
+##
+## Dependencies: TBD
+##
+## This sample code is made available under the MIT-0 license. See the LICENSE file.
+
+AWSTemplateFormatVersion: "2010-09-09"
+Description: IAM Sample Code
+
+## Parameters
+Parameters:
+  TemplateName:
+    Type: String
+    Description: Name used for different elements created.
+    Default : "test-iam"
+  DocDBSGName:
+    Type: String
+    Description: DocumentDB Security Group Name
+    Default : "DocDB-IAM-SG"
+  DocDBUser:
+    Description: Default user for DocumentDB
+    Type: String
+    Default: labuser
+  DocDBPassword:
+    Description: Password for DocumentDB Cluster
+    Type: String
+    Default : password
+    MinLength: 8
+    NoEcho: true
+    AllowedPattern: "[a-zA-Z0-9]{8,}"
+  KeyPairName:
+    Description: KeyPairName for EC2 Login
+    Type: String
+  LoginIPRange:
+    Description: CIDR range of IPs allowed to log in to EC2 instance
+    Type: String
+    Default : "0.0.0.0/0"
+
+## Mappings
+Mappings:
+  NetworkSettings:
+    global:
+      vpcCidr: 10.0.0.0/20
+
+## Resources
+Resources:
+## The VPC
+  MainVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      InstanceTenancy: default
+      CidrBlock: !FindInMap [ NetworkSettings, global, vpcCidr ]
+      Tags:
+        - Key: Name
+          Value:  !Sub ${TemplateName}-VPC
+  PrivateSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref MainVPC
+      CidrBlock: !Select [ 0, !Cidr [ !GetAtt MainVPC.CidrBlock, 6, 5]]
+      AvailabilityZone: !Select [ 0, !GetAZs ]    # Get the first AZ in the list
+      Tags:
+      - Key: Name
+        Value: !Sub ${TemplateName}-PrivateA
+  PrivateSubnetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref MainVPC
+      CidrBlock: !Select [ 1, !Cidr [ !GetAtt MainVPC.CidrBlock, 6, 5]]
+      AvailabilityZone: !Select [ 1, !GetAZs ]    # Get the second AZ in the list
+      Tags:
+      - Key: Name
+        Value: !Sub ${TemplateName}-PrivateB
+  PrivateSubnetC:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref MainVPC
+      CidrBlock: !Select [ 2, !Cidr [ !GetAtt MainVPC.CidrBlock, 6, 5]]
+      AvailabilityZone: !Select [ 2, !GetAZs ]    # Get the third AZ in the list
+      Tags:
+      - Key: Name
+        Value: !Sub ${TemplateName}-PrivateC
+# Here is a private route table:
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref MainVPC
+      Tags:
+      - Key: Name
+        Value: !Sub ${TemplateName}-private-rtb
+  PrivateRoute1:            # Private route table can access web via NAT (created below)
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      # Route traffic through the NAT Gateway:
+      NatGatewayId: !Ref NATGateway
+  PrivateSubnetARouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnetA
+      RouteTableId: !Ref PrivateRouteTable
+  PrivateSubnetBRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnetB
+      RouteTableId: !Ref PrivateRouteTable
+  PrivateSubnetCRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnetC
+      RouteTableId: !Ref PrivateRouteTable
+  NATGateway:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt ElasticIPAddress.AllocationId
+      SubnetId: !Ref PublicSubnetA
+      Tags:
+      - Key: Name
+        Value: !Sub ${TemplateName}-natgw
+  ElasticIPAddress:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+  SGforDocDB:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+        GroupName: !Ref DocDBSGName
+        GroupDescription: Allow http to client host
+        VpcId: !Ref MainVPC
+        SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: !Ref LoginIPRange
+        - IpProtocol: tcp
+          FromPort: 27017
+          ToPort: 27017
+          CidrIp: !Select [ 3, !Cidr [ !GetAtt MainVPC.CidrBlock, 6, 5]]
+  DOCDBSGIngress:
+    Type: 'AWS::EC2::SecurityGroupIngress'
+    DependsOn: SGforDocDB
+    Properties:
+      GroupId: !Ref SGforDocDB
+      IpProtocol: tcp
+      FromPort: 0
+      ToPort: 65535
+      SourceSecurityGroupId: !Ref SGforDocDB
+  DocDBInstance1:
+    DependsOn: DocDBCluster
+    Type: AWS::DocDB::DBInstance
+    Properties:
+      DBClusterIdentifier: !Ref DocDBCluster
+      DBInstanceClass: db.r6g.large
+      DBInstanceIdentifier: documentdb-iam-sample-instance-1
+  DocDBCluster:
+    DependsOn: 
+      - DocDBSubnetGroup
+      - MainVPC
+    Type: AWS::DocDB::DBCluster
+    Properties:
+        BackupRetentionPeriod : 7
+        DBClusterIdentifier : documentdb-iam-sample-cluster
+        DBSubnetGroupName : !Ref DocDBSubnetGroup
+        MasterUsername : !Ref DocDBUser
+        MasterUserPassword : !Ref DocDBPassword
+        Port : 27017
+        PreferredBackupWindow : 01:00-02:00
+        PreferredMaintenanceWindow : sat:03:30-sat:05:00
+        DeletionProtection: false
+        VpcSecurityGroupIds:
+          - !GetAtt SGforDocDB.GroupId
+  DocDBSubnetGroup:
+    Type: AWS::DocDB::DBSubnetGroup
+    Properties:
+      DBSubnetGroupName: !Sub ${TemplateName}-docdb-subnet-group
+      DBSubnetGroupDescription: 'Subnet Group for DocumentDB'
+      SubnetIds: 
+        - !Ref PrivateSubnetA
+        - !Ref PrivateSubnetB
+        - !Ref PrivateSubnetC
+  PublicSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref MainVPC
+      CidrBlock: !Select [ 3, !Cidr [ !GetAtt MainVPC.CidrBlock, 6, 5]]
+      AvailabilityZone: !Select [ 0, !GetAZs ]    # Get the first AZ in the list
+      MapPublicIpOnLaunch: true
+      Tags:
+      - Key: Name
+        Value: !Sub ${TemplateName}-PublicA
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    DependsOn: MainVPC
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub ${TemplateName}-igw
+  attachIGW:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref MainVPC
+      InternetGatewayId: !Ref InternetGateway
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref MainVPC
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: attachIGW
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+  PublicSubnetARouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnetA
+      RouteTableId: !Ref PublicRouteTable
+  InstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${AWS::StackName}-iam-role
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+
+  InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      InstanceProfileName: !Sub ${AWS::StackName}-instance-profile
+      Roles:
+        - !Ref InstanceRole
+  
+  Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-0195204d5dce06d99
+      InstanceType: t2.large
+      IamInstanceProfile: !Ref InstanceProfile
+      SubnetId: !Ref PublicSubnetA
+      SecurityGroupIds:
+        - !Ref SGforDocDB
+      KeyName : !Ref KeyPairName      
+        
+        
+##Outputs
+Outputs:
+  ServiceSecurityGroup:
+    Description: ServiceSecurityGroup
+    Value: !GetAtt SGforDocDB.GroupId
+  SubnetIds:
+    Description: SubnetIds
+    Value: !Join [ " , ", [ !GetAtt PrivateSubnetA.SubnetId,!GetAtt PrivateSubnetB.SubnetId, !GetAtt PrivateSubnetC.SubnetId ] ]
+  VPCId :
+    Description: VPCId
+    Value: !GetAtt MainVPC.VpcId
+  DocDBEndpoint :
+    Description: DocDBEndpoint
+    Value: !GetAtt DocDBCluster.Endpoint
+  InstanceRole :
+    Description: InstanceRole
+    Value: !GetAtt InstanceRole.Arn
+  InstancePublicIp :
+    Description : EC2 Instance PublicIp
+    Value: !GetAtt Instance.PublicIp
