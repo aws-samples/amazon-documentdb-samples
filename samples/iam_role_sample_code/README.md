@@ -78,7 +78,7 @@ This script connects to the Amazon DocumentDB cluster with the IAM Role assumed 
 
 * We do not pass any credentials in the Amazon DocumentDB URI.
 * Amazon DocumentDB URI parameter  : **authSource=%$external** 
-* Amazon DocumentDB URI parameter  :**authMechanism=MONGODB-AWS**
+* Amazon DocumentDB URI parameter  : **authMechanism=MONGODB-AWS**
   
 The script inserts a document and then reads a document from two databases in the cluster - **allowed_db** and **other_db**. The operations in **allowed_db** are successful, and those in **other_db** fail with authorization errors, because we have granted this IAM Role access to database **allowed_db** alone - ```roles: [ { role: "readWrite", db: "allowed_db" } ]```.
 
