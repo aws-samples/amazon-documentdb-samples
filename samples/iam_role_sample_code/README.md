@@ -42,7 +42,7 @@ git clone https://github.com/aws-samples/amazon-documentdb-samples.git
 
 Change directory
 ```
-cd amazon-documentdb-samples\samples\iam_role_sample_code
+cd amazon-documentdb-samples/samples/iam_role_sample_code
 ```
 
 Get the certificate file needed for TLS communication with Amazon DocumentDB.
