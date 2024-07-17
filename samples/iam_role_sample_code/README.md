@@ -15,7 +15,7 @@ Create resources with the template file **iam_role_sample_cf.yaml** using instru
 Replace the following parameters in the stack details screen.
 ![iam_stack_details_params](files/iam_stack_details_params.jpg)
 
-This will create the resources needed for running this sample  including the following:
+The template will create the resources needed for running this sample  including the following:
     
 * An [Amazon EC2 Instance](https://aws.amazon.com/pm/ec2/) with an [IAM Role](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html) attached to it
 * An Amazon DocumentDB cluster with one db.r6g.large instance.
@@ -36,6 +36,16 @@ sudo yum install pip
 pip install 'pymongo[aws]'
 ```
 ## Run Sample Code
+Download the code sample project from Github
+```
+git clone https://github.com/aws-samples/amazon-documentdb-samples.git
+```
+
+Change directory
+```
+cd amazon-documentdb-samples\samples\iam_role_sample_code
+```
+
 Get the certificate file needed for TLS communication with Amazon DocumentDB.
 ```
 wget https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem
@@ -45,7 +55,7 @@ Log into mongoshell using the admin user.
 mongo --ssl --host <<DocDBEndpoint_Output>>:27017 --sslCAFile global-bundle.pem --username labuser --password <<DocDBPassword_Parameter>> 
 ```
 Create user in Amazon DocumentDB to link the IAM role attached to the EC2 instance which can found in the **InstanceRole** Output variable.
-Once this command is executed, any AWS entity, that assumes the role identified by **InstanceRole** Output variable,permissions execute **read** and **write** operations on the database **allowed_db** in this cluster.
+Once this command is executed, any AWS entity, that assumes the role identified by **InstanceRole** Output variable,permissions execute **read** and **write** operations on the database **allowed_db** in this cluster. 
 ```
 use $external;
 db.createUser(
@@ -71,7 +81,7 @@ This script connects to the Amazon DocumentDB cluster with the IAM Role assumed 
 * **authSource=%24external** URI parameter
 * **authMechanism=MONGODB-AWS** URI parameter
   
-The script inserts a document and then reads a document from two databases in the cluster - **allowed_db** and **other_db**. The operations in **allowed_db** are successful, and those in **other_db** fail with authorization errors.
+The script inserts a document and then reads a document from two databases in the cluster - **allowed_db** and **other_db**. The operations in **allowed_db** are successful, and those in **other_db** fail with authorization errors, because we have granted this IAM Role access to database **allowed_db** alone - ```roles: [ { role: "readWrite", db: "allowed_db" } ]```.
 
 ![script_output](files/script_output.jpg)
 
