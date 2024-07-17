@@ -77,8 +77,8 @@ python test_iam_role_docdb.py --docdb-uri 'mongodb://<<DocDBEndpoint_Output>>:27
 This script connects to the Amazon DocumentDB cluster with the IAM Role assumed by the EC2 instance we are running it from. The driver knows that it should authenticate using IAM credentials instead of native user credentials through a combination of the following three factors:
 
 * We do not pass any credentials in the Amazon DocumentDB URI.
-* **authSource=%24external** URI parameter
-* **authMechanism=MONGODB-AWS** URI parameter
+* Amazon DocumentDB URI parameter  : **authSource=%$external** 
+* Amazon DocumentDB URI parameter  :**authMechanism=MONGODB-AWS**
   
 The script inserts a document and then reads a document from two databases in the cluster - **allowed_db** and **other_db**. The operations in **allowed_db** are successful, and those in **other_db** fail with authorization errors, because we have granted this IAM Role access to database **allowed_db** alone - ```roles: [ { role: "readWrite", db: "allowed_db" } ]```.
 
