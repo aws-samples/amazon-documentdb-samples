@@ -74,15 +74,14 @@ Execute the Python script **test_iam_role_docdb.py**.
 python test_iam_role_docdb.py --docdb-uri 'mongodb://<<DocDBEndpoint_Output>>:27017/?tls=true&tlsCAFile=global-bundle.pem&replicaSet=rs0&readPreference=secondaryPreferred&retryWrites=false&authSource=%24external&authMechanism=MONGODB-AWS'
 
 ```
-This script connects to the Amazon DocumentDB cluster with the IAM Role assumed by the EC2 instance we are running it from. The driver knows that it should authenticate using IAM credentials instead of native user credentials through a combination of the following three factors:
 
-* We do not pass any credentials in the Amazon DocumentDB URI.
-* Amazon DocumentDB URI parameter  : **authSource=%$external** 
-* Amazon DocumentDB URI parameter  : **authMechanism=MONGODB-AWS**
+This script connects to the Amazon DocumentDB cluster with the IAM Role assumed by the EC2 instance we are running it from. To authenticate using IAM Role, we use the follwing Amazon DocumentDB URI parameters - ```authSource``` as ```$external``` and ```authMechanism``` as ```MONGODB-AWS```. *Note that we do not explicitly provide any username-password in the Amazon DocumentDB URI*.
+
+After the script completes, check the output.
   
-The script inserts a document and then reads a document from two databases in the cluster - **allowed_db** and **other_db**. The operations in **allowed_db** are successful, and those in **other_db** fail with authorization errors, because we have granted this IAM Role access to database **allowed_db** alone - ```roles: [ { role: "readWrite", db: "allowed_db" } ]```.
-
 ![script_output](files/script_output.jpg)
+
+The script inserts a document and then reads a document from two databases in the cluster - **allowed_db** and **other_db**. The operations in **allowed_db** are successful, and those in **other_db** fail with authorization errors, because we have granted this IAM Role access to database **allowed_db** alone - ```roles: [ { role: "readWrite", db: "allowed_db" } ]```.
 
 ## Cleanup Resources
 Delete the CloudFormation stack to delete all resources created in this sample.
