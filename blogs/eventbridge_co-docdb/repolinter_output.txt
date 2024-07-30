@@ -1,0 +1,64 @@
+Target directory: /Users/sonuaws/utility/docdb-blog/documentdbco
+Lint:
+✔  binary-exec-lib: Did not find a file matching the specified patterns
+	✔ **/*.jar
+	✔ **/*.exe
+	✔ **/*.dll
+	✔ **/*.pyc
+	✔ **/*.class
+	✔ **/*.so
+	✔ **/*.o
+	✔ **/*.a
+✔  binary-archive: Did not find a file matching the specified patterns
+	✔ **/*.zip
+	✔ **/*.tar
+	✔ **/*.tar.gz
+	✔ **/*.7z
+	✔ **/*.iso
+	✔ **/*.rpm
+	✔ **/*.gz
+	✔ **/*.rar
+	✔ **/*.whl
+	✔ **/*.tgz
+✔  binary-document: Did not find a file matching the specified patterns
+	✔ **/*.pdf
+	✔ **/*.doc
+	✔ **/*.docx
+	✔ **/*.xls
+	✔ **/*.xlsx
+	✔ **/*.ppt
+	✔ **/*.pptx
+	✔ **/*.odt
+✔  font-file: Did not find a file matching the specified patterns
+	✔ **/*.ttf
+	✔ **/*.otf
+	✔ **/*.svg
+	✔ **/*.eot
+	✔ **/*.woff
+	✔ **/*.woff2
+✔  amazon-logo: No file matching hash found
+⚠  third-party-image: Found files
+	ℹ PolicyUrl: https://w.amazon.com/bin/view/Open_Source/Tools/Repolinter/Ruleset/Third-Party-Image
+	⚠ images/EB-scheduler.png
+	⚠ images/IAM-policy.png
+	⚠ images/architecture_diagram.png
+	⚠ images/lambda-functions.png
+	⚠ images/terraform-confirm.png
+	⚠ images/terraform-apply.png
+	⚠ images/terraform-init.png
+✔  dataset: Did not find a file matching the specified patterns
+	✔ **/*.csv
+	✔ **/*.data
+	✔ **/*.tsv
+✔  dockerfile: Did not find a file matching the specified patterns (**/*docker*)
+✔  general-logo: Did not find a file matching the specified patterns (**/*logo*)
+✔  dockerfile-download-statement: Did not find content matching specified patterns
+✔  internal-url: Did not find content matching specified patterns
+✔  prohibited-license: Did not find content matching specified patterns
+⚠  third-party-license-file: Found files
+	ℹ PolicyUrl: https://w.amazon.com/bin/view/Open_Source/Tools/Repolinter/Ruleset/Third-Party-License-File/ (LICENSE)
+⚠  hidden-or-generated-file: Found files
+	ℹ PolicyUrl: https://w.amazon.com/bin/view/Open_Source/Tools/Repolinter/Ruleset/Hidden-Generated-File
+	⚠ .git
+	⚠ images/.gitkeep
+✔  large-file: No file larger than 500000 bytes found.
