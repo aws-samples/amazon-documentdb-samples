@@ -188,6 +188,7 @@ Enter "r" - the tests will execute and print the following lines on the console
     All 2 tests are passing (0 skipped), 2 tests were run in 5445ms. Tests completed at 19:00:22.
     Press [e] to edit command line args (currently ''), [r] to re-run, [o] Toggle test output, [:] for the terminal, [h] for more options>
 
+Enter "q" - to exit from Quarkus console
 
 ## Build  Docker Image
 
