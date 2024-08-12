@@ -1,11 +1,4 @@
 ---
-## DBBLOG-4119 Build Kubernetes native applications with Amazon DocumentDB and Amazon ECS on AWS Fargate 
-## Creates VPC and Networking components, DocumentDB Cluster and ECR
-##
-## Changelog:
-##
-## Dependencies: TBD
-##
 ## This sample code is made available under the MIT-0 license. See the LICENSE file.
 
 AWSTemplateFormatVersion: "2010-09-09"
