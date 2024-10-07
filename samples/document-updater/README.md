@@ -1,5 +1,5 @@
 # Python Updater tool 
-This sample applications compresses pre-existing documents in a collections after compression is turned on in an existing collection.
+This sample applications compresses pre-existing documents in an existing collection after compression is turned on that existing collection.
 
 ## Requirements
 Python 3.6 or later, pymongo
