@@ -15,7 +15,7 @@ cd amazon-documentdb-samples/samples/document-updater
 
 ```
  python3 updater.py --uri "<<documentdb_uri>>"  --database <<database>>   --collection <<collection>>
-
+```
 
 The application has the following arguments:
 
@@ -26,3 +26,4 @@ Required parameters
   --database DATABASE                            Database
   --collection COLLECTION                        Collection
 
+```
