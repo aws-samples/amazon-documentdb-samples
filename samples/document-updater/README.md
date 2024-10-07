@@ -1,4 +1,4 @@
-# Python Insert Benchmark (bench02)
+# Python Updater tool 
 This sample applications compresses pre-existing documents in a collections after compression is turned on in an existing collection.
 
 ## Requirements
