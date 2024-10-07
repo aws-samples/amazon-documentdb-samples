@@ -14,7 +14,7 @@ cd amazon-documentdb-samples/samples/document-updater
 ## Usage/Examples
 
 ```
- python3 compressor.py --uri "<<documentdb_uri>>"  --database <<database>>   --collection <<collection>>
+ python3 updater.py --uri "<<documentdb_uri>>"  --database <<database>>   --collection <<collection>>
 
 
 The application has the following arguments:
