@@ -67,7 +67,6 @@ def setup(appConfig):
             print("Found existing record: {}".format(str(lastEntry))) 
 
     else :      
-        # try:
         result = col.find({},{ "_id" :1}).sort({ "_id" :-1}).limit(1)
         for id in result :
             print("result {}".format(result))
@@ -75,11 +74,11 @@ def setup(appConfig):
         lastScannedObjectId = 0
         numDocumentsUpdated = 0
         
-        thisIndexName = 'idx_collectionName_ts'
+        # thisIndexName = 'idx_collectionName_ts'
             
-        printLog("Creating index {}".format(thisIndexName),appConfig)
+        # printLog("Creating index {}".format(thisIndexName),appConfig)
             
-        tracker_col.create_index([('ts', pymongo.ASCENDING)], name=thisIndexName, background=False, unique=False)
+        # tracker_col.create_index([('ts', pymongo.ASCENDING)], name=thisIndexName, background=False, unique=False)
             
         numExistingDocuments = col.estimated_document_count()
             
@@ -98,13 +97,6 @@ def setup(appConfig):
 
         printLog("Insert entry {}".format(first_entry),appConfig)
             
-            
-            
-            
-            
-        # except Exception as e:
-        #     printLog( " Exception during SETUP : {}".format(str(e)),appConfig)
-           
     client.close()
 
     returnData = {}
@@ -121,10 +113,8 @@ def setup(appConfig):
 def task_worker(threadNum,perfQ,appConfig):
 
 
-    rateLimit = appConfig['rateLimit']
     maxObjectIdToTouch = appConfig['maxObjectIdToTouch']
     lastScannedObjectId = appConfig['lastScannedObjectId']
-    #runSeconds = appConfig['runSeconds']
     numInsertProcesses = appConfig['numInsertProcesses']
 
     
@@ -162,27 +152,21 @@ def task_worker(threadNum,perfQ,appConfig):
         
         if lastScannedObjectId != 0 :
        
-            batch =  col.find({"_id" : { "$gt" : lastScannedObjectId   }},{ "_id" :1}).sort({"_id" :1}).limit(appConfig['rateLimit'])
+            batch =  col.find({"_id" : { "$gt" : lastScannedObjectId   }},{ "_id" :1}).sort({"_id" :1}).limit(appConfig['batchSize'])
         else :
             
-            batch =  col.find({},{ "_id" :1}).sort({ "_id" :1}).limit(appConfig['rateLimit'])
+            batch =  col.find({},{ "_id" :1}).sort({ "_id" :1}).limit(appConfig['batchSize'])
             
             
         batch_count = 0
         
-        print("--------------batch_count : {}".format(batch_count))
-        
+
         for id in batch : 
-            # print("------------------{}----------------".format(id["_id"].generation_time))
-            # print("------------------{}----------------".format(maxObjectIdToTouch.generation_time))
-            # print("------------------{}----------------".format(id["_id"]))
-            # print("------------------{}----------------".format(maxObjectIdToTouch))
-            
-            
-            if id["_id"]<maxObjectIdToTouch:
+
+            if id["_id"]<=maxObjectIdToTouch:
                 
                 # print("found id {} lesser than maxObjectIdToTouch {}.".format(str(id["_id"]),str(maxObjectIdToTouch)))
-                col.update_one({ "_id" : id["_id"] } , { "$set": { "temp_field_for_compressor": 1 } } )
+                col.update_one({ "_id" : id["_id"] } , { "$set": { appConfig['updateField']: 1 } } )
                 tempLastScannedObjectId = id["_id"]
                 batch_count = batch_count + 1
                 
@@ -193,13 +177,7 @@ def task_worker(threadNum,perfQ,appConfig):
                 break
             
         
-        # if  batch_count == 0 :
-        #     allDone = True
-        #     break
-        
-        # print("--------------numDocumentsUpdated : {}".format(numDocumentsUpdated))
-        # print("--------------batch_count : {}".format(batch_count))
-        
+
         
         if  batch_count > 0 :
         
@@ -223,6 +201,10 @@ def task_worker(threadNum,perfQ,appConfig):
         
             printLog("sleeping for {} seconds".format(appConfig['waitPeriod']),appConfig)
             time.sleep(appConfig['waitPeriod'])
+        else :
+            print("No updates in batch")
+            allDone = True
+            break
         
 
                 
@@ -237,9 +219,9 @@ def main():
     parser.add_argument('--database',required=True,type=str,help='Database')
     parser.add_argument('--collection',required=True,type=str,help='Collection')
     parser.add_argument('--file-name',required=False,type=str,default='compressor',help='Starting name of the created log files')
-    #parser.add_argument('--batch-size',required=True,type=int,help='Number of documents to read')
-    #parser.add_argument('--wait-period',required=False,type=int,default=9999999,help='Number of seconds to wait between each batch')
-    # parser.add_argument('--processes',required=True,type=int,help='Degree of concurrency')
+    parser.add_argument('--update-field',required=False,type=str,default='temp_field_for_compressor',help='Field used for updating an existing document. This should not conflict with any fieldname you are already using ')
+    parser.add_argument('--wait-period',required=False,type=int,default=60,help='Number of seconds to wait between each batch')
+    parser.add_argument('--batch-size',required=False,type=int,default=5000,help='Number of documents to update in a single batch')
 
     
 
@@ -250,8 +232,9 @@ def main():
     appConfig['numInsertProcesses'] = 1 #int(args.processes)
     appConfig['databaseName'] = args.database
     appConfig['collectionName'] = args.collection
-    appConfig['rateLimit'] = 5000  #int(args.rate_limit)
-    appConfig['waitPeriod'] = 60 #int(args.wait_period)
+    appConfig['updateField'] = args.update_field
+    appConfig['batchSize'] = int(args.batch_size)
+    appConfig['waitPeriod'] = int(args.wait_period)
     appConfig['logFileName'] = "{}.log".format(args.file_name)
 
     
