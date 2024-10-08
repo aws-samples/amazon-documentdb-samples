@@ -3,7 +3,7 @@ This sample applications compresses pre-existing documents in an existing collec
 
 Single threaded application - issues **5000** (controlled by argument --batch-size) updates serially in a _round_, and sleeps for **60** (controlled by argument --wait-period) seconds before starting next _round_.
 
-Status of the updates are maintained in database **tracker_db** - for each collection there is a tracker collection named **<<collection>>__tracker_col**.
+Status of the updates are maintained in database **tracker_db** - for each collection there is a tracker collection named **<< collection >>__tracker_col**.
 
 The application can be restarted if it crashes and it will pick up from last successful _round_ based on data in **<< collection >>__tracker_col**.
 
