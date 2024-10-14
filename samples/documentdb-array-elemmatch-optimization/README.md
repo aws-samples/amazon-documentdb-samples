@@ -63,7 +63,7 @@ __Prerequisites__
 2. Clone this repository
 
 ```bash
-git clone https://github.com/aws-samples/amazon-documentdb-samples/tree/master
+git clone [https://github.com/aws-samples/amazon-documentdb-samples/tree/master](https://github.com/aws-samples/amazon-documentdb-samples.git)
 cd amazon-documentdb-samples/samples/documentdb-array-elemmatch-optimisation/
 ```
 ## Setup Test Environment
