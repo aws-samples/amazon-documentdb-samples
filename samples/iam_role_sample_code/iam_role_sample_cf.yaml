@@ -241,7 +241,7 @@ Resources:
   Instance:
     Type: AWS::EC2::Instance
     Properties:
-      ImageId: ami-0195204d5dce06d99
+      ImageId: ami-0fff1b9a61dec8a5f
       InstanceType: t2.large
       IamInstanceProfile: !Ref InstanceProfile
       SubnetId: !Ref PublicSubnetA
