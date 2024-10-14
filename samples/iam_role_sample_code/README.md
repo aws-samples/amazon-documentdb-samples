@@ -7,7 +7,7 @@ In the sample code, we attach an IAM Role to an EC2 instance and run a Python co
 ![iam_solution_overview](files/iam_solution_overview.jpg)
 
 ## Prerequisites
-Create resources with the template file **iam_role_sample_cf.yaml** using instructions in [Selecting a stack template](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-using-console-create-stack-template.html). 
+Create resources with the template file **iam_role_sample_cf.yaml** using instructions in [Selecting a stack template](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-using-console-create-stack-template.html). The AMI used in this templates works in us-east-1 , please change the ami( Amazon Linux 2023) if using in other regions
 
 ![iam_upload_template_file](files/iam_upload_template_file.jpg)
 
