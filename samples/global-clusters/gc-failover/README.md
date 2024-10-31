@@ -1,3 +1,5 @@
+**Note:** This automation was used prior to the introduction of [Amazon DocumentDB Global Cluster switchover and failover](https://docs.aws.amazon.com/documentdb/latest/developerguide/global-clusters-disaster-recovery.html). 
+
 # Global Clusters Failover
 
 Amazon DocumentDB Global Clusters allows you to promote secondary cluster(s) in a different AWS region to a primary cluster, during regional failures.The recomended steps to promote a secondary cluster are 
