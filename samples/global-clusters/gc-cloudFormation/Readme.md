@@ -12,9 +12,9 @@ Amazon DocumentDB Global Clusters allow you to create a single, unified database
 
 This repository includes two key CloudFormation templates:
 
-1. `create_docdb_globalcluster.yaml`: This template creates the foundation of your global database architecture. It sets up a Global Cluster and deploys a primary DocumentDB cluster with three instances in your chosen region.
+1. `create_docdb_globalcluster.yaml:` This template creates the foundation of your global database architecture. It sets up a Global Cluster and deploys a primary Amazon DocumentDB cluster with three instances in the region.
 
-2. `addRegion_globalCluster.yaml`: Use this template to expand your global footprint. It adds a secondary region to your existing Global Cluster, allowing for global read scaling and improved disaster recovery.
+2. `addRegion_globalCluster.yaml:` Use this template to expand your global footprint. It adds a secondary region to your existing Global Cluster, allowing for global read scaling and improved disaster recovery.
 
 ## Prerequisites
 
@@ -65,8 +65,8 @@ Repeat this step for each additional region you wish to add to your Global Clust
 
 ## Contributing
 
-Contributions to improve these templates are welcome. Please submit a pull request with your proposed changes.
+Contributions to improve these templates are welcome. See CONTRIBUTING file.
 
 ## License
 
-This project is licensed under the MIT License
+This project is licensed under the MIT License. See the LICENSE file.
