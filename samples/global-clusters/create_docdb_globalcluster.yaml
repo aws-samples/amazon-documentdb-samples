@@ -1,0 +1,129 @@
+AWSTemplateFormatVersion: 2010-09-09
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: "DocumentDB Configuration"
+        Parameters:
+          - GlobalClusterIdentifier
+          - DocDBClusterIdentifier
+          - DocDBInstanceType
+          - DocDBSubnetGroupName
+          - DocDBSecurityGroup
+          - DocDBUsername
+          - DocDBPassword
+    ParameterLabels:
+      GlobalClusterIdentifier:
+        default: "Amazon DocumentDB Global Cluster Identifier"
+      DocDBClusterIdentifier:
+        default: "Primary Region Cluster Identifier"
+      DocDBInstanceType:
+        default: "Amazon DocumentDB Instance Class"
+      DocDBSubnetGroupName:
+        default: "Database Subnet Group"
+      DocDBSecurityGroup:
+        default: "Security Group"
+      DocDBUsername:
+        default: "Amazon DocumentDB Username"
+      DocDBPassword:
+        default: "Amazon DocumentDB Password"
+Parameters:
+  GlobalClusterIdentifier:
+    Type: String
+    Description: Identifier used for global Amazon DocumentDB database cluster
+    AllowedPattern: '^[a-zA-Z]{1}(?:-?[a-zA-Z0-9]){0,62}$'
+  DocDBClusterIdentifier:
+    Type: String
+    Description: Identifier used for regional primary Amazon DocumentDB cluster
+    AllowedPattern: '^[a-zA-Z]{1}(?:-?[a-zA-Z0-9]){0,62}$'
+  DocDBSecurityGroup:
+    Type: List<AWS::EC2::SecurityGroup::Id>
+    Description: Security group for Amazon DocumentDB primay cluster
+    AllowedPattern: '^[a-zA-Z]{1}(?:-?[a-zA-Z0-9]){0,62}$'
+  DocDBInstanceType:
+    Type: String
+    AllowedValues:
+      - db.r6g.large
+      - db.r6g.xlarge
+      - db.r6g.2xlarge
+      - db.r6g.4xlarge
+      - db.r6g.8xlarge
+      - db.r6g.12xlarge
+      - db.r6g.16xlarge
+      - db.r5.large
+      - db.r5.xlarge
+      - db.r5.2xlarge
+      - db.r5.4xlarge
+      - db.r5.8xlarge
+      - db.r5.16xlarge
+      - db.r5.24xlarge
+  DocDBSubnetGroupName:
+    Type: String
+    Description: Database subnetgroup name for primary region
+    AllowedPattern: '^[a-zA-Z]{1}(?:-?[a-zA-Z0-9]){0,62}$'
+  DocDBUsername:
+    Description: Admin username for DocumentDB
+    Type: String
+    MinLength: '1'
+    MaxLength: '16'
+    AllowedPattern: '[a-zA-Z][a-zA-Z0-9]*'
+    ConstraintDescription: must begin with a letter and contain only alphanumeric characters.
+  DocDBPassword:
+    NoEcho: 'true'
+    Description: Admin password for DocumentDB  
+    Type: String
+    MinLength: '8'
+    MaxLength: '41'
+    AllowedPattern: '[a-zA-Z0-9]*'
+    ConstraintDescription: must contain only alphanumeric characters.
+Resources:
+  GlobalCluster:
+    Type: 'AWS::RDS::GlobalCluster'
+    DependsOn: DocumentDBCluster
+    Properties:
+      GlobalClusterIdentifier: !Ref GlobalClusterIdentifier
+      SourceDBClusterIdentifier: !Ref DocumentDBCluster
+  DocumentDBCluster:
+    Type: 'AWS::DocDB::DBCluster'
+    Properties:
+      DBClusterIdentifier: !Ref DocDBClusterIdentifier
+      MasterUsername: !Ref DocDBUsername
+      MasterUserPassword: !Ref DocDBPassword
+      DBSubnetGroupName: !Ref DocDBSubnetGroupName
+      PreferredBackupWindow : 01:00-02:00
+      PreferredMaintenanceWindow : sat:03:30-sat:05:00
+      VpcSecurityGroupIds: !Ref DocDBSecurityGroup
+  DocDBDBInstance:
+    Type: AWS::DocDB::DBInstance
+    DependsOn: DocumentDBCluster
+    Properties:
+      DBClusterIdentifier: !Ref DocumentDBCluster
+      DBInstanceClass: !Ref DocDBInstanceType
+      DBInstanceIdentifier: !Join ["", [!Ref DocDBClusterIdentifier, "1"]]
+  DocDBDBInstance2:
+    Type: AWS::DocDB::DBInstance
+    DependsOn: DocumentDBCluster
+    Properties:
+      DBClusterIdentifier: !Ref DocumentDBCluster
+      DBInstanceClass: !Ref DocDBInstanceType
+      DBInstanceIdentifier: !Join ["", [!Ref DocDBClusterIdentifier, "2"]]
+  DocDBDBInstance3:
+    Type: AWS::DocDB::DBInstance
+    DependsOn: DocumentDBCluster
+    Properties:
+      DBClusterIdentifier: !Ref DocumentDBCluster
+      DBInstanceClass: !Ref DocDBInstanceType
+      DBInstanceIdentifier: !Join ["", [!Ref DocDBClusterIdentifier, "3"]]
+  
+  #outputs
+Outputs:
+  ClusterId:
+    Value: !Ref DocumentDBCluster
+  PrimaryClusterEndpoint:
+    Value: !GetAtt DocumentDBCluster.Endpoint
+  ClusterPort:
+    Value: !GetAtt DocumentDBCluster.Port
+  DocDBUser:
+    Value: !Ref DocDBUsername
+  DocDBSgId:
+    Value: !Join [', ', !Ref DocDBSecurityGroup]
