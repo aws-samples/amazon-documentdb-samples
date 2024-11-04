@@ -1,0 +1,79 @@
+AWSTemplateFormatVersion: 2010-09-09
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: "DocumentDB Configuration"
+        Parameters:
+          - GlobalClusterIdentifier
+          - DocDBClusterIdentifier
+          - DocDBInstanceType
+          - DocDBSubnetGroupName
+          - DocDBSecurityGroup
+    ParameterLabels:
+      GlobalClusterIdentifier:
+        default: "Global Cluster Identifier"
+      DocDBClusterIdentifier:
+        default: "Regional Cluster Identifier"
+      DocDBInstanceType:
+        default: "Amazon DocumentDB Instance Class"
+      DocDBSubnetGroupName:
+        default: "Database Subnet Group Name"
+      DocDBSecurityGroup:
+        default: "Security Group"
+Parameters:
+  GlobalClusterIdentifier:
+    Type: String
+    Description: Identifier used for global DocumentDB database cluster
+    AllowedPattern: '^[a-zA-Z]{1}(?:-?[a-zA-Z0-9]){0,62}$'
+  DocDBClusterIdentifier:
+    Type: String
+    Description: Identifier used for secondary DocumentDB cluster
+    AllowedPattern: '^[a-zA-Z]{1}(?:-?[a-zA-Z0-9]){0,62}$'
+  DocDBSecurityGroup:
+    Type: List<AWS::EC2::SecurityGroup::Id>
+    Description: Security group for DocumentDB primay cluster
+    AllowedPattern: '^[a-zA-Z]{1}(?:-?[a-zA-Z0-9]){0,62}$'
+  DocDBInstanceType:
+    Type: String
+    AllowedValues:
+      - db.r6g.large
+      - db.r6g.xlarge
+      - db.r6g.2xlarge
+      - db.r6g.4xlarge
+      - db.r6g.8xlarge
+      - db.r6g.12xlarge
+      - db.r6g.16xlarge
+      - db.r5.large
+      - db.r5.xlarge
+      - db.r5.2xlarge
+      - db.r5.4xlarge
+      - db.r5.8xlarge
+      - db.r5.16xlarge
+      - db.r5.24xlarge
+  DocDBSubnetGroupName:
+    Type: String
+    Description: Subnetgroup name for primary region
+    AllowedPattern: '^[a-zA-Z]{1}(?:-?[a-zA-Z0-9]){0,62}$'    
+
+Resources:
+  DocumentDBCluster:
+    Type: 'AWS::RDS::DBCluster'
+    Properties:
+      DBClusterIdentifier: !Ref DocDBClusterIdentifier
+      GlobalClusterIdentifier: !Ref GlobalClusterIdentifier
+      Engine: 'docdb'
+      EngineVersion: '5.0.0'
+  DocDBDBInstance:
+    Type: 'AWS::RDS::DBInstance'
+    Properties:
+      DBClusterIdentifier: !Ref DocumentDBCluster
+      DBInstanceClass: !Ref DocDBInstanceType
+      DBInstanceIdentifier: !Join ["", [!Ref DocDBClusterIdentifier, "1"]]
+      Engine: 'docdb'
+
+Outputs:
+  SecondaryClusterId:
+    Value: !Ref DocumentDBCluster
+  SecondaryClusterEndpoint:
+    Value: !GetAtt DocumentDBCluster.Endpoint.Address
