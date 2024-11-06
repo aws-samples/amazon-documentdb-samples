@@ -19,19 +19,18 @@ The On the EC2 instance, Rust should be installed. Follow installation steps at 
 
 Using below git command, clone repository in to the home directory of your EC2 instance.
 ```
-git clone https://github.com/goyalnikhil/documentdb-rust.git
+git clone https://github.com/aws-samples/amazon-documentdb-samples.git
 ```
-Also, download the AWS RDS global certificates bundle and save it your preferred location on your EC2 instance. Full path to this certificate will be needed later on.
+
+## Step 2: TLS setup
+
+> [!NOTE]
+> If your DocuemntDB cluster is setup without TLS, you can skip this step.
+
+Downloaded the AWS RDS global certificates bundle `global-bundle.pem` file into the home diretory of the EC2 instance using below command.
 ```
 wget https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem
 ```
-
-## Step 2: Update Rust source code
-
-While in the `documentdb-rust` folder, open `src/main.rs` file in your choice of editor and make changes by replacing:
-- `<Your-Seceret-Name>` with the name of secrete you created in AWS Secretes Manager with DocumentDB credentials.
-- `<Path-to-global-bundle>` with the full path name of the location you stored the downloaded `global-bundle.pem` file.
-Save the file and exit the editor. Your Rust code is ready to compile and run.
 
 ## Step 3: Build the application code
 
@@ -44,19 +43,44 @@ cargo build
 
 The `cargo` package manager also allows us to run the application. From the command prompt while still in `documentdb-rust` folder, run below command to execute the application while passing command line argument to invoke each CRUD operation. 
 
-#### 'C'reate document
-Passing a command line argument `c` creats a document, you can use below command.
-
+#### Usage
+Using `--help` command line argunment lists the usage options and information for each option. Use below command:
 ```
-cargo r -- c
+cargo r -- --help
 ```
 
 This should generate output similar to below.
 
 ```
-[ec2-user@ip-xxxxxxxxx documentdb-rust]$ cargo r -- c
+[ec2-user@ip-xxxxxxxxx documentdb-rust]$ cargo r -- --help
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.26s
+     Running `target/debug/documentdb-rust --help`
+Usage: documentdb-rust [OPTIONS] --op <op> --secret <secret>
+
+Options:
+      --op <op>          CRUD operation to perform (c, r, u, d)
+      --secret <secret>  Secret name with DocumentDB credentials
+      --tls              Use TLS when connecting to DocumentDB
+  -h, --help             Print help
+  -V, --version          Print version
+```
+
+#### 'C'reate document
+Passing a command line argument `--op c` creates a document, you can use below command.
+
+```
+cargo r -- --op c --secret <secret>
+```
+> [!NOTE]
+> If your DocuemntDB cluster is setup with TLS, add the `--tls` option to the command line above.
+
+
+This should generate output similar to below.
+
+```
+[ec2-user@ip-xxxxxxxxx documentdb-rust]$ cargo r -- --op c --secret xxxxxx
     Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.22s
-     Running `target/debug/documentdb-rust c`
+     Running `target/debug/documentdb-rust --op c --secret xxxxxx`
 Connected to Amazon DocumentDB using credentials from Secrets Manager!
  Ping respose: { "ok": 1, "operationTime": Timestamp(1730126391, 1) }
 Document inserted!
@@ -64,18 +88,20 @@ Document inserted!
 The created document can be viewed by running qurey via mongo shell against the database.
 
 #### 'R'ead the created document
-Passing a command line argument `r` reads the document, you can use below command.
+Passing a command line argument `--op r` reads the document, you can use below command.
 
 ```
-cargo r -- r
+cargo r -- --op r --secret <secret>
 ```
+> [!NOTE]
+> If your DocuemntDB cluster is setup with TLS, add the `--tls` option to the command line above.
 
 This should generate output similar to below.
 
 ```
-[ec2-user@ip-xxxxxxxxx documentdb-rust]$ cargo r -- r
+[ec2-user@ip-xxxxxxxxx documentdb-rust]$ cargo r -- --op r --secret xxxxxx
     Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.28s
-     Running `target/debug/documentdb-rust r`
+     Running `target/debug/documentdb-rust --op r --secret xxxxxx`
 Connected to Amazon DocumentDB using credentials from Secrets Manager!
  Ping respose: { "ok": 1, "operationTime": Timestamp(1730137680, 1) }
 Some(
@@ -97,18 +123,20 @@ Some(
 ```
 
 #### 'U'pdate the document
-Passing a command line argument `u` updates the document, you can use below command.
+Passing a command line argument `--op u` updates the document, you can use below command.
 
 ```
-cargo r -- u
+cargo r -- --op u --secret <secret>
 ```
+> [!NOTE]
+> If your DocuemntDB cluster is setup with TLS, add the `--tls` option to the command line above.
 
 This shdould generate output similar to below.
 
 ```
-[ec2-user@ip-xxxxxxxx documentdb-rust]$ cargo r -- u
+[ec2-user@ip-xxxxxxxx documentdb-rust]$ cargo r -- --op u --secret xxxxxx
     Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.22s
-     Running `target/debug/documentdb-rust u`
+     Running `target/debug/documentdb-rust --op u --secret xxxxxx`
 Connected to Amazon DocumentDB using credentials from Secrets Manager!
  Ping respose: { "ok": 1, "operationTime": Timestamp(1730145700, 1) }
 Document updated!
@@ -116,18 +144,20 @@ Document updated!
 The updated document can be viewed by running qurey via mongo shell against the database.
 
 #### 'D'elete the created document
-Passing a command line argument `d` reads the document, you can use below command.
+Passing a command line argument `--op d` reads the document, you can use below command.
 
 ```
-cargo r -- d
+cargo r -- --op d --secret <secret>
 ```
+> [!NOTE]
+> If your DocuemntDB cluster is setup with TLS, add the `--tls` option to the command line above.
 
 This should generate output similar to below.
 
 ```
-[ec2-user@ip-xxxxxxxx documentdb-rust]$ cargo r -- d
+[ec2-user@ip-xxxxxxxx documentdb-rust]$ cargo r -- --op d --secret xxxxxx
     Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.20s
-     Running `target/debug/documentdb-rust d`
+     Running `target/debug/documentdb-rust --op d --secret xxxxxx`
 Connected to Amazon DocumentDB using credentials from Secrets Manager!
  Ping respose: { "ok": 1, "operationTime": Timestamp(1730145950, 1) }
 Document deleted!

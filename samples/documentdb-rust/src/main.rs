@@ -1,4 +1,5 @@
 use std::{env, error::Error, path::PathBuf};
+use clap::{arg, Command, ArgAction};
 use serde::Deserialize;
 use serde_json;
 use mongodb::{Client, Database, options::{ClientOptions, TlsOptions, Tls}, bson::{doc, Document}};
@@ -96,15 +97,19 @@ async fn delete_document(database: &Database) -> Result<(), Box<dyn Error>> {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
+
     //Get command line arguments
-    let args: Vec<String> = env::args().collect();
-    if args.len() < 2 {
-        panic!("Need a command line argument while invoking the program. Use c, r, u, or d for the respective CRUD operation to run.")
-    }
-    let op = &args[1];
+    let matches = command!()
+        .arg(arg!(--op "CRUD operation to perform (c, r, u, d)").required(true).action(ArgAction::Set))
+        .arg(arg!(--secret "Secret name with DocumentDB credentials").required(true).action(ArgAction::Set))
+        .arg(arg!(--tls "Use TLS when connecting to DocumentDB").action(ArgAction::SetTrue))
+        .get_matches();
+
+    let op = matches.get_one::<String>("op").expect("required");
+    let secret_name = matches.get_one::<String>("secret").expect("required");
+    let tls = matches.get_flag("tls");
 
     // Retrieve credentials from Secrets Manager
-    let secret_name = "<Your-Seceret-Name>";
     let secret = get_secret(secret_name).await?;
 
     // Construct connection string using the secret credentials
@@ -115,11 +120,13 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     // Parse MongoDB client options
     let mut client_options = ClientOptions::parse(&client_uri).await?;
-    let ca_file = PathBuf::from(r"/<Path-to-global-bundle>/global-bundle.pem");
-    let tls_options = TlsOptions::builder()
-        .ca_file_path(ca_file)
-        .build();
-    client_options.tls = Some(Tls::Enabled(tls_options));
+    if tls {
+        let ca_file = PathBuf::from(r"/home/ec2-user/global-bundle.pem");
+        let tls_options = TlsOptions::builder()
+            .ca_file_path(ca_file)
+            .build();
+        client_options.tls = Some(Tls::Enabled(tls_options));
+    }
 
     // Connect to DocumentDB
     let client = Client::with_options(client_options)?;
