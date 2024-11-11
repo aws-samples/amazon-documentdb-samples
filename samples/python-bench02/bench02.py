@@ -425,7 +425,10 @@ def main():
             thisUri = thisUri.replace(thisPassword,'<PASSWORD>')
             printLog("  config | {} | {}".format(thisKey,thisUri),appConfig)
         else:
-            printLog("  config | {} | {}".format(thisKey,appConfig[thisKey]),appConfig)
+            if type(appConfig[thisKey]) == int:
+                printLog("  config | {} | {:,d}".format(thisKey,appConfig[thisKey]),appConfig)
+            else:
+                printLog("  config | {} | {}".format(thisKey,appConfig[thisKey]),appConfig)
     printLog('---------------------------------------------------------------------------------------',appConfig)
     
     mp.set_start_method('spawn')
