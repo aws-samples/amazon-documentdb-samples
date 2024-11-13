@@ -11,11 +11,11 @@ You should have an existing Amazon DocumentDB cluster in your AWS account. Also 
 
 
 
-Finally, you will need to store the database credentials in AWS Secretes Manager. For more information on how to create a secret refer to [AWS Secrets Manager user guide](https://docs.aws.amazon.com/secretsmanager/latest/userguide/create_secret.html). The secret name created in this step will be used later in the setup.
+Finally, you will need to store the database credentials in AWS Secrets Manager. For more information on how to create a secret refer to [AWS Secrets Manager user guide](https://docs.aws.amazon.com/secretsmanager/latest/userguide/create_secret.html). The secrets name created in this step will be used later in the setup.
 
 ## Step 1: Setup on EC2 instance
 
-The On the EC2 instance, Rust should be installed. Follow installation steps at [Install Rust](https://www.rust-lang.org/tools/install). Validate the Rust installation by running `rustc --version`.
+On the EC2 instance, Rust should be installed. Follow installation steps at [Install Rust](https://www.rust-lang.org/tools/install). Validate the Rust installation by running `rustc --version`.
 
 Using below git command, clone repository in to the home directory of your EC2 instance.
 ```
@@ -25,9 +25,9 @@ git clone https://github.com/aws-samples/amazon-documentdb-samples.git
 ## Step 2: TLS setup
 
 > [!NOTE]
-> If your DocuemntDB cluster is setup without TLS, you can skip this step.
+> If your DocuemntDB cluster is set up without TLS, you can skip this step.
 
-Downloaded the AWS RDS global certificates bundle `global-bundle.pem` file into the home diretory of the EC2 instance using below command.
+Download the AWS RDS global certificates bundle `global-bundle.pem` file into the home directory of the EC2 instance using below command.
 ```
 wget https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem
 ```
@@ -44,7 +44,7 @@ cargo build
 The `cargo` package manager also allows us to run the application. From the command prompt while still in `documentdb-rust` folder, run below command to execute the application while passing command line argument to invoke each CRUD operation. 
 
 #### Usage
-Using `--help` command line argunment lists the usage options and information for each option. Use below command:
+Using `--help` command line argument lists the usage options and information for each option. Use below command:
 ```
 cargo r -- --help
 ```
@@ -72,7 +72,7 @@ Passing a command line argument `--op c` creates a document, you can use below c
 cargo r -- --op c --secret <secret>
 ```
 > [!NOTE]
-> If your DocuemntDB cluster is setup with TLS, add the `--tls` option to the command line above.
+> If your DocumentDB cluster is set up with TLS, add the `--tls` option to the command line above.
 
 
 This should generate output similar to below.
@@ -85,7 +85,7 @@ Connected to Amazon DocumentDB using credentials from Secrets Manager!
  Ping respose: { "ok": 1, "operationTime": Timestamp(1730126391, 1) }
 Document inserted!
 ```
-The created document can be viewed by running qurey via mongo shell against the database.
+The created document can be viewed by running query via mongo shell against the database.
 
 #### 'R'ead the created document
 Passing a command line argument `--op r` reads the document, you can use below command.
@@ -94,7 +94,7 @@ Passing a command line argument `--op r` reads the document, you can use below c
 cargo r -- --op r --secret <secret>
 ```
 > [!NOTE]
-> If your DocuemntDB cluster is setup with TLS, add the `--tls` option to the command line above.
+> If your DocuemntDB cluster is set up with TLS, add the `--tls` option to the command line above.
 
 This should generate output similar to below.
 
@@ -129,9 +129,9 @@ Passing a command line argument `--op u` updates the document, you can use below
 cargo r -- --op u --secret <secret>
 ```
 > [!NOTE]
-> If your DocuemntDB cluster is setup with TLS, add the `--tls` option to the command line above.
+> If your DocuemntDB cluster is set up with TLS, add the `--tls` option to the command line above.
 
-This shdould generate output similar to below.
+This should generate output similar to below.
 
 ```
 [ec2-user@ip-xxxxxxxx documentdb-rust]$ cargo r -- --op u --secret xxxxxx
@@ -141,7 +141,7 @@ Connected to Amazon DocumentDB using credentials from Secrets Manager!
  Ping respose: { "ok": 1, "operationTime": Timestamp(1730145700, 1) }
 Document updated!
 ```
-The updated document can be viewed by running qurey via mongo shell against the database.
+The updated document can be viewed by running query via mongo shell against the database.
 
 #### 'D'elete the created document
 Passing a command line argument `--op d` reads the document, you can use below command.
@@ -150,7 +150,7 @@ Passing a command line argument `--op d` reads the document, you can use below c
 cargo r -- --op d --secret <secret>
 ```
 > [!NOTE]
-> If your DocuemntDB cluster is setup with TLS, add the `--tls` option to the command line above.
+> If your DocuemntDB cluster is set up with TLS, add the `--tls` option to the command line above.
 
 This should generate output similar to below.
 
