@@ -1,7 +1,7 @@
 # How to Use Amazon DocumentDB with Rust - A Step-by-Step Guide
 ## Introduction
 
-This sample project will create a Rust application that executes CRUD operations on an existing Amazon DocumentDB cluster. It will use AWS Secretes Manager to retrieve database credentials and connect to the Amazon DocumentDB cluster.
+This sample project will create a Rust application that executes CRUD operations on an existing Amazon DocumentDB cluster. It will use AWS Secrets Manager to retrieve database credentials and connect to the Amazon DocumentDB cluster.
 
 Project contains a `Cargo.toml` file with required dependencies and `main.rs` contains the main source code in Rust programming language.
 
