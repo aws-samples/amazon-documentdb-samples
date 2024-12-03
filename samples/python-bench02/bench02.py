@@ -10,6 +10,7 @@ import multiprocessing as mp
 import argparse
 import string
 import math
+import warnings
 
 
 def deleteLog(appConfig):
@@ -222,6 +223,8 @@ def reporter(perfQ,appConfig):
 
 
 def task_worker(threadNum,perfQ,appConfig):
+    warnings.filterwarnings("ignore","You appear to be connected to a DocumentDB cluster.")
+
     rateLimit = appConfig['rateLimit']
     runSeconds = appConfig['runSeconds']
     numInsertsPerBatch = appConfig['batchSize']
@@ -332,6 +335,8 @@ def task_worker(threadNum,perfQ,appConfig):
 
 
 def main():
+    warnings.filterwarnings("ignore","You appear to be connected to a DocumentDB cluster.")
+
     parser = argparse.ArgumentParser(description='Data Generator')
 
     parser.add_argument('--uri',required=True,type=str,help='URI (connection string)')
