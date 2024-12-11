@@ -145,6 +145,8 @@ def reporter(perfQ,appConfig):
     numIntervalsTps = appConfig['numIntervalsAverage'] 
     numInsertProcesses = appConfig['numInsertProcesses']
     numExistingDocuments = appConfig['numExistingDocuments']
+    numOperations = appConfig['numOperations']
+    runSeconds = appConfig['runSeconds']
 
     startTime = time.time()
     lastTime = time.time()
@@ -211,9 +213,19 @@ def reporter(perfQ,appConfig):
         for thisLatency in recentLatency:
             totRecentLatency += thisLatency
         avgRecentLatency = totRecentLatency / len(recentLatency)
+
+        # estimated time to done
+        if numOperations > 0:
+            pctDone = numTotalInserts / numOperations
+            remainingSeconds = max(int(elapsedSeconds / pctDone) - elapsedSeconds,0)
+        else:
+            remainingSeconds = max(runSeconds - elapsedSeconds,0)
+        thisHours, rem = divmod(remainingSeconds, 3600)
+        thisMinutes, thisSeconds = divmod(rem, 60)
+        remainHMS = "{:0>2}:{:0>2}:{:0>2}".format(int(thisHours),int(thisMinutes),int(thisSeconds))
         
         logTimeStamp = datetime.utcnow().isoformat()[:-3] + 'Z'
-        printLog("[{}] elapsed {} | total ins {:16,d} at {:12,.2f} p/s | tot docs {:16,d} | interval {:12,.2f} p/s @ {:8,.2f} ms | last {} is {:12,.2f} p/s @ {:8,.2f} ms ".format(logTimeStamp,thisHMS,numTotalInserts,insertsPerSecond,numTotalInserts+numExistingDocuments,intervalInsertsPerSecond,intervalLatencyMs,numIntervalsTps,avgRecentTps,avgRecentLatency),appConfig)
+        printLog("[{}] elapsed {} | total ins {:16,d} at {:12,.2f} p/s | tot docs {:16,d} | interval {:12,.2f} p/s @ {:8,.2f} ms | last {} is {:12,.2f} p/s @ {:8,.2f} ms  | done in {}".format(logTimeStamp,thisHMS,numTotalInserts,insertsPerSecond,numTotalInserts+numExistingDocuments,intervalInsertsPerSecond,intervalLatencyMs,numIntervalsTps,avgRecentTps,avgRecentLatency,remainHMS),appConfig)
         csvData = "{},{},{:.2f},{},{:.2f},{},{:.2f},{:.2f},{:.2f},{:.2f}".format(logTimeStamp,thisHMS,elapsedSeconds,numTotalInserts,insertsPerSecond,numTotalInserts+numExistingDocuments,intervalInsertsPerSecond,intervalLatencyMs,avgRecentTps,avgRecentLatency)
         printCsv(csvData,appConfig)
         nextReportTime = nowTime + numSecondsFeedback
