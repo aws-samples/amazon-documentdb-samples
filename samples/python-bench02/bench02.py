@@ -216,7 +216,7 @@ def reporter(perfQ,appConfig):
 
         # estimated time to done
         if numOperations > 0:
-            pctDone = numTotalInserts / numOperations
+            pctDone = max(numTotalInserts / numOperations,0.001)
             remainingSeconds = max(int(elapsedSeconds / pctDone) - elapsedSeconds,0)
         else:
             remainingSeconds = max(runSeconds - elapsedSeconds,0)
