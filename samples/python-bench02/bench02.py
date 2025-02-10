@@ -271,7 +271,7 @@ def task_worker(threadNum,perfQ,appConfig):
     randomChars = int(textSize * (1 - (pctCompressed / 100)))
     fixedChars = textSize - randomChars
     randomTextBufferSize = 4*1024*1024
-    randomTextBufferMaxStart = randomTextBufferSize - fixedChars
+    randomTextBufferMaxStart = randomTextBufferSize - randomChars
     # generate a 4MB random string
     randomString = ''.join(random.choices(string.ascii_uppercase+string.ascii_lowercase,k=4*1024*1024))
     fixedString = "a" * fixedChars
