@@ -37,7 +37,7 @@ pip install pymongo
 1.Install and Setup Mongobetween
 
 * SSH into your EC2 instance
-* Copy the files [```install_mongobetween.sh```](install_monogbetween.sh),[```mongo.go```](mongo.go),[```operations.go```](operations.go) to the EC2 instance home directory.The go files are needed to make the current main branch of Mongobetween( as of [commit](https://github.com/coinbase/mongobetween/commit/ca3d8d78d99847afc747b56c5b4ea31b85bff013)) to work with read preferences passed in connection URI string.
+* Copy the files [```install_mongobetween.sh```](install_mongobetween.sh),[```mongo.go```](mongo.go),[```operations.go```](operations.go) to the EC2 instance home directory.The go files are needed to make the current main branch of Mongobetween( as of [commit](https://github.com/coinbase/mongobetween/commit/ca3d8d78d99847afc747b56c5b4ea31b85bff013)) to work with read preferences passed in connection URI string.
 * Run the following command to make the ```install_mongobetween.sh``` file executable: 
 
 	```chmod 700 install_mongobetween.sh```
