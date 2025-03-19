@@ -74,7 +74,7 @@ def setup(appConfig):
     collectionName = appConfig['collectionName']
     numSecondaryIndexes = appConfig['numSecondaryIndexes']
 
-    client = pymongo.MongoClient(host=appConfig['uri'],appname='bench02')
+    client = pymongo.MongoClient(host=appConfig['uri'],appname='pybench02')
     db = client[databaseName]
     adminDb = client['admin']
     col = db[collectionName]
