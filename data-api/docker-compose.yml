@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:6.0
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+    volumes:
+      - mongodb_data:/data/db
+
+  data-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: data-api
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      MONGODB_CONNECTION_STRING_KEY: mongodb://root:example@mongodb:27017/?authSource=admin
+    depends_on:
+      - mongodb
+
+volumes:
+  mongodb_data:
