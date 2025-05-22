@@ -86,7 +86,3 @@ When the application starts, it generates a random main API key at the startup. 
 
 ![Amazon DocumentDB Data-API insertOne API](public/assets/screenshot-insertone-api.png)
 
-## Stay in touch
-
-- Author - [Shyam Arjarapu](https://phonetool.amazon.com/users/ska)
-- Website - [documentdb-data-api](https://gitlab.aws.dev/team-jelez/proserve-etip-nosql/documentdb-data-api)
