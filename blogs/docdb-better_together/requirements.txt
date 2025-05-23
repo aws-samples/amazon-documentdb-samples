@@ -99,7 +99,7 @@ stack-data==0.6.2
 terminado==0.17.1
 tinycss2==1.2.1
 tomli==2.0.1
-tornado==6.4.2
+tornado==6.5.1
 traitlets==5.10.1
 typing_extensions==4.8.0
 tzdata==2023.3
