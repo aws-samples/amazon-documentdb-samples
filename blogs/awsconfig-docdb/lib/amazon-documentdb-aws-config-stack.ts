@@ -1,143 +1,146 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: MIT-0
 
-import { CustomRule, ManagedRule, ManagedRuleIdentifiers, ResourceType, RuleScope } from '@aws-cdk/aws-config';
-import { Rule } from '@aws-cdk/aws-events';
-import { Effect, ManagedPolicy, PolicyStatement, Role, ServicePrincipal } from '@aws-cdk/aws-iam';
-import { Code, Function, Runtime } from '@aws-cdk/aws-lambda';
-import { Topic } from '@aws-cdk/aws-sns';
-import { LogGroup, RetentionDays } from '@aws-cdk/aws-logs';
-import * as cdk from '@aws-cdk/core';
-import { CloudWatchLogGroup, LambdaFunction, SnsTopic } from '@aws-cdk/aws-events-targets';
-import { Key } from '@aws-cdk/aws-kms';
+import { Construct } from 'constructs';
+import { 
+  aws_config as config,
+  aws_events as events,
+  aws_iam as iam,
+  aws_lambda as lambda,
+  aws_sns as sns,
+  aws_logs as logs,
+  aws_events_targets as targets,
+  aws_kms as kms,
+  Stack, StackProps
+} from 'aws-cdk-lib';
 
-interface DocumentDbConfigStackProps extends cdk.StackProps {
+interface DocumentDbConfigStackProps extends StackProps {
   clusterParameterGroup?: string;
   backupRetentionPeriod?: number;
 }
 
-export class AmazonDocumentdbAwsConfigStack extends cdk.Stack {
-  constructor(scope: cdk.Construct, id: string, props?: DocumentDbConfigStackProps) {
+export class AmazonDocumentdbAwsConfigStack extends Stack {
+  constructor(scope: Construct, id: string, props?: DocumentDbConfigStackProps) {
     super(scope, id, props);
 
     const clusterParameterGroup = props?.clusterParameterGroup || 'blogpost-param-group';
     const backupRetentionPeriod = props?.backupRetentionPeriod || 7;
 
     // aws managed rules
-    new ManagedRule(this, 'ClusterDeletionProtectionEnabled', {
-      identifier: ManagedRuleIdentifiers.RDS_CLUSTER_DELETION_PROTECTION_ENABLED,
+    new config.ManagedRule(this, 'ClusterDeletionProtectionEnabled', {
+      identifier: config.ManagedRuleIdentifiers.RDS_CLUSTER_DELETION_PROTECTION_ENABLED,
       configRuleName: 'documentdb-cluster-deletion-protection-enabled',
-      ruleScope: RuleScope.fromResources([ResourceType.RDS_DB_CLUSTER])
+      ruleScope: config.RuleScope.fromResources([config.ResourceType.RDS_DB_CLUSTER])
     });
 
-    new ManagedRule(this, 'StorageEncrypted', {
-      identifier: ManagedRuleIdentifiers.RDS_STORAGE_ENCRYPTED,
+    new config.ManagedRule(this, 'StorageEncrypted', {
+      identifier: config.ManagedRuleIdentifiers.RDS_STORAGE_ENCRYPTED,
       configRuleName: 'documentdb-cluster-storage-encrypted',
-      ruleScope: RuleScope.fromResources([ResourceType.RDS_DB_INSTANCE])
+      ruleScope: config.RuleScope.fromResources([config.ResourceType.RDS_DB_INSTANCE])
     });
 
     // custom rules
     // cluster parameter group
-    const clusterParameterGroupRole = new Role(this, 'ClusterParameterGroupRole', {
-      assumedBy: new ServicePrincipal('lambda.amazonaws.com')
+    const clusterParameterGroupRole = new iam.Role(this, 'ClusterParameterGroupRole', {
+      assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com')
     }); 
-    clusterParameterGroupRole.addManagedPolicy(ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole'));
-    clusterParameterGroupRole.addManagedPolicy(ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSConfigRulesExecutionRole'));
+    clusterParameterGroupRole.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole'));
+    clusterParameterGroupRole.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSConfigRulesExecutionRole'));
 
-    const clusterParameterGroupFn = new Function(this, 'ClusterParameterGroupFn', {
-      runtime: Runtime.NODEJS_14_X,
+    const clusterParameterGroupFn = new lambda.Function(this, 'ClusterParameterGroupFn', {
+      runtime: lambda.Runtime.NODEJS_22_X,
       handler: 'index.handler',
-      code: Code.fromAsset('./lib/functions/cluster-parameter-group-rule'),
+      code: lambda.Code.fromAsset('./lib/functions/cluster-parameter-group-rule'),
       role: clusterParameterGroupRole
     });
 
-    new CustomRule(this, 'ClusterParameterGroupRule', {
+    new config.CustomRule(this, 'ClusterParameterGroupRule', {
       lambdaFunction: clusterParameterGroupFn,
       configurationChanges: true,
       configRuleName: 'documentdb-cluster-parameter-group',
       description: 'Evaluates whether the cluster parameter group is the one provided to the rule as a parameter',
-      ruleScope: RuleScope.fromResources([ResourceType.RDS_DB_CLUSTER]),
+      ruleScope: config.RuleScope.fromResources([config.ResourceType.RDS_DB_CLUSTER]),
       inputParameters: {
         desiredClusterParameterGroup: clusterParameterGroup
       }
     });
 
     // cluster backup retention
-    const clusterBackupRententionRole = new Role(this, 'ClusterBackupRetentionRole', {
-      assumedBy: new ServicePrincipal('lambda.amazonaws.com')
+    const clusterBackupRententionRole = new iam.Role(this, 'ClusterBackupRetentionRole', {
+      assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com')
     }); 
-    clusterBackupRententionRole.addManagedPolicy(ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole'));
-    clusterBackupRententionRole.addManagedPolicy(ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSConfigRulesExecutionRole'));
+    clusterBackupRententionRole.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole'));
+    clusterBackupRententionRole.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSConfigRulesExecutionRole'));
 
-    const clusterBackupRetentionFn = new Function(this, 'ClusterBackupRetentionFn', {
-      runtime: Runtime.NODEJS_14_X,
+    const clusterBackupRetentionFn = new lambda.Function(this, 'ClusterBackupRetentionFn', {
+      runtime: lambda.Runtime.NODEJS_22_X,
       handler: 'index.handler',
-      code: Code.fromAsset('./lib/functions/cluster-backup-retention-rule'),
+      code: lambda.Code.fromAsset('./lib/functions/cluster-backup-retention-rule'),
       role: clusterBackupRententionRole
     });
 
-    new CustomRule(this, 'ClusterBackupRetentionRule', {
+    new config.CustomRule(this, 'ClusterBackupRetentionRule', {
       lambdaFunction: clusterBackupRetentionFn,
       configurationChanges: true,
       configRuleName: 'documentdb-cluster-backup-retention',
       description: 'Evaluates whether the backup retention policy has been set to a greater value than the one provided to the as parameter',
-      ruleScope: RuleScope.fromResources([ResourceType.RDS_DB_CLUSTER]),
+      ruleScope: config.RuleScope.fromResources([config.ResourceType.RDS_DB_CLUSTER]),
       inputParameters: {
         minBackupRetentionPeriod: backupRetentionPeriod
       }
     });
 
     // instances homogeneous
-    const instancesHomogeneousRole = new Role(this, 'InstancesHomogeneousRole', {
-      assumedBy: new ServicePrincipal('lambda.amazonaws.com')
+    const instancesHomogeneousRole = new iam.Role(this, 'InstancesHomogeneousRole', {
+      assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com')
     }); 
-    instancesHomogeneousRole.addManagedPolicy(ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole'));
-    instancesHomogeneousRole.addManagedPolicy(ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSConfigRulesExecutionRole'));
-    instancesHomogeneousRole.addToPolicy(new PolicyStatement({
-      effect: Effect.ALLOW,
+    instancesHomogeneousRole.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole'));
+    instancesHomogeneousRole.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSConfigRulesExecutionRole'));
+    instancesHomogeneousRole.addToPolicy(new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
       actions: ['rds:DescribeDBInstances'],
       resources: ['*']
     }));
 
-    const instancesHomogeneousFn = new Function(this, 'InstancesHomogeneousFn', {
-      runtime: Runtime.NODEJS_14_X,
+    const instancesHomogeneousFn = new lambda.Function(this, 'InstancesHomogeneousFn', {
+      runtime: lambda.Runtime.NODEJS_22_X,
       handler: 'index.handler',
-      code: Code.fromAsset('./lib/functions/instances-homogeneous-rule'),
+      code: lambda.Code.fromAsset('./lib/functions/instances-homogeneous-rule'),
       role: instancesHomogeneousRole
     });
 
-    new CustomRule(this, 'InstancesHomogeneousRule', {
+    new config.CustomRule(this, 'InstancesHomogeneousRule', {
       lambdaFunction: instancesHomogeneousFn,
       configurationChanges: true,
       configRuleName: 'documentdb-cluster-instances-homogeneous',
       description: 'Evaluates whether all instances within an Amazon DocumentDB cluster belong to the same instance family and size.',
-      ruleScope: RuleScope.fromResources([ResourceType.RDS_DB_INSTANCE])
+      ruleScope: config.RuleScope.fromResources([config.ResourceType.RDS_DB_INSTANCE])
     });
 
     // remediation
     // sns topic for notifications
-    const key = new Key(this, 'Key');
-    key.addToResourcePolicy(new PolicyStatement({
+    const key = new kms.Key(this, 'Key');
+    key.addToResourcePolicy(new iam.PolicyStatement({
       actions: [
         'kms:GenerateDataKey',
         'kms:Decrypt'
       ],
-      principals: [new ServicePrincipal('events.amazonaws.com')],
+      principals: [new iam.ServicePrincipal('events.amazonaws.com')],
       resources: ['*'],
     }));
 
-    const topic = new Topic(this, 'ComplianceNotificationsTopic', {
+    const topic = new sns.Topic(this, 'ComplianceNotificationsTopic', {
       displayName: 'Compliance Notifications',
       masterKey: key
     });
 
     // cloudwatch log group for debugging purposes
-    const logGroup = new LogGroup(this, 'AuditLogGroup', {
+    const logGroup = new logs.LogGroup(this, 'AuditLogGroup', {
       logGroupName: `/aws/events/documentdb-config-events`,
-      retention: RetentionDays.ONE_WEEK
+      retention: logs.RetentionDays.ONE_WEEK
     });
 
-    const notificationRule = new Rule(this, 'ComplianceNotificationRule', {
+    const notificationRule = new events.Rule(this, 'ComplianceNotificationRule', {
       eventPattern: {
         source: ['aws.config'],
         detailType: ['Config Rules Compliance Change'],
@@ -156,19 +159,19 @@ export class AmazonDocumentdbAwsConfigStack extends cdk.Stack {
       }
     });
 
-    notificationRule.addTarget(new CloudWatchLogGroup(logGroup));
-    notificationRule.addTarget(new SnsTopic(topic));
+    notificationRule.addTarget(new targets.CloudWatchLogGroup(logGroup));
+    notificationRule.addTarget(new targets.SnsTopic(topic));
 
     // parameter group remediation
     // (the IAM role below can be shared among both lambda functions that remediate
     // wrong parameter group and deletion protection disabled as they both perform the
     // same operations and thus require same IAM permissions with current implementation)
-    const remediationRole = new Role(this, 'ParameterGroupRemediationRole', {
-      assumedBy: new ServicePrincipal('lambda.amazonaws.com')
+    const remediationRole = new iam.Role(this, 'ParameterGroupRemediationRole', {
+      assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com')
     }); 
-    remediationRole.addManagedPolicy(ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole'));
-    remediationRole.addToPolicy(new PolicyStatement({
-      effect: Effect.ALLOW,
+    remediationRole.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole'));
+    remediationRole.addToPolicy(new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
       actions: [
         'rds:DescribeDBClusters',
         'rds:ModifyDBCluster'
@@ -176,17 +179,17 @@ export class AmazonDocumentdbAwsConfigStack extends cdk.Stack {
       resources: ['*']
     }));
 
-    const parameterGroupRemediationFn = new Function(this, 'ParameterGroupRemediationFn', {
-      runtime: Runtime.NODEJS_14_X,
+    const parameterGroupRemediationFn = new lambda.Function(this, 'ParameterGroupRemediationFn', {
+      runtime: lambda.Runtime.NODEJS_22_X,
       handler: 'index.handler',
-      code: Code.fromAsset('./lib/functions/cluster-parameter-group-remediation'),
+      code: lambda.Code.fromAsset('./lib/functions/cluster-parameter-group-remediation'),
       role: remediationRole,
       environment: {
         DESIRED_CLUSTER_PARAMETER_GROUP: clusterParameterGroup
       }
     });
 
-    const parameterGroupRule = new Rule(this, 'ParameterGroupRule', {
+    const parameterGroupRule = new events.Rule(this, 'ParameterGroupRule', {
       eventPattern: {
         source: ['aws.config'],
         detailType: ['Config Rules Compliance Change'],
@@ -205,17 +208,17 @@ export class AmazonDocumentdbAwsConfigStack extends cdk.Stack {
       }
     });
 
-    parameterGroupRule.addTarget(new LambdaFunction(parameterGroupRemediationFn));
+    parameterGroupRule.addTarget(new targets.LambdaFunction(parameterGroupRemediationFn));
 
     // cluster deletion protection remediation
-    const deletionProtectionRemediationFn = new Function(this, 'DeletionProtectionRemediationFn', {
-      runtime: Runtime.NODEJS_14_X,
+    const deletionProtectionRemediationFn = new lambda.Function(this, 'DeletionProtectionRemediationFn', {
+      runtime: lambda.Runtime.NODEJS_22_X,
       handler: 'index.handler',
-      code: Code.fromAsset('./lib/functions/cluster-deletion-protection-remediation'),
+      code: lambda.Code.fromAsset('./lib/functions/cluster-deletion-protection-remediation'),
       role: remediationRole
     });
 
-    const deletionProtectionRule = new Rule(this, 'DelectionProtectionRule', {
+    const deletionProtectionRule = new events.Rule(this, 'DelectionProtectionRule', {
       eventPattern: {
         source: ['aws.config'],
         detailType: ['Config Rules Compliance Change'],
@@ -234,6 +237,6 @@ export class AmazonDocumentdbAwsConfigStack extends cdk.Stack {
       }
     });
 
-    deletionProtectionRule.addTarget(new LambdaFunction(deletionProtectionRemediationFn));
+    deletionProtectionRule.addTarget(new targets.LambdaFunction(deletionProtectionRemediationFn));
   }
 }
