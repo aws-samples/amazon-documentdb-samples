@@ -1,8 +1,8 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: MIT-0
 
-const aws = require('aws-sdk');
-const docDb = new aws.DocDB();
+const { DocDBClient, DescribeDBClustersCommand, ModifyDBClusterCommand } = require('@aws-sdk/client-docdb');
+const docDb = new DocDBClient();
 
 exports.handler = async event => {
   try {
@@ -19,7 +19,8 @@ exports.handler = async event => {
       DBClusterParameterGroupName: desiredClusterParameterGroup
     };
 
-    await docDb.modifyDBCluster(params).promise();
+    const command = new ModifyDBClusterCommand(params);
+    await docDb.send(command);
     return;
 
   } catch (e) {
@@ -30,7 +31,8 @@ exports.handler = async event => {
 
 async function getDbClusterIdentifier(resourceId) {
   try {
-    const {DBClusters: clusters} = await docDb.describeDBClusters().promise();  
+    const command = new DescribeDBClustersCommand({});
+    const {DBClusters: clusters} = await docDb.send(command);
     const {DBClusterIdentifier: dbClusterIdentifier} = clusters.find(c => c.DbClusterResourceId === resourceId);
 
     if (!dbClusterIdentifier) {

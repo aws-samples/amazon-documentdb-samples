@@ -1,9 +1,10 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: MIT-0
 
-const aws = require('aws-sdk');
-const config = new aws.ConfigService();
-const docDb = new aws.DocDB();
+const { ConfigServiceClient, GetResourceConfigHistoryCommand, PutEvaluationsCommand } = require('@aws-sdk/client-config-service');
+const { DocDBClient, DescribeDBInstancesCommand } = require('@aws-sdk/client-docdb');
+const config = new ConfigServiceClient();
+const docDb = new DocDBClient();
 
 // helper function used to validate input
 function checkDefined(reference, referenceName) {
@@ -24,11 +25,12 @@ function isOverSizedChangeNotification(messageType) {
 async function getConfiguration(resourceType, resourceId, configurationCaptureTime) {
   try {
     const laterTime = new Date(configurationCaptureTime);
-    const data = await config.getResourceConfigHistory({ resourceType, resourceId, laterTime, limit: 1 }).promise();
+    const command = new GetResourceConfigHistoryCommand({ resourceType, resourceId, laterTime, limit: 1 });
+    const data = await config.send(command);
     const configurationItem = data.configurationItems[0];
     return configurationItem;
   } catch (e) {
-    console.log('There has been an error whil getting Resource Config History', e);
+    console.log('There has been an error while getting Resource Config History', e);
     throw e;
   }
 }
@@ -136,7 +138,8 @@ async function getClusterInstances(configurationItem) {
       Values: [configurationItem.configuration.dBClusterIdentifier]
     }]
   };
-  const {DBInstances: dbClusterInstances} = (await docDb.describeDBInstances(params).promise());
+  const command = new DescribeDBInstancesCommand(params);
+  const {DBInstances: dbClusterInstances} = await docDb.send(command);
   return dbClusterInstances;
 }
 
@@ -165,7 +168,7 @@ exports.handler = async event => {
           ComplianceResourceType: configurationItem.resourceType,
           ComplianceResourceId: i.DbiResourceId,
           ComplianceType: compliance,
-          OrderingTimestamp: configurationItem.configurationItemCaptureTime,
+          OrderingTimestamp: new Date(configurationItem.configurationItemCaptureTime),
         });
       });
     } else {
@@ -173,7 +176,7 @@ exports.handler = async event => {
         ComplianceResourceType: configurationItem.resourceType,
         ComplianceResourceId: configurationItem.resourceId,
         ComplianceType: compliance,
-        OrderingTimestamp: configurationItem.configurationItemCaptureTime,
+        OrderingTimestamp: new Date(configurationItem.configurationItemCaptureTime),
       }];
     }
         
@@ -182,7 +185,8 @@ exports.handler = async event => {
     // invoke the Config API to report the result of the evaluation
     let result;
     try {      
-      result = await config.putEvaluations(putEvaluationsRequest).promise();
+      const putCommand = new PutEvaluationsCommand(putEvaluationsRequest);
+      result = await config.send(putCommand);
     } catch (e) {
       console.log('There has been an error while sending evaluations to AWS Config', e);
       throw e;
