@@ -1,5 +1,5 @@
 # Local Ollama-Powered Amazon DocumentDB TSQL Plugin for mongosh
-This AI-powered mongosh plugin translates TSQL queries into Amazon DocumentDB-compatible mongosh commands. This version is powered by Ollama and runs locally on your machine. See **Amazon Bedrock-Powered Amazon DocumentDB TSQL Plugin for mongosh** for the version powered by Amazon Bedrock and Claude 3 Haiku.
+This AI-powered mongosh plugin translates TSQL queries into Amazon DocumentDB-compatible mongosh commands. This version is powered by [Ollama](https://ollama.com/) and runs locally on your machine. See [Amazon Bedrock-Powered Amazon DocumentDB TSQL Plugin for mongosh](https://github.com/aws-samples/amazon-documentdb-samples/tree/master/samples/mongosh-tsql-plugin/tsql-bedrock-plugin) for the version powered by Amazon Bedrock and Claude 3 Haiku.
 
 Both versions automatically handle [Supported MongoDB APIs, operations, and data types in Amazon DocumentDB](https://docs.aws.amazon.com/documentdb/latest/developerguide/mongo-apis.html), allow for customization of the prompt and LLM, and include a safety review mode to show generated code before execution.
 
