@@ -57,7 +57,7 @@ MongoDB code:`;
       
       fs.writeFileSync(bodyFile, JSON.stringify(body));
       
-      const command = `aws bedrock-runtime invoke-model --model-id anthropic.claude-3-haiku-20240307-v1:0 --body file://${bodyFile} --cli-binary-format raw-in-base64-out ${responseFile}`;
+      const command = `aws bedrock-runtime invoke-model --model-id anthropic.claude-3-haiku-20240307-v1:0 --body file://${bodyFile} ${responseFile}`;
       
       execSync(command, { stdio: 'pipe' });
       
