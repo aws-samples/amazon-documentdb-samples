@@ -19,6 +19,8 @@ This repository includes samples for -
 
 - [Vector search](https://github.com/aws-samples/amazon-documentdb-samples/tree/master/samples/vector-search) - Samples of vector search functionality
 
+- [mongosh-tsql-plugin](https://github.com/aws-samples/amazon-documentdb-samples/tree/master/samples/mongosh-tsql-plugin) - AI-powered mongosh plugins that translate TSQL queries into Amazon DocumentDB-compatible mongosh commands
+
 ## Get Involved
 
 See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more information.
