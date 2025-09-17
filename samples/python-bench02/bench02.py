@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+import datetime as dt
 import sys
 import random
 import json
@@ -224,7 +224,7 @@ def reporter(perfQ,appConfig):
         thisMinutes, thisSeconds = divmod(rem, 60)
         remainHMS = "{:0>2}:{:0>2}:{:0>2}".format(int(thisHours),int(thisMinutes),int(thisSeconds))
         
-        logTimeStamp = datetime.utcnow().isoformat()[:-3] + 'Z'
+        logTimeStamp = dt.datetime.now(dt.timezone.utc).isoformat()[:-3] + 'Z'
         printLog("[{}] elapsed {} | total ins {:16,d} at {:12,.2f} p/s | tot docs {:16,d} | interval {:12,.2f} p/s @ {:8,.2f} ms | last {} is {:12,.2f} p/s @ {:8,.2f} ms  | done in {}".format(logTimeStamp,thisHMS,numTotalInserts,insertsPerSecond,numTotalInserts+numExistingDocuments,intervalInsertsPerSecond,intervalLatencyMs,numIntervalsTps,avgRecentTps,avgRecentLatency,remainHMS),appConfig)
         csvData = "{},{},{:.2f},{},{:.2f},{},{:.2f},{:.2f},{:.2f},{:.2f}".format(logTimeStamp,thisHMS,elapsedSeconds,numTotalInserts,insertsPerSecond,numTotalInserts+numExistingDocuments,intervalInsertsPerSecond,intervalLatencyMs,avgRecentTps,avgRecentLatency)
         printCsv(csvData,appConfig)
@@ -264,8 +264,8 @@ def task_worker(threadNum,perfQ,appConfig):
     myCollectionName = appConfig['collectionName']
     col = db[myCollectionName]
 
-    start = datetime(1980, 1, 1, 1, 1, 1)
-    end = datetime(2023, 9, 7, 1, 1, 1)
+    start = dt.datetime(1980, 1, 1, 1, 1, 1)
+    end = dt.datetime(2023, 9, 7, 1, 1, 1)
     
     textValue = "0123456789" * 100
     randomChars = int(textSize * (1 - (pctCompressed / 100)))
@@ -308,11 +308,11 @@ def task_worker(threadNum,perfQ,appConfig):
         for batchLoop in range(numInsertsPerBatch):
             thisInsert = {}
             
-            thisTimestamp = datetime.utcnow()
+            thisTimestamp = dt.datetime.now(dt.timezone.utc)
             thisInsert["customerId"] = random.randint(1,numCustomers)
             thisInsert["productId"] = random.randint(1,numProducts)
             thisInsert["quantity"] = random.randint(1,maxQuantity)
-            thisInsert["orderDate"] = datetime.utcnow()-timedelta(seconds=numSecondsDateRange)
+            thisInsert["orderDate"] = thisTimestamp-dt.timedelta(seconds=numSecondsDateRange)
 
             randomStringStart = random.randint(1,randomTextBufferMaxStart)-1
             thisInsert["textField"] = randomString[randomStringStart:randomStringStart+randomChars]+fixedString
