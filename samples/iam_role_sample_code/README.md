@@ -28,7 +28,7 @@ ssh -i <<KeyPairName_Parameter>>.pem ec2-user@<<InstancePublicIp_Output>>
 ```
 
 ## Install dependencies
-1. Install the mongo shell using the instructions in [Install the mongo shell](https://docs.aws.amazon.com/documentdb/latest/developerguide/get-started-guide.html#cloud9-mongoshell).
+1. Install the mongo shell using the instructions in [Install the mongo shell](https://docs.aws.amazon.com/documentdb/latest/developerguide/connect-ec2-manual.html#manual-connect-ec2.install-mongo-shell:~:text=If%20you%20are%20using%20IAM%2C%20you%20must%20use%20the%20previous%20version%20of%20the%20MongoDB%20shell%20(5.0)%20to%20connect%20to%20your%20Amazon%20DocumentDB%20cluster%2C%20follow%20these%20steps%3A).
 2. Install required python libraries for Amazon DocumentDB IAM authentication
 ```
 sudo yum install pip
@@ -51,7 +51,7 @@ wget https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem
 ```
 Log into mongoshell using the admin user.
 ```
-mongo --ssl --host <<DocDBEndpoint_Output>>:27017 --sslCAFile global-bundle.pem --username labuser --password <<DocDBPassword_Parameter>> 
+mongosh <<DocDBEndpoint_Output>>:27017 --tls --tlsCAFile global-bundle.pem --retryWrites=false --username labuser --password <<DocDBPassword_Parameter>>
 ```
 Create user in Amazon DocumentDB to link the IAM role attached to the EC2 instance which can found in the **InstanceRole** Output variable.
 Once this command is executed, any AWS entity, that assumes the role identified by **InstanceRole** Output variable,permissions execute **read** and **write** operations on the database **allowed_db** in this cluster. 
