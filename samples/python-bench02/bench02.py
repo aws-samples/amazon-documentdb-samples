@@ -96,18 +96,33 @@ def setup(appConfig):
             printLog("  completed in {} ms".format(elapsedMs),appConfig)
         else:
             # not sharded
-            if appConfig['compress']:
-                printLog("Creating compressed collection {}".format(nameSpace),appConfig)
+            if appConfig['compression'] == 'lz4':
+                printLog("Creating lz4 compressed collection {} with threshold 128".format(nameSpace),appConfig)
                 startTime = time.time()
-                db.create_collection(name=collectionName,storageEngine={"documentDB":{"compression":{"enable":True}}})
+                db.create_collection(name=collectionName,storageEngine={"documentDB":{"compression":{"enable":True,"algorithm":"lz4","threshold":128}}})
+                elapsedMs = int((time.time() - startTime) * 1000)
+                printLog("  completed in {} ms".format(elapsedMs),appConfig)
+            elif appConfig['compression'] == 'zstd':
+                printLog("Creating zstd compressed collection {}".format(nameSpace),appConfig)
+                startTime = time.time()
+                db.create_collection(name=collectionName,storageEngine={"documentDB":{"compression":{"enable":True,"algorithm":"zstd"}}})
+                elapsedMs = int((time.time() - startTime) * 1000)
+                printLog("  completed in {} ms".format(elapsedMs),appConfig)
+            elif appConfig['compression'] == 'none':
+                printLog("Creating uncompressed collection {}".format(nameSpace),appConfig)
+                startTime = time.time()
+                db.create_collection(name=collectionName,storageEngine={"documentDB":{"compression":{"enable":False}}})
+                elapsedMs = int((time.time() - startTime) * 1000)
+                printLog("  completed in {} ms".format(elapsedMs),appConfig)
+            elif appConfig['compression'] == 'parmgroup':
+                printLog("Creating collection {} using parameter group setting for default_collection_compression choice for compression".format(nameSpace),appConfig)
+                startTime = time.time()
+                db.create_collection(name=collectionName,storageEngine={"documentDB":{"compression":{"enable":False}}})
                 elapsedMs = int((time.time() - startTime) * 1000)
                 printLog("  completed in {} ms".format(elapsedMs),appConfig)
             else:
-                printLog("Creating uncompressed collection {}".format(nameSpace),appConfig)
-                startTime = time.time()
-                db.create_collection(name=collectionName)
-                elapsedMs = int((time.time() - startTime) * 1000)
-                printLog("  completed in {} ms".format(elapsedMs),appConfig)
+                printLog("Unknown value {} for --compression, exiting".format(appConfig['compression']))
+                sys.exit(1)
     
         # create indexes
         if numSecondaryIndexes >= 1:
@@ -363,7 +378,7 @@ def main():
     parser.add_argument('--text-compressible',required=False,type=int,default=25,help='Compressibility of text field (percentage)')
     parser.add_argument('--ordered-batches',required=False,action='store_true',help='Use ordered bulk-writes')
     parser.add_argument('--drop-collection',required=False,action='store_true',help='Drop the collection (if it exists)')
-    parser.add_argument('--compress',required=False,action='store_true',help='Compress the collection')
+    parser.add_argument('--compression',required=False,type=str,choices=['parmgroup','none','lz4','zstd'],help='Compression to use (or not)')
     parser.add_argument('--shard',required=False,action='store_true',help='Shard the collection')
     parser.add_argument('--num-customers',required=False,type=int,default=10000,help='Number of customers')
     parser.add_argument('--num-products',required=False,type=int,default=1000000,help='Number of products')
@@ -376,7 +391,7 @@ def main():
 
     args = parser.parse_args()
     
-    if args.compress and not args.drop_collection:
+    if args.compression in ['lz4','zstd'] and not args.drop_collection:
         printLog("Collection must be dropped to enable compression, add --drop-collection",appConfig)
         sys.exit(1)
 
@@ -401,7 +416,7 @@ def main():
     appConfig['textCompressible'] = int(args.text_compressible)
     appConfig['orderedBatches'] = args.ordered_batches
     appConfig['dropCollection'] = args.drop_collection
-    appConfig['compress'] = args.compress
+    appConfig['compression'] = args.compression
     appConfig['shard'] = args.shard
     appConfig['numCustomers'] = int(args.num_customers)
     appConfig['numProducts'] = int(args.num_products)
