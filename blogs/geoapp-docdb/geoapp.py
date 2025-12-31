@@ -51,7 +51,7 @@ def get_credentials(region_name, secret_name):
         cluster_uri = secret_json['host']
         return (username, password, cluster_uri)
     except Exception as e:
-        print('Failed to retrieve secret {} because: {}'.format(secret_name, e))
+        print('Failed to retrieve secret because: {}'.format(e))
 
 
 # Function for connecting to Amazon DocumentDB

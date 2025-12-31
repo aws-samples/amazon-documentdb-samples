@@ -24,7 +24,7 @@ def get_credentials(secret_name):
         cluster_uri = secret_json['host']
         return (username, password, cluster_uri)
     except Exception as e:
-        print('Failed to retrieve secret {} because: {}'.format(secret_name, e))
+        print('Failed to retrieve secret because: {}'.format(e))
 
 
 def connect_docdb(secret_name):

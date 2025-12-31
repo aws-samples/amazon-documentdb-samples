@@ -16,17 +16,17 @@ THRESHOLD_SECONDS = int(os.environ['THRESHOLD_SECONDS'])
 def get_credentials(secret_name):
     session = boto3.session.Session()
     try:
-        logger.info('Retrieving secret {} from Secrets Manager.'.format(secret_name))
+        logger.info('Retrieving secret from Secrets Manager.')
         client = session.client(service_name='secretsmanager', region_name=session.region_name)
         secret_value = client.get_secret_value(SecretId=secret_name)
         secret_json = json.loads(secret_value['SecretString'])
         username = secret_json['username']
         password = secret_json['password']
         cluster_uri = secret_json['host']
-        logger.info('Secret {} retrieved from Secrets Manager.'.format(secret_name))
+        logger.info('Secret retrieved from Secrets Manager.')
         return (username, password, cluster_uri)
     except Exception as e:
-        logger.error('Failed to retrieve secret {} because: {}'.format(secret_name, e))
+        logger.error('Failed to retrieve secret because: {}'.format(e))
 
 
 # Initialize DocumentDB client outside of the handler

@@ -73,7 +73,7 @@ def get_credentials():
     try:
         secret_name = os.environ['DOCUMENTDB_SECRET']
 
-        logger.debug('Retrieving secret {} from Secrets Manger.'.format(secret_name))
+        logger.debug('Retrieving secret from Secrets Manger.')
 
         secrets_client = boto_session.client(service_name='secretsmanager',
                                              region_name=boto_session.region_name)
@@ -84,12 +84,12 @@ def get_credentials():
         username = secret_json['username']
         password = secret_json['password']
 
-        logger.debug('Secret {} retrieved from Secrets Manger.'.format(secret_name))
+        logger.debug('Secret retrieved from Secrets Manger.')
 
         return (username, password)
 
     except Exception as ex:
-        logger.error('Failed to retrieve secret {}'.format(secret_name))
+        logger.error('Failed to retrieve secret')
         raise
 
 
