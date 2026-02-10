@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+import datetime as dt
 import sys
 import random
 import json
@@ -267,7 +267,7 @@ def reporter(perfQ,appConfig):
         thisMinutes, thisSeconds = divmod(rem, 60)
         remainHMS = "{:0>2}:{:0>2}:{:0>2}".format(int(thisHours),int(thisMinutes),int(thisSeconds))
         
-        logTimeStamp = datetime.utcnow().isoformat()[:-3] + 'Z'
+        logTimeStamp = dt.datetime.now(dt.timezone.utc).isoformat()[:-3] + 'Z'
         
         if appConfig['modeLoad']:
             printLog("[{}] elapsed {} | total ins {:12,d} at {:10,.2f} p/s | interval {:10,.2f} p/s @ {:8,.2f} ms | last {} {:10,.2f} p/s @ {:8,.2f} ms | {:6,d} exceptions | ETA {}".format(logTimeStamp,thisHMS,numTotalInserts,insertsPerSecond,intervalInsertsPerSecond,intervalLatencyMs,numIntervalsTps,avgRecentTps,avgRecentLatency,numTotalExceptions,remainHMS),appConfig)
