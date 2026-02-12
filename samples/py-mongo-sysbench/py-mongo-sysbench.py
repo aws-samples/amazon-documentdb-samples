@@ -385,7 +385,7 @@ def load_worker(threadNum,perfQ,appConfig):
 def run_worker(threadNum,perfQ,appConfig):
     warnings.filterwarnings("ignore","You appear to be connected to a DocumentDB cluster.")
     
-    random.seed(threadNum)
+    random.seed()
 
     rateLimit = appConfig['rateLimit']
     runSeconds = appConfig['runSeconds']
@@ -436,7 +436,7 @@ def run_worker(threadNum,perfQ,appConfig):
     numIntervalExceptions = 0
 
     batchElapsedMs = 0.0
-    
+
     allDone = False
 
     while not allDone:
@@ -458,8 +458,6 @@ def run_worker(threadNum,perfQ,appConfig):
         # pick the collection
         myCollectionName = "{}{}".format(appConfig['collectionName'],random.randint(1,numCollections))
         col = db[myCollectionName]
-
-        #print("{}".format(myCollectionName))
 
         batchStartTime = time.time()
 
@@ -531,7 +529,7 @@ def run_worker(threadNum,perfQ,appConfig):
             startId = random.randint(1,numExistingDocuments)
             randomStringStart = round(random.randint(1,textBufferMaxStart)/13)*13
             thisResult = col.update_one({"_id":startId},{"$set":{"c":sysbenchString[randomStringStart:randomStringStart+cFieldSize]}})
-            #print("{} | {} | {}".format(myCollectionName,startId,thisResult.raw_result))
+            #if thisResult.raw_result['nModified'] == 0:
         
         # deletes then inserts
         for loop in range(sysbenchDeletesThenInserts):
