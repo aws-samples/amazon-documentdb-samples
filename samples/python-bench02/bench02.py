@@ -117,7 +117,7 @@ def setup(appConfig):
             elif appConfig['compression'] == 'parmgroup':
                 printLog("Creating collection {} using parameter group setting for default_collection_compression choice for compression".format(nameSpace),appConfig)
                 startTime = time.time()
-                db.create_collection(name=collectionName,storageEngine={"documentDB":{"compression":{"enable":False}}})
+                db.create_collection(name=collectionName)
                 elapsedMs = int((time.time() - startTime) * 1000)
                 printLog("  completed in {} ms".format(elapsedMs),appConfig)
             else:
