@@ -123,19 +123,34 @@ def setup_load(appConfig):
             printLog("  completed in {} ms".format(elapsedMs),appConfig)
         else:
             # not sharded
-            if appConfig['compress']:
-                printLog("Creating compressed collection {}".format(nameSpace),appConfig)
+            if appConfig['compression'] == 'lz4':
+                printLog("Creating lz4 compressed collection {} with threshold 128".format(nameSpace),appConfig)
                 startTime = time.time()
-                db.create_collection(name=thisCollectionName,storageEngine={"documentDB":{"compression":{"enable":True,"threshold":128}}})
+                db.create_collection(name=thisCollectionName,storageEngine={"documentDB":{"compression":{"enable":True,"algorithm":"lz4","threshold":128}}})
                 elapsedMs = int((time.time() - startTime) * 1000)
                 printLog("  completed in {} ms".format(elapsedMs),appConfig)
-            else:
+            elif appConfig['compression'] == 'zstd':
+                printLog("Creating zstd compressed collection {}".format(nameSpace),appConfig)
+                startTime = time.time()
+                db.create_collection(name=thisCollectionName,storageEngine={"documentDB":{"compression":{"enable":True,"algorithm":"zstd"}}})
+                elapsedMs = int((time.time() - startTime) * 1000)
+                printLog("  completed in {} ms".format(elapsedMs),appConfig)
+            elif appConfig['compression'] == 'none':
                 printLog("Creating uncompressed collection {}".format(nameSpace),appConfig)
+                startTime = time.time()
+                db.create_collection(name=thisCollectionName,storageEngine={"documentDB":{"compression":{"enable":False}}})
+                elapsedMs = int((time.time() - startTime) * 1000)
+                printLog("  completed in {} ms".format(elapsedMs),appConfig)
+            elif appConfig['compression'] == 'parmgroup':
+                printLog("Creating collection {} using parameter group setting for default_collection_compression choice for compression".format(nameSpace),appConfig)
                 startTime = time.time()
                 db.create_collection(name=thisCollectionName)
                 elapsedMs = int((time.time() - startTime) * 1000)
                 printLog("  completed in {} ms".format(elapsedMs),appConfig)
-    
+            else:
+                printLog("Unknown value {} for --compression, exiting".format(appConfig['compression']))
+                sys.exit(1)
+
         # create secondary indexes
         thisIndexName = 'idx_k'
         printLog("Creating index {}".format(thisIndexName),appConfig)
@@ -286,7 +301,7 @@ def reporter(perfQ,appConfig):
 def load_worker(threadNum,perfQ,appConfig):
     warnings.filterwarnings("ignore","You appear to be connected to a DocumentDB cluster.")
     
-    random.seed(threadNum)
+    random.seed()
 
     rateLimit = appConfig['rateLimit']
     numDocumentsPerCollection = appConfig['numDocumentsPerCollection']
@@ -352,12 +367,13 @@ def load_worker(threadNum,perfQ,appConfig):
             thisInsert = {}
             
             thisInsert["_id"] = numTotalInserts
-            thisInsert["k"] = random.randint(1,numDocumentsPerCollection)
+            thisInsert["k"] = numTotalInserts
             # all strings are aligned to 13 so they all start with 12 digits, then dash, then 12 digits, ...
             randomStringStart = round(random.randint(1,textBufferMaxStart)/13)*13
             thisInsert["c"] = sysbenchString[randomStringStart:randomStringStart+cFieldSize]
             randomStringStart = round(random.randint(1,textBufferMaxStart)/13)*13
             thisInsert["pad"] = sysbenchString[randomStringStart:randomStringStart+padFieldSize]
+            thisInsert["numUpdates"] = 0
             
             insList.append(pymongo.InsertOne(thisInsert))
         
@@ -406,6 +422,15 @@ def run_worker(threadNum,perfQ,appConfig):
     sysbenchIndexedUpdates = appConfig['sysbenchIndexedUpdates']
     sysbenchNonIndexedUpdates = appConfig['sysbenchNonIndexedUpdates']
     sysbenchDeletesThenInserts = appConfig['sysbenchDeletesThenInserts']
+
+    indexForQueries = appConfig['indexForQueries']
+    if indexForQueries == 'id':
+        lookupField = '_id'
+    elif indexForQueries == 'k':
+        lookupField = 'k'
+    else:
+        printLog("Unknown value {} for --index-for-queries, exiting".format(indexForQueries))
+        sys.exit(1)
 
     perfReportInterval = 1
 
@@ -467,9 +492,8 @@ def run_worker(threadNum,perfQ,appConfig):
             numIntervalOperations += 1
             startId = random.randint(1,numExistingDocuments)
             try:
-                for thisDoc in col.find_one(filter={"_id":startId},projection={"_id":0,"c":1}):
-                    #print("{} | {} | {}".format(myCollectionName,startId,thisDoc))
-                    pass
+                thisDoc = col.find_one(filter={lookupField:startId},projection={"_id":0,"c":1})
+                pass
             except TypeError as e:
                 numTotalExceptions += 1
                 numIntervalExceptions += 1
@@ -480,8 +504,7 @@ def run_worker(threadNum,perfQ,appConfig):
             numIntervalOperations += 1
             startId = random.randint(1,numExistingDocuments)
             endId = startId + sysbenchRangeSize
-            for thisDoc in col.find(filter={"_id":{"$gte":startId,"$lte":endId}},projection={"_id":0,"c":1}):
-                #print("{} | {} | {}".format(myCollectionName,startId,thisDoc))
+            for thisDoc in col.find(filter={lookupField:{"$gte":startId,"$lte":endId}},projection={"_id":0,"c":1}):
                 pass
         
         # summed ranges
@@ -490,8 +513,7 @@ def run_worker(threadNum,perfQ,appConfig):
             numIntervalOperations += 1
             startId = random.randint(1,numExistingDocuments)
             endId = startId + sysbenchRangeSize
-            for thisDoc in col.aggregate([{"$match":{"_id":{"$gte":startId,"$lte":endId}}},{"$project":{"_id":0,"k":1}},{"$group":{"_id":None,"sum":{"$sum":"$k"}}}]):
-                #print("{} | {} | {}".format(myCollectionName,startId,thisDoc))
+            for thisDoc in col.aggregate([{"$match":{lookupField:{"$gte":startId,"$lte":endId}}},{"$project":{"_id":0,"numUpdates":1}},{"$group":{"_id":None,"sum":{"$sum":"$numUpdates"}}}]):
                 pass
         
         # ordered ranges
@@ -500,8 +522,7 @@ def run_worker(threadNum,perfQ,appConfig):
             numIntervalOperations += 1
             startId = random.randint(1,numExistingDocuments)
             endId = startId + sysbenchRangeSize
-            for thisDoc in col.find(filter={"_id":{"$gte":startId,"$lte":endId}},projection={"_id":0,"c":1},sort=[("c",pymongo.ASCENDING)]):
-                #print("{} | {} | {}".format(myCollectionName,startId,thisDoc))
+            for thisDoc in col.find(filter={lookupField:{"$gte":startId,"$lte":endId}},projection={"_id":0,"c":1},sort=[("c",pymongo.ASCENDING)]):
                 pass
         
         # distinct ranges
@@ -510,8 +531,7 @@ def run_worker(threadNum,perfQ,appConfig):
             numIntervalOperations += 1
             startId = random.randint(1,numExistingDocuments)
             endId = startId + sysbenchRangeSize
-            for thisDoc in col.distinct("c",filter={"_id":{"$gte":startId,"$lte":endId}}):
-                #print("{} | {} | {}".format(myCollectionName,startId,thisDoc))
+            for thisDoc in col.distinct("c",filter={lookupField:{"$gte":startId,"$lte":endId}}):
                 pass
         
         # indexed updates
@@ -519,8 +539,8 @@ def run_worker(threadNum,perfQ,appConfig):
             numTotalOperations += 1
             numIntervalOperations += 1
             startId = random.randint(1,numExistingDocuments)
-            thisResult = col.update_one({"_id":startId},{"$inc":{"k":1}})
-            #print("{} | {} | {}".format(myCollectionName,startId,thisResult.raw_result))
+            newStartId = random.randint(1,numExistingDocuments)
+            thisResult = col.update_one({lookupField:startId},{"$set":{"k":newStartId},"$inc":{"numUpdates":1}})
         
         # non-indexed updates
         for loop in range(sysbenchNonIndexedUpdates):
@@ -528,8 +548,7 @@ def run_worker(threadNum,perfQ,appConfig):
             numIntervalOperations += 1
             startId = random.randint(1,numExistingDocuments)
             randomStringStart = round(random.randint(1,textBufferMaxStart)/13)*13
-            thisResult = col.update_one({"_id":startId},{"$set":{"c":sysbenchString[randomStringStart:randomStringStart+cFieldSize]}})
-            #if thisResult.raw_result['nModified'] == 0:
+            thisResult = col.update_one({lookupField:startId},{"$set":{"c":sysbenchString[randomStringStart:randomStringStart+cFieldSize]},"$inc":{"numUpdates":1}})
         
         # deletes then inserts
         for loop in range(sysbenchDeletesThenInserts):
@@ -540,7 +559,6 @@ def run_worker(threadNum,perfQ,appConfig):
             # delete existing document
             startId = random.randint(1,numExistingDocuments)
             thisResult = col.delete_one({"_id":startId})
-            #print("{} | {} | {}".format(myCollectionName,startId,thisResult.raw_result))
 
             # put it back with new values
             thisInsert = {}
@@ -550,10 +568,10 @@ def run_worker(threadNum,perfQ,appConfig):
             thisInsert["c"] = sysbenchString[randomStringStart:randomStringStart+cFieldSize]
             randomStringStart = round(random.randint(1,textBufferMaxStart)/13)*13
             thisInsert["pad"] = sysbenchString[randomStringStart:randomStringStart+padFieldSize]
+            thisInsert["numUpdates"] = 0
             
             try:
                 thisResult = col.insert_one(thisInsert)
-                #print("{} | {} | {}".format(myCollectionName,startId,thisResult.inserted_id))
             except DuplicateKeyError:
                 # race condition - two processes on the same document
                 numTotalExceptions += 1
@@ -599,7 +617,7 @@ def main():
     parser.add_argument('--rate-limit',required=False,type=int,default=9999999,help='Limit throughput (operations per second)')
     parser.add_argument('--pad-field-size',required=False,type=int,default=60,help='Size of pad field (bytes)')
     parser.add_argument('--ordered-batches',required=False,action='store_true',help='Use ordered bulk-writes')
-    parser.add_argument('--compress',required=False,action='store_true',help='Compress the collection')
+    parser.add_argument('--compression',required=False,type=str,default='parmgroup',choices=['parmgroup','none','lz4','zstd'],help='Compression to use (or not)')
     parser.add_argument('--shard',required=False,action='store_true',help='Shard the collection')
     parser.add_argument('--file-name',required=False,type=str,default='benchmark',help='Starting name of the created CSV and log files')
     parser.add_argument('--change-stream',required=False,action='store_true',help='Enable change streams')
@@ -615,6 +633,7 @@ def main():
     parser.add_argument('--sysbench-indexed-updates',required=False,type=int,default=1,help='Number of single document indexed update operations per sysbench transaction')
     parser.add_argument('--sysbench-non-indexed-updates',required=False,type=int,default=1,help='Number of single document non-indexed update operations per sysbench transaction')
     parser.add_argument('--sysbench-deletes-then-inserts',required=False,type=int,default=1,help='Number of single document delete then insert operations per sysbench transaction')
+    parser.add_argument('--index-for-queries',required=False,type=str,default='id',choices=['id','k'],help='Index to use for queries, id or k')
 
     args = parser.parse_args()
 
@@ -642,7 +661,7 @@ def main():
     appConfig['rateLimit'] = int(args.rate_limit)
     appConfig['loadBatchSize'] = int(args.load_batch_size)
     appConfig['orderedBatches'] = args.ordered_batches
-    appConfig['compress'] = args.compress
+    appConfig['compression'] = args.compression
     appConfig['shard'] = args.shard
     appConfig['logFileName'] = "{}.log".format(args.file_name)
     appConfig['csvFileName'] = "{}.csv".format(args.file_name)
@@ -660,6 +679,7 @@ def main():
     appConfig['sysbenchIndexedUpdates'] = int(args.sysbench_indexed_updates)
     appConfig['sysbenchNonIndexedUpdates'] = int(args.sysbench_non_indexed_updates)
     appConfig['sysbenchDeletesThenInserts'] = int(args.sysbench_deletes_then_inserts)
+    appConfig['indexForQueries'] = args.index_for_queries
 
     # parameterized but not user facing
     appConfig['cFieldSize'] = 120
