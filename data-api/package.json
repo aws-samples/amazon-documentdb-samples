@@ -21,7 +21,7 @@
     "copy:assets": "cp -R public/* dist/"
   },
   "dependencies": {
-    "@aws-sdk/client-ssm": "^3.600.0",
+    "@aws-sdk/client-ssm": "^3.995.0",
     "@b8n/nestjs-rapidoc": "^1.0.9",
     "@fastify/static": "^7.0.4",
     "@nestjs/common": "^10.0.0",
