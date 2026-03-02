@@ -1676,10 +1676,10 @@
   resolved "https://registry.npmjs.org/@nestjs/mapped-types/-/mapped-types-2.0.5.tgz"
   integrity sha512-bSJv4pd6EY99NX9CjBIyn4TVDoSit82DUZlL4I3bqNfy5Gt+gXTa86i3I/i0iIV9P4hntcGM5GyO+FhZAhxtyg==
 
-"@nestjs/platform-fastify@^11.1.13":
-  version "11.1.13"
-  resolved "https://registry.yarnpkg.com/@nestjs/platform-fastify/-/platform-fastify-11.1.13.tgz#79686ec66f5ff7007308306e73aa133a16ec8bbf"
-  integrity sha512-08VkZt5SVRtRyuEzRxY5KzrtsTSiqTSQlySUI8GUVhINHV/iziB6GKOWJc3upTmxvYG/5LSmDO4hv8kDnsWNCQ==
+"@nestjs/platform-fastify@^11.1.14":
+  version "11.1.14"
+  resolved "https://registry.yarnpkg.com/@nestjs/platform-fastify/-/platform-fastify-11.1.14.tgz#72010d19738750ec57703bc188c784c217f46c9e"
+  integrity sha512-/hnKvPpeH+CTWus7L+F+qXkdbTRXudSQU3Z8tcs5kfvluoBLsxSDTTvjjySr7zrPs5bebaFbGIyG2fKMAWl++g==
   dependencies:
     "@fastify/cors" "11.2.0"
     "@fastify/formbody" "8.0.2"
