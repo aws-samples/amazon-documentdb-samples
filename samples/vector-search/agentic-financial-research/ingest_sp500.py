@@ -6,6 +6,8 @@ load into DocumentDB with vector index.
 import csv
 import json
 import os
+import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import boto3
 import pymongo
 from dotenv import load_dotenv
@@ -19,6 +21,7 @@ EMBEDDING_MODEL = "amazon.titan-embed-text-v2:0"
 EMBEDDING_DIMENSION = 1024
 AWS_REGION = "us-east-1"
 CSV_FILE = "sp500_enriched.csv"
+CONCURRENT_WORKERS = 10
 
 NUMERIC_FIELDS = [
     "fullTimeEmployees", "marketCap", "totalRevenue", "revenueGrowth",
@@ -121,19 +124,18 @@ def main():
     collection.drop()
     print("  Connected.")
 
-    # Embed and insert in batches
-    print(f"\n[3/4] Embedding and inserting...")
-    batch = []
+    # Build documents (without embeddings)
+    print(f"\n[3/4] Embedding ({CONCURRENT_WORKERS} concurrent workers) and inserting...")
+    start_time = time.time()
+    docs = []
     skipped = 0
-    inserted = 0
 
-    for i, row in enumerate(rows, 1):
+    for row in rows:
         summary = row.get("longBusinessSummary", "")
         if not summary:
             skipped += 1
             continue
 
-        # Build document
         doc = {
             "symbol": row["Symbol"],
             "company": row["Security"],
@@ -145,30 +147,38 @@ def main():
             "description": summary,
         }
 
-        # Add numeric metrics
         metrics = {}
         for field in NUMERIC_FIELDS:
             val = parse_numeric(row.get(field, ""))
             if val is not None:
                 metrics[field] = val
         doc["metrics"] = metrics
+        doc["_embed_text"] = f"{doc['company']} ({doc['sector']}, {doc['industry']}): {summary}"
+        docs.append(doc)
 
-        # Generate embedding
-        embed_text = f"{doc['company']} ({doc['sector']}, {doc['industry']}): {summary}"
-        doc["embedding"] = generate_embedding(bedrock, embed_text)
+    # Generate embeddings concurrently
+    def embed_doc(idx_doc):
+        idx, doc = idx_doc
+        doc["embedding"] = generate_embedding(bedrock, doc.pop("_embed_text"))
+        return idx, doc
 
-        batch.append(doc)
+    embedded = 0
+    with ThreadPoolExecutor(max_workers=CONCURRENT_WORKERS) as executor:
+        futures = {executor.submit(embed_doc, (i, doc)): i for i, doc in enumerate(docs)}
+        for future in as_completed(futures):
+            idx, doc = future.result()
+            docs[idx] = doc
+            embedded += 1
+            if embedded % 50 == 0:
+                print(f"  Embedded {embedded}/{len(docs)} companies...")
 
-        if i % 10 == 0:
-            print(f"  [{i}/{len(rows)}] Embedded {doc['symbol']}...")
+    print(f"  Embedding complete: {embedded} docs in {time.time() - start_time:.1f}s")
 
-        if len(batch) >= 25:
-            collection.insert_many(batch)
-            inserted += len(batch)
-            batch = []
-
-    # Insert remaining
-    if batch:
+    # Batch insert
+    BATCH_SIZE = 50
+    inserted = 0
+    for i in range(0, len(docs), BATCH_SIZE):
+        batch = docs[i:i + BATCH_SIZE]
         collection.insert_many(batch)
         inserted += len(batch)
 
@@ -178,7 +188,8 @@ def main():
     print("\n[4/4] Creating indexes...")
     create_indexes(db, COLLECTION_NAME)
 
-    print(f"\nDone! Collection: {DB_NAME}.{COLLECTION_NAME} ({inserted} docs)")
+    elapsed = time.time() - start_time
+    print(f"\nDone! Collection: {DB_NAME}.{COLLECTION_NAME} ({inserted} docs) in {elapsed:.1f}s")
     docdb.close()
 
 
