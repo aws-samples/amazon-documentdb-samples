@@ -82,6 +82,11 @@ ssh -i your-key.pem -L 27017:your-cluster.docdb.amazonaws.com:27017 ec2-user@bas
 wget https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem
 ```
 
+Or if `wget` is not installed (e.g. macOS):
+```bash
+curl -o global-bundle.pem https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem
+```
+
 ### 5. Ingest data
 
 Ingest the S&P 500 dataset into DocumentDB with embeddings and indexes:
