@@ -1,0 +1,6 @@
+strands-agents>=0.1.0
+strands-agents-tools>=0.1.0
+boto3>=1.35.0
+pymongo>=4.6.0
+streamlit>=1.30.0
+python-dotenv>=1.0.0
