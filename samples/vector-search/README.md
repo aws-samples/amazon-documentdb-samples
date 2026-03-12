@@ -21,3 +21,12 @@
 - Notebook was tested using python 3.8, pymongo 4.7.1, boto3 1.34.71
 - This notebook demonstrates the implementation of a Question and Answer (Q&A) system using Retrieval Augmented Generation (RAG). It utilizes Amazon Titan Text Embedding as the embedding model, Anthropic Claude as the Large Language Model (LLM), and Amazon Bedrock as the runtime environment. The LlamaIndex framework is used as RAG orchestratation framework.
 - Dataset: You could use this [sample transcript](https://github.com/aws-samples/amazon-documentdb-samples/blob/master/samples/vector-search/sample-datasets/Q1-2024-result-transcript.pdf) for the demo
+
+
+## Agentic Financial Research Assistant
+- File Name: [agentic-financial-research](https://github.com/aws-samples/amazon-documentdb-samples/tree/master/samples/vector-search/agentic-financial-research)
+- Tested using Python 3.10+, pymongo 4.6.0, boto3 1.35.0, strands-agents 0.1.0, streamlit 1.30.0
+- An agentic research assistant that uses Amazon DocumentDB for vector search, text search, and structured queries — all in one database
+- Powered by Amazon Bedrock (Claude for reasoning, Titan Embedding v2 for 1024-dim vectors) and the Strands Agents SDK
+- Demonstrates HNSW vector index (semantic search), compound text index (keyword search), and compound index (sector + market cap filtering) on a single collection
+- Dataset: ~500 S&P 500 company profiles with business descriptions, GICS classification, and 16 financial metrics (included as [sp500_enriched.csv](https://github.com/aws-samples/amazon-documentdb-samples/blob/master/samples/vector-search/agentic-financial-research/sp500_enriched.csv))

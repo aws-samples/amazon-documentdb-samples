@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+
+# Data files (intermediate/generated)
+filtered_data.csv
+fetch_log.txt
+ingest_log.txt
+
+# Secrets and certificates
+*.pem
+.env
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
