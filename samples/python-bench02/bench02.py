@@ -121,7 +121,7 @@ def setup(appConfig):
                 elapsedMs = int((time.time() - startTime) * 1000)
                 printLog("  completed in {} ms".format(elapsedMs),appConfig)
             else:
-                printLog("Unknown value {} for --compression, exiting".format(appConfig['compression']))
+                printLog("Unknown value {} for --compression, exiting".format(appConfig['compression']),appConfig)
                 sys.exit(1)
     
         # create indexes
@@ -378,7 +378,7 @@ def main():
     parser.add_argument('--text-compressible',required=False,type=int,default=25,help='Compressibility of text field (percentage)')
     parser.add_argument('--ordered-batches',required=False,action='store_true',help='Use ordered bulk-writes')
     parser.add_argument('--drop-collection',required=False,action='store_true',help='Drop the collection (if it exists)')
-    parser.add_argument('--compression',required=False,type=str,choices=['parmgroup','none','lz4','zstd'],help='Compression to use (or not)')
+    parser.add_argument('--compression',required=False,type=str,default='parmgroup',choices=['parmgroup','none','lz4','zstd'],help='Compression to use (or not)')
     parser.add_argument('--shard',required=False,action='store_true',help='Shard the collection')
     parser.add_argument('--num-customers',required=False,type=int,default=10000,help='Number of customers')
     parser.add_argument('--num-products',required=False,type=int,default=1000000,help='Number of products')
