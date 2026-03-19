@@ -1,8 +1,8 @@
-# Gaming Leaderboard Sample
+# Media Metadata Management Sample
 
 ## Overview
 
-This is an example of an online gaming leaderboard with Amazon DocumentDB.
+This is an example of media metadata management with Amazon DocumentDB.
 
 **Key design elements**
 
