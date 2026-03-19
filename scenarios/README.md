@@ -7,7 +7,7 @@ This GitHub repository contains fully functional, standalone implementations of 
 
 - [Media metadata management](https://github.com/aws-samples/amazon-documentdb-samples/tree/sample-central-1/scenarios/media_metadata_management) - media metadata management use case implementation using DocumentDB
 
-- [Product catalog management](https://github.com/aws-samples/amazon-documentdb-samples/tree/sample-central-1/scenarios/product_catalog_management) - product catalog management use case implementation using DocumentDB
+- [Product catalog](https://github.com/aws-samples/amazon-documentdb-samples/tree/sample-central-1/scenarios/product_catalog) - product catalog use case implementation using DocumentDB
 
 ## Get Involved
 
