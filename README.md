@@ -11,10 +11,6 @@ __[Samples](./samples)__
 
 Sample code for client configuration, connection best practices, global cluster failover automation, AI-powered mongosh plugins, and more.
 
-__[Workarounds](./workarounds)__
-
-Alternative implementations for MongoDB operators, APIs, and aggregations.
-
 __[Datasets](./datasets)__
 
 Sample datasets for use with Amazon DocumentDB.
