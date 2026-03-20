@@ -7,7 +7,7 @@ __[Use Cases](https://github.com/aws-samples/amazon-documentdb-samples/tree/samp
 
 This is an explanation of what scenarios are.
 
-__[Samples](https://github.com/aws-samples/amazon-documentdb-samples/tree/sample-central-1/usecases)__
+__[Samples](https://github.com/aws-samples/amazon-documentdb-samples/tree/sample-central-1/samples)__
 
 This repository includes:
 - using Amazon DocumentDB features like client-side field level encryption, IAM authentication, vector search, and more
