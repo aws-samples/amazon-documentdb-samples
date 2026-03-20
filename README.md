@@ -3,23 +3,23 @@
 
 This repository contains code samples that demonstrate how to use Amazon DocumentDB.
   
-__[Use Cases](https://github.com/aws-samples/amazon-documentdb-samples/tree/sample-central-1/usecases)__
+__[Use Cases](./usecases)__
 
 Fully functional, standalone implementations of common document database use cases.
 
-__[Samples](https://github.com/aws-samples/amazon-documentdb-samples/tree/sample-central-1/samples)__
+__[Samples](./samples)__
 
 Sample code for client configuration, connection best practices, global cluster failover automation, AI-powered mongosh plugins, and more.
 
-__[Workarounds](https://github.com/aws-samples/amazon-documentdb-samples/tree/sample-central-1/workarounds)__
+__[Workarounds](./workarounds)__
 
 Alternative implementations for MongoDB operators, APIs, and aggregations.
 
-__[Datasets](https://github.com/aws-samples/amazon-documentdb-samples/tree/sample-central-1/datasets)__
+__[Datasets](./datasets)__
 
 Sample datasets for use with Amazon DocumentDB.
 
-__[Blogs](https://github.com/aws-samples/amazon-documentdb-samples/tree/sample-central-1/blogs)__
+__[Blogs](./blogs)__
 
 Code samples used in blogs written for Amazon DocumentDB.
 

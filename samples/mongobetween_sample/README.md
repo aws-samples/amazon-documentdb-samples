@@ -98,7 +98,7 @@ Open the ```~/.bashrc``` file in your editor of choice, add the following lines 
 ```
         mkdir logs
 ```
-3. Copy the file [```test_mongobetween_docdb.py```](test_mongobetween_docdb.py) to the working directory. This file contains Python code that spins off a number of processes, as provided by the argument ```--mongo-clients-count```. Each process creates its own collection, inserts 1000 documents into the primary instance of Amazon DocumentDB, as provided by the argument ```--docdb-uri```, and then reads the 1000 documents back from a replica.
+3. Copy the file [```test_mongobetween_docdb.py```](./test_mongobetween_docdb.py) to the working directory. This file contains Python code that spins off a number of processes, as provided by the argument ```--mongo-clients-count```. Each process creates its own collection, inserts 1000 documents into the primary instance of Amazon DocumentDB, as provided by the argument ```--docdb-uri```, and then reads the 1000 documents back from a replica.
 
 3. Download the file ```global-bundle.pem``` in the working directory.
 
@@ -135,11 +135,11 @@ cat  "$(ls -drt logs/* | tail -1)" |grep "time taken by process" | wc -l
 
 * Check the number of connections opened to the primary instance of your DocumentDB cluster from the monitoring dashboard.
 
-![direct-200-primary](files/direct-200-primary.png)
+![direct-200-primary](./files/direct-200-primary.png)
 
 * Check the number of connections opened to the replica instance from your DocumentDB cluster from the monitoring dashboard.
 
-![direct-200-secondary](files/direct-200-secondary.png)
+![direct-200-secondary](./files/direct-200-secondary.png)
 
 ## Run a Python script with a direct connection to a DocumentDB cluster with 900 concurrent processes.
 
@@ -161,7 +161,7 @@ cat  "$(ls -drt logs/* | tail -1)" |grep "exception in mongo client"
 
 * You will notice exceptions.
 
-![direct-900-exception](files/direct-900-exception.png)
+![direct-900-exception](./files/direct-900-exception.png)
 
 These are the consequences of the large instances of Amazon DocumentDB R6G.large instances rejecting connections beyond its limit of 1700. By default, each Mongo client would open connections in increments of two up to a maximum of 100, as determined by the Mongo URI parameter. Each process in our code creates one Mongo client; hence, with 900 clients, the code is trying to open 1800 connections to the primary
 
@@ -188,7 +188,7 @@ The maximum number of connections a pool may establish concurrently. The default
 
 ```ps -ef | grep "mongobetween "```
 
-![mongobetween_ps](files/mongobetween_ps.png)
+![mongobetween_ps](./files/mongobetween_ps.png)
 
 4. Change to the working directory.
 ```
@@ -219,11 +219,11 @@ cat  "$(ls -drt logs/* | tail -1)" |grep "time taken by process" | wc -l
 
 * Check the number of connections opened to the primary instance of your DocumentDB cluster from the monitoring dashboard.
 
-![mb-250-primary](files/mb-250-primary.png)
+![mb-250-primary](./files/mb-250-primary.png)
 
 * Check the number of connections opened to the replica instance from your DocumentDB cluster from the monitoring dashboard.
 
-![mb-250-secondary](files/mb-250-secondary.png)
+![mb-250-secondary](./files/mb-250-secondary.png)
 
 ## Optional - verify connections and operation metrics. 
 
@@ -231,7 +231,7 @@ Change the instance(s) name and region, wherever applicable, in the ```dashboard
 
 Create a dashboard and [view/edit source](https://repost.aws/questions/QUzarTQVN5TgqAVeXR6_h6Bg/cloudwatch-dashboard-source-json). Copy the contents of the previous step and save the dashboard.
 
-![dashboard-screenshot](files/dashboard-screenshot.png)
+![dashboard-screenshot](./files/dashboard-screenshot.png)
 
 Note: This dashboard was created for a cluster with a topology of one primary and one replica instance. Change the content according to your cluster topology.
 

@@ -13,11 +13,11 @@ In the sample code, we demonstrate how human users can connect to DocumentDB wit
 
 1. User is mapped to an IAM user and are given permanent AWS secrets. They use those credentials directly in the DocumentDB URI they provide to mongoshell.
 
-![iam_user_solution_overview](files/iam_user_solution_overview.jpg)
+![iam_user_solution_overview](./files/iam_user_solution_overview.jpg)
 
 2. User is provided SSH access to an EC2 instance which has IAM Role attached to it. User launches mongoshell and authentic using this IAM Role.
 
-![iam_role_solution_overview](files/iam_role_solution_overview.jpg)
+![iam_role_solution_overview](./files/iam_role_solution_overview.jpg)
 
 
 Of the two approaches, using IAM Roles is more secure since it uses temporary credentials isntead of permanent ones like IAM user does. However, IAM user can be convinient when a user is trying to connect to Amazon DocumentDB from their local work environment, like a laptop, and connecting via a VPN using mongoshell.
@@ -26,11 +26,11 @@ Of the two approaches, using IAM Roles is more secure since it uses temporary cr
 
 Create resources with the template file **iam_user_sample_cf.yaml** using instructions in [Selecting a stack template](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-using-console-create-stack-template.html). 
 
-![iam_upload_template_file](files/iam_upload_template_file.jpg)
+![iam_upload_template_file](./files/iam_upload_template_file.jpg)
 
 Replace the following paremeters in the stack details screen
 
-![iam_user_stack_details_params](files/iam_user_stack_details_params.jpg)
+![iam_user_stack_details_params](./files/iam_user_stack_details_params.jpg)
 
 This will create resources needed for running this sample  including the following
     
@@ -44,7 +44,7 @@ This will create resources needed for running this sample  including the followi
 
 Once CloudFomation has created all resources, check the Outputs tab of the stack and note down all the Key-Value pairs
 
-![stack_user_output](files/stack_user_output.jpg)
+![stack_user_output](./files/stack_user_output.jpg)
 
 SSH into your ec2 instance using the following command
 
@@ -120,7 +120,7 @@ db.createUser(
 ```
 Execute ```show users``` command in mongoshell and confirm that each of the IAM User and Role has been linked to a user.
 
-![show_iam_users](files/show_iam_users.jpg)
+![show_iam_users](./files/show_iam_users.jpg)
 
 ### Using IAM User
  
@@ -132,7 +132,7 @@ mongo 'mongodb://<<AccessKey_Output>>:<<SecretAccessKey_Output>>@<<DocDBEndpoint
 
 To check if connection was established using IAM user, run command ``` db.runCommand( { connectionStatus: 1, showPrivileges: true } )```. The output will indicate the user that is connected and the privileges they have.
 
-![connstatus_user](files/connstatus_user.jpg)
+![connstatus_user](./files/connstatus_user.jpg)
 
 Insert a document in **allowed_db_1**.
 
@@ -140,7 +140,7 @@ Insert a document in **allowed_db_1**.
 use  allowed_db_1;
 db.test.insert({x:1});
 ```
-![allowed_db_1_success](files/allowed_db_1_success.jpg)
+![allowed_db_1_success](./files/allowed_db_1_success.jpg)
 
 Since the IAM User has been granted privileges to allowed_db_1 database - ```roles: [ { role: "readWrite", db: "allowed_db_1" } ]```, the insert is succuessful.
 
@@ -151,7 +151,7 @@ use  allowed_db_2;
 db.test.insert({x:1});
 ```
 
-![allowed_db_2_error](files/allowed_db_2_error.jpg)
+![allowed_db_2_error](./files/allowed_db_2_error.jpg)
 
 Since the IAM User has been granted privileges only to **allowed_db_1** database, the insert to **allowed_db_2** database fails with *"Authorization failure* error.
 
@@ -165,7 +165,7 @@ mongo 'mongodb://<<DocDBEndpoint_Output>>:27017/test?authSource=%24external&auth
 
 To check if connection was established using IAM Role attached to the EC2 instance, run command ``` db.runCommand( { connectionStatus: 1, showPrivileges: true } )```. The output will indicate the user that is connected and the privileges they have.
 
-![connstatus_role](files/connstatus_role.jpg)
+![connstatus_role](./files/connstatus_role.jpg)
 
 Insert a document in **allowed_db_2**.
 

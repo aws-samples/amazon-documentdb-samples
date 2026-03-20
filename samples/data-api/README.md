@@ -6,7 +6,7 @@ Amazon DocumentDB Data API allow your client applications and services access Am
 
 ## Architecture
 
-![Amazon DocumentDB Data-API architecture diagram](public/assets/data-api-diagram.png)
+![Amazon DocumentDB Data-API architecture diagram](./public/assets/data-api-diagram.png)
 
 ## Getting started
 
@@ -84,5 +84,5 @@ docker-compose up
 
 When the application starts, it generates a random main API key at the startup. You can use the main API key to access the API endpoints at default address of http://localhost:3000/api. Set the generated apiKey in [Authentication header](http://localhost:3000/api#auth) before invoking any API endpoints. Recommendation is to create a new persisted apiKey user with a specific expiration date than the tentative master API key. Example of creating a new document via insertOne api is shown below.
 
-![Amazon DocumentDB Data-API insertOne API](public/assets/screenshot-insertone-api.png)
+![Amazon DocumentDB Data-API insertOne API](./public/assets/screenshot-insertone-api.png)
 

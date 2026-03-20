@@ -63,7 +63,7 @@ wget https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem
 ## Usage csfle-genDataKey.py
 This script will generate data encryption keys (DEK), encrypt them using the customer master key (CMK) and store it in Amazon DocumentDB.
 
-![Generate data keys flow](img/csfle-datakey.jpg)
+![Generate data keys flow](./img/csfle-datakey.jpg)
  
 ```
 python3 csfle-genDataKey.py --help

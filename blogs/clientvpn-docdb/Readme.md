@@ -25,7 +25,7 @@ provisioned successfully.
 
 2.  In the "Create stack" page, choose "Upload a template file" option
     and provide the template that you downloaded into your local machine
-    from [this repo](docdb_clientVPN.yaml).
+    from [this repo](./docdb_clientVPN.yaml).
 
 3.  In the "Specify stack details" page, provide the values as below
     (Replace the example values provided with your own values).

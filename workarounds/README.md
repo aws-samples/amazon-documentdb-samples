@@ -3,6 +3,6 @@
 
 This GitHub repository contains workarounds for the following unsupported MongoDB operators, APIs, and aggregations:
   
-- [cos](https://github.com/aws-samples/amazon-documentdb-samples/tree/sample-central-1/workarounds/cos) - client-side `$cos` workaround
+- [cos](./cos) - client-side `$cos` workaround
 
-- [facet](https://github.com/aws-samples/amazon-documentdb-samples/tree/sample-central-1/workarounds/facet) - client-side `$facet` workaround
+- [facet](./facet) - client-side `$facet` workaround
