@@ -3,15 +3,22 @@
 
 This GitHub repository contains code samples that demonstrate how to use Amazon DocumentDB. Each sample includes a README file that explains how to run and use the sample.
   
-## Samples
-
-This is an explanation of what samples are.
-
-## Scenarios
+__[Use Cases](https://github.com/aws-samples/amazon-documentdb-samples/tree/sample-central-1/usecases)__
 
 This is an explanation of what scenarios are.
 
-## Workarounds
+__[Samples](https://github.com/aws-samples/amazon-documentdb-samples/tree/sample-central-1/usecases)__
+
+This repository includes:
+- using Amazon DocumentDB features like client-side field level encryption, IAM authentication, vector search, and more
+
+- using Amazon DocumentDB with AWS services like AWS AppConfig and AWS Lambda
+
+- using Amazon DocumentDB with 3rd party offerings like mongobetween, GridFS, Morphia, Panache, Quarkus, Spring Boot, Terraform, and more
+
+- and more
+
+__[Workarounds](https://github.com/aws-samples/amazon-documentdb-samples/tree/sample-central-1/workarounds)__
 
 This is an explanation of what workarounds are.
 

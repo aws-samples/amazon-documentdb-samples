@@ -1,26 +1,25 @@
+# Sample Categories
 
-## Amazon DocumentDB (with MongoDB compatibility) samples
+__[app-config](https://github.com/aws-samples/amazon-documentdb-samples/tree/master/samples/app-config)__
 
-This GitHub repository contains code samples that demonstrate how to use Amazon DocumentDB. Each sample includes a README file that explains how to run and use the sample.
-  
-## Samples
+Sample code for client configuration, connection best practices and exception handling using Java
 
-This repository includes samples for - 
+__[Connect and query](https://github.com/aws-samples/amazon-documentdb-samples/tree/master/samples/connect-and-query)__
 
-- [Lambda samples](https://github.com/aws-samples/amazon-documentdb-samples/tree/master/lambda-samples) - Sample AWS Lambda code for Amazon DocumentDB
+Sample code for connecting to Amazon DocumentDB from Python, PHP, Node.js and Ruby (more coming soon)
 
-- [Vector search](https://github.com/aws-samples/amazon-documentdb-samples/tree/master/samples/vector-search) - Samples of vector search functionality
+__[Change Streams](https://github.com/aws-samples/amazon-documentdb-samples/tree/master/samples/change-streams)__
 
-- [mongosh-tsql-plugin](https://github.com/aws-samples/amazon-documentdb-samples/tree/master/samples/mongosh-tsql-plugin) - AI-powered mongosh plugins that translate TSQL queries into Amazon DocumentDB-compatible mongosh commands
+Sample code that shows how to use AWS DocumentDB change streams to stream events to ElasticSearch, Amazon Managed Stream for Kafka (or any other Apache Kafka distro), AWS Kinesis Streams, AWS SQS, and/or S3 using AWS Lambda
 
-## Get Involved
+__[Templates](https://github.com/aws-samples/amazon-documentdb-samples/tree/master/samples/templates)__
 
-See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more information.
+Cloudformation templates
 
-## Support
+__[global-clusters](https://github.com/aws-samples/amazon-documentdb-samples/tree/master/samples/global-clusters)__
 
-The contents of this repository are maintained by Amazon DocumentDB Specialist SAs and are not officially supported by AWS. Please file a [Github Issue](https://github.com/aws-samples/amazon-documentdb-samples/issues) if you experience any problems.
+Sample bash script to automate global cluster failover
 
-## License
+__[mongosh-tsql-plugin](https://github.com/aws-samples/amazon-documentdb-samples/tree/master/samples/mongosh-tsql-plugin)__
 
-This library is licensed under the MIT-0 License. See the LICENSE file.
+AI-powered mongosh plugins that translate TSQL queries into Amazon DocumentDB-compatible mongosh commands
