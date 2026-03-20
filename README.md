@@ -1,15 +1,15 @@
 
 ## Amazon DocumentDB (with MongoDB compatibility) samples
 
-This GitHub repository contains code samples that demonstrate how to use Amazon DocumentDB. Each sample includes a README file that explains how to run and use the sample.
+This repository contains code samples that demonstrate how to use Amazon DocumentDB. Each sample includes a README file that explains how to run and use the sample.
   
 __[Use Cases](https://github.com/aws-samples/amazon-documentdb-samples/tree/sample-central-1/usecases)__
 
-This repository includes fully functional, standalone implementations of use cases like gaming leaderboard, media metadata management, and product catalog.
+The use cases repository includes fully functional, standalone implementations of use cases like gaming leaderboard, media metadata management, and product catalog.
 
 __[Samples](https://github.com/aws-samples/amazon-documentdb-samples/tree/sample-central-1/samples)__
 
-This repository includes:
+The samples repository includes:
 - using Amazon DocumentDB features like client-side field level encryption, IAM authentication, vector search, and more
 
 - using Amazon DocumentDB with AWS services like AWS AppConfig and AWS Lambda
@@ -20,7 +20,7 @@ This repository includes:
 
 __[Workarounds](https://github.com/aws-samples/amazon-documentdb-samples/tree/sample-central-1/workarounds)__
 
-This is an explanation of what workarounds are.
+The workarounds repository includes ...
 
 ## Get Involved
 
