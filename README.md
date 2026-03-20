@@ -20,7 +20,7 @@ The samples repository includes:
 
 __[Workarounds](https://github.com/aws-samples/amazon-documentdb-samples/tree/sample-central-1/workarounds)__
 
-The workarounds repository includes ...
+The workarounds repository includes workarounds for unsupported MongoDB operators, APIs, and aggregations like `$cos` and `$facet`.
 
 ## Get Involved
 
