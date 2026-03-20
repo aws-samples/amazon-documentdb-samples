@@ -5,7 +5,7 @@ This GitHub repository contains code samples that demonstrate how to use Amazon 
   
 __[Use Cases](https://github.com/aws-samples/amazon-documentdb-samples/tree/sample-central-1/usecases)__
 
-This is an explanation of what scenarios are.
+This repository includes fully functional, standalone implementations of use cases like gaming leaderboard, media metadata management, and product catalog.
 
 __[Samples](https://github.com/aws-samples/amazon-documentdb-samples/tree/sample-central-1/samples)__
 
