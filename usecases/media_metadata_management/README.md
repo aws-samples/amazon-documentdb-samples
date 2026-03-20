@@ -1,4 +1,4 @@
-# Media Metadata Management Sample
+# Media Metadata Management
 
 ## Overview
 

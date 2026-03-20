@@ -1,4 +1,4 @@
-# Gaming Leaderboard Sample
+# Gaming Leaderboard
 
 ## Overview
 

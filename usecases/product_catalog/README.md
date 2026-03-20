@@ -1,4 +1,4 @@
-# Product Catalog Sample
+# Product Catalog
 
 ## Overview
 
