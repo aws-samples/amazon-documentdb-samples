@@ -8,4 +8,3 @@ This repository contains fully functional, standalone implementations of the fol
 - [Media metadata management](https://github.com/aws-samples/amazon-documentdb-samples/tree/sample-central-1/usecases/media_metadata_management) - media metadata management use case implementation using DocumentDB
 
 - [Product catalog](https://github.com/aws-samples/amazon-documentdb-samples/tree/sample-central-1/usecases/product_catalog) - product catalog use case implementation using DocumentDB
-◊
