@@ -310,6 +310,11 @@ def load_worker(threadNum,perfQ,appConfig):
     orderedBatches = appConfig['orderedBatches']
     padFieldSize = appConfig['padFieldSize']-1
     cFieldSize = appConfig['cFieldSize']-1
+    compressibleFieldSize = appConfig['compressibleFieldSize']
+    if compressibleFieldSize == 0:
+        compressFieldValue = ''
+    else:
+        compressFieldValue = 'a' * compressibleFieldSize
 
     perfReportInterval = 1
 
@@ -373,6 +378,8 @@ def load_worker(threadNum,perfQ,appConfig):
             thisInsert["c"] = sysbenchString[randomStringStart:randomStringStart+cFieldSize]
             randomStringStart = round(random.randint(1,textBufferMaxStart)/13)*13
             thisInsert["pad"] = sysbenchString[randomStringStart:randomStringStart+padFieldSize]
+            if compressibleFieldSize > 0:
+                thisInsert["compressField"] = compressFieldValue
             thisInsert["numUpdates"] = 0
             
             insList.append(pymongo.InsertOne(thisInsert))
@@ -616,6 +623,7 @@ def main():
     parser.add_argument('--load-batch-size',required=False,default=100,type=int,help='Number of documents to insert per batch during load')
     parser.add_argument('--rate-limit',required=False,type=int,default=9999999,help='Limit throughput (operations per second)')
     parser.add_argument('--pad-field-size',required=False,type=int,default=60,help='Size of pad field (bytes)')
+    parser.add_argument('--compressible-field-size',required=False,type=int,default=0,help='Size of compressible field (bytes)')
     parser.add_argument('--ordered-batches',required=False,action='store_true',help='Use ordered bulk-writes')
     parser.add_argument('--compression',required=False,type=str,default='parmgroup',choices=['parmgroup','none','lz4','zstd'],help='Compression to use (or not)')
     parser.add_argument('--shard',required=False,action='store_true',help='Shard the collection')
@@ -668,6 +676,7 @@ def main():
     appConfig['changeStream'] = args.change_stream
     appConfig['numIntervalsAverage'] = int(args.num_intervals_average)
     appConfig['padFieldSize'] = int(args.pad_field_size)
+    appConfig['compressibleFieldSize'] = int(args.compressible_field_size)
     appConfig['modeLoad'] = args.load
     appConfig['modeRun'] = args.run
     appConfig['sysbenchRangeSize'] = int(args.sysbench_range_size)
