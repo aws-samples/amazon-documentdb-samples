@@ -4,15 +4,15 @@
 Amazon DocumentDB users and applications can use IAM users and roles to authenticate into an Amazon DocumentDB cluster. Amazon DocumentDB IAM authentication is a password-less authentication method in which user passwords are not stored in the Amazon DocumentDB cluster. Also, client applications do not send the password secrets to the Amazon DocumentDB cluster. Instead, client connections are authenticated by AWS STS using temporary security tokens. 
 ## Solution Overview
 In the sample code, we attach an IAM Role to an EC2 instance and run a Python code that authenticates connections to an Amazon DocumentDB cluster using the IAM Role instead of a username-password mechanism.
-![iam_solution_overview](files/iam_solution_overview.jpg)
+![iam_solution_overview](./files/iam_solution_overview.jpg)
 
 ## Prerequisites
 Create resources with the template file **iam_role_sample_cf.yaml** using instructions in [Selecting a stack template](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-using-console-create-stack-template.html). The AMI used in this templates works in us-east-1 , please change the ami( Amazon Linux 2023) if using in other regions
 
-![iam_upload_template_file](files/iam_upload_template_file.jpg)
+![iam_upload_template_file](./files/iam_upload_template_file.jpg)
 
 Replace the following parameters in the stack details screen.
-![iam_stack_details_params](files/iam_stack_details_params.jpg)
+![iam_stack_details_params](./files/iam_stack_details_params.jpg)
 
 The template will create the resources needed for running this sample  including the following:
     
@@ -20,7 +20,7 @@ The template will create the resources needed for running this sample  including
 * An Amazon DocumentDB cluster with one db.r6g.large instance.
 * A security group that enables you to connect to your Amazon DocumentDB cluster from your Amazon EC2 instance. 
 Once CloudFomation has created all the resources, check the Outputs tab of the stack and note down all the key-value pairs.
-![stack_output](files/stack_output.jpg)
+![stack_output](./files/stack_output.jpg)
 
 SSH into your EC2 instance using the following command:
 ```
@@ -67,7 +67,7 @@ db.createUser(
 ```
 Execute the ```show users``` command in mongoshell and confirm that the IAM Role has been linked to a user.
 
-![show_users](files/show_users.jpg)
+![show_users](./files/show_users.jpg)
 
 Execute the Python script **test_iam_role_docdb.py**.  
 ```
@@ -79,7 +79,7 @@ This script connects to the Amazon DocumentDB cluster with the IAM Role assumed 
 
 After the script completes, check the output.
   
-![script_output](files/script_output.jpg)
+![script_output](./files/script_output.jpg)
 
 The script inserts a document and then reads a document from two databases in the cluster - **allowed_db** and **other_db**. The operations in **allowed_db** are successful, and those in **other_db** fail with authorization errors, because we have granted this IAM Role access to database **allowed_db** alone - ```roles: [ { role: "readWrite", db: "allowed_db" } ]```.
 

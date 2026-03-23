@@ -1,13 +1,13 @@
 # Lambda with Amazon DocumentDB
 
 Follow the steps below to properly configure and execute a Lambda function that interacts with an Amazon DocumentDB cluster.
-Explore the [samples](https://github.com/aws-samples/amazon-documentdb-samples/tree/master/lambda-samples/samples) to experiment with several Lambda functions.
+Explore the [samples](./samples) to experiment with several Lambda functions.
 
 ### 1. Create a Lambda layer
 A Lambda layer is a package of custom code or libraries that can be added to your Lambda functions. It helps you avoid duplicating code and allows you to manage and share code and libraries across multiple Lambda functions.
 For example, for a Lambda function written in Python, you'll need external libraries such as Pymongo to connect to and query data from an Amazon DocumentDB cluster. Instead of building the dependencies in each function, one layer can be shared by all the Lambda functions that require this dependency.
 
-To create a layer that contains the Pymongo library (for Python), or the MongoDB package (for NodeJS), along with the CA certificate, see the [Lambda layers repository for Amazon DocumentDB](https://github.com/aws-samples/amazon-documentdb-samples/tree/master/lambda-layers). Additionally, you can review the [Lambda Documentation](https://docs.aws.amazon.com/lambda/latest/dg/configuration-layers.html) for creating and configuring a layer.
+Review the [Lambda Documentation](https://docs.aws.amazon.com/lambda/latest/dg/configuration-layers.html) for creating and configuring a layer.
 
 ### 2. Create a function execution role for Lambda
 A role allows you to define the necessary permissions and access rights that the Lambda function requires to interact with other AWS services and resources. 

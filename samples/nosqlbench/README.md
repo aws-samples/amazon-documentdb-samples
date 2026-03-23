@@ -271,15 +271,15 @@ Check , using Mongo Shell, if 1 million document were inserted into the **nosqlb
 
 Check Cloudwatch DocumentDB metrics to validate if the ratio is being maintained as intended.
 
-![OpsCounters](images/opscounter.jpg)
+![OpsCounters](./images/opscounter.jpg)
 
 Buffer  Cache metrics
 
-![BufferCache](images/cache.jpg)
+![BufferCache](./images/cache.jpg)
 
 Read Write response times
 
-![latencies](images/latencies.jpg)
+![latencies](./images/latencies.jpg)
 
 
 
@@ -292,7 +292,7 @@ Once the test is over, find the results in folder **~/environment/****tmp****/cs
 1. Each named block, with **instrument** as true, will have its own set of metrics
 2. There will also be overall test metrics
 
-![application_metrics](images/application_metrics.jpg)
+![application_metrics](./images/application_metrics.jpg)
 1. [_https://docs.nosqlbench.io/getting-started/04-reading-metrics/_](https://docs.nosqlbench.io/getting-started/04-reading-metrics/)
 2. **metric: result** This is the primary metric that should be used to get a quick idea of the throughput and latency for a given run. It encapsulates the entire operation life cycle ( ie. bind, execute, get result back ).
 3. **metric: result-success** This metric shows whether there were any errors during the run. You can confirm that the count is equal to the number of cycles for the run if you are expecting or requiring zero failed operations.

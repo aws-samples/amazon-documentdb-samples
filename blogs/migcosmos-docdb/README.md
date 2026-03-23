@@ -5,9 +5,9 @@ by Igor Obradovic and Nicolas Ruiz
 
 This example shows you how to migrate Azure Cosmos DB SQL API to Amazon DocumentDB (with MongoDB Compatibility) using automation and native tools. 
 
-![](Blog-1-C2DDB-Diagram-1000px.png)
+![](./Blog-1-C2DDB-Diagram-1000px.png)
 
-Use the [IAM Policy](CF-User-Policy.json) to create an IAM role that will provision resources and run the migration process. The policy follows AWS IAM’s best practices and least privilege principle. This way we ensure that the user conducting the migration will not have excessive privileges, and thus we keep a high level of security that is compliant with most production workloads. First download the [user policy](CF-User-Policy.json) and save it to your computer locally, in the working directory where you will run the following AWS CLI commands: 
+Use the [IAM Policy](./CF-User-Policy.json) to create an IAM role that will provision resources and run the migration process. The policy follows AWS IAM’s best practices and least privilege principle. This way we ensure that the user conducting the migration will not have excessive privileges, and thus we keep a high level of security that is compliant with most production workloads. First download the [user policy](./CF-User-Policy.json) and save it to your computer locally, in the working directory where you will run the following AWS CLI commands: 
 
 `$ aws iam create-policy --policy-name DBDocMigrationUserPolicy --policy-document file://CF-User-Policy.json`
 
@@ -19,7 +19,7 @@ $ aws iam attach-role-policy --role-name DBDocMigRole --policy-arn arn:aws:iam::
 
 ```
 
-After you have created this role, create additional resources with AWS CloudFormation. Sign in to the AWS Management Console and then switch to the role you just created (DBDocMigRole). The [CloudFormation template](CosmosDB-Migration.yaml) will provision the stack with EC2 worker instances, IAM Role and Security Groups. Once the stack is provisioned, log in to the Windows EC2 worker instance using AWS Systems Manager Session Manager, and invoke the migration process: 
+After you have created this role, create additional resources with AWS CloudFormation. Sign in to the AWS Management Console and then switch to the role you just created (DBDocMigRole). The [CloudFormation template](./CosmosDB-Migration.yaml) will provision the stack with EC2 worker instances, IAM Role and Security Groups. Once the stack is provisioned, log in to the Windows EC2 worker instance using AWS Systems Manager Session Manager, and invoke the migration process: 
 
 `C:\CosmosDB2JSON\CosmosDB2JSON.bat`
  

@@ -1,25 +1,23 @@
 
 ## Amazon DocumentDB (with MongoDB compatibility) samples
 
-This GitHub repository contains code samples that demonstrate how to use Amazon DocumentDB. Each sample includes a README file that explains how to run and use the sample.
+This repository contains code samples that demonstrate how to use Amazon DocumentDB.
   
-## Samples
+__[Use Cases](./usecases)__
 
-This repository includes samples for - 
+Fully functional, standalone implementations of common document database use cases.
 
-- [Connect and query](https://github.com/aws-samples/amazon-documentdb-samples/tree/master/samples/connect-and-query) - Sample code for connecting to Amazon DocumentDB from Python, PHP, Node.js and Ruby (more coming soon)
+__[Samples](./samples)__
 
-- [Change streams](https://github.com/aws-samples/amazon-documentdb-samples/tree/master/samples/change-streams) - Sample code that shows how to use AWS DocumentDB change streams to stream events to ElasticSearch, Amazon Managed Stream for Kafka (or any other Apache Kafka distro), AWS Kinesis Streams, AWS SQS, and S3 using AWS Lambda
+Sample code for client configuration, connection best practices, global cluster failover automation, AI-powered mongosh plugins, and more.
 
-- [Lambda layers](https://github.com/aws-samples/amazon-documentdb-samples/tree/master/lambda-layers) - Sample AWS Lambda Layers
+__[Datasets](./datasets)__
 
-- [Lambda samples](https://github.com/aws-samples/amazon-documentdb-samples/tree/master/lambda-samples) - Sample AWS Lambda code for Amazon DocumentDB
+Sample datasets for use with Amazon DocumentDB.
 
-- [Templates](https://github.com/aws-samples/amazon-documentdb-samples/tree/master/samples/templates) - Sample AWS CloudFormation stacks
+__[Blogs](./blogs)__
 
-- [Vector search](https://github.com/aws-samples/amazon-documentdb-samples/tree/master/samples/vector-search) - Samples of vector search functionality
-
-- [mongosh-tsql-plugin](https://github.com/aws-samples/amazon-documentdb-samples/tree/master/samples/mongosh-tsql-plugin) - AI-powered mongosh plugins that translate TSQL queries into Amazon DocumentDB-compatible mongosh commands
+Code samples used in blogs written for Amazon DocumentDB.
 
 ## Get Involved
 
