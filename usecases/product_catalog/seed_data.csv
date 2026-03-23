@@ -1,0 +1,26 @@
+sku,name,category,price,stock
+LAPTOP-001,Pro Laptop 15,Electronics,1299.99,15
+LAPTOP-002,Business Laptop 14,Electronics,899.99,22
+LAPTOP-003,Gaming Laptop 17,Electronics,1899.99,8
+MOUSE-001,Wireless Mouse,Electronics,29.99,50
+MOUSE-002,Gaming Mouse RGB,Electronics,59.99,35
+KEYBOARD-001,Mechanical Keyboard,Electronics,89.99,28
+KEYBOARD-002,Wireless Keyboard,Electronics,49.99,40
+MONITOR-001,4K Monitor 27,Electronics,399.99,12
+MONITOR-002,Ultrawide Monitor 34,Electronics,699.99,6
+WEBCAM-001,HD Webcam 1080p,Electronics,79.99,45
+WEBCAM-002,4K Webcam Pro,Electronics,149.99,18
+HEADSET-001,Wireless Headset,Electronics,129.99,30
+HEADSET-002,Gaming Headset 7.1,Electronics,89.99,25
+DESK-001,Standing Desk,Furniture,499.99,10
+DESK-002,Executive Desk,Furniture,799.99,5
+CHAIR-001,Ergonomic Chair,Furniture,349.99,15
+CHAIR-002,Gaming Chair,Furniture,299.99,20
+LAMP-001,LED Desk Lamp,Furniture,39.99,60
+CABLE-001,USB-C Cable 6ft,Accessories,12.99,100
+CABLE-002,HDMI Cable 10ft,Accessories,15.99,85
+HUB-001,USB Hub 7-Port,Accessories,34.99,42
+ADAPTER-001,USB-C to HDMI Adapter,Accessories,24.99,55
+MOUSEPAD-001,Extended Mouse Pad,Accessories,19.99,70
+STAND-001,Laptop Stand Aluminum,Accessories,44.99,38
+ORGANIZER-001,Desk Organizer Set,Accessories,29.99,48
