@@ -1,0 +1,11 @@
+pymongo
+gradio
+beautifulsoup4
+pypdf
+langchain-aws
+langchain
+langchain-community
+html2text
+tenacity
+numpy
+boto3
