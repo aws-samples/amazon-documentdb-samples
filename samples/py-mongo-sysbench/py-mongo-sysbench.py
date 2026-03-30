@@ -64,12 +64,31 @@ def reportCollectionInfo(appConfig):
         gbDivisor = 1024*1024*1024
         
         printLog("{} ----------------------------------------------------------".format(thisCollectionName),appConfig)
-        printLog("collection statistics | numDocs             = {0:12,d}".format(collStats['count']),appConfig)
-        printLog("collection statistics | avgObjSize          = {0:12,d}".format(int(collStats['avgObjSize'])),appConfig)
-        printLog("collection statistics | size (GB)           = {0:12,.4f}".format(collStats['size']/gbDivisor),appConfig)
-        printLog("collection statistics | storageSize (GB)    = {0:12,.4f} ".format(collStats['storageSize']/gbDivisor),appConfig)
-        printLog("collection statistics | compressionRatio    = {0:12,.4f}".format(compressionRatio),appConfig)
-        printLog("collection statistics | totalIndexSize (GB) = {0:12,.4f}".format(collStats['totalIndexSize']/gbDivisor),appConfig)
+        printLog("collection statistics | numDocs             = {0:14,d}".format(collStats['count']),appConfig)
+        printLog("collection statistics | avgObjSize          = {0:14,d}".format(int(collStats['avgObjSize'])),appConfig)
+        printLog("collection statistics | size (GB)           = {0:14,.4f}".format(collStats['size']/gbDivisor),appConfig)
+        printLog("collection statistics | storageSize (GB)    = {0:14,.4f} ".format(collStats['storageSize']/gbDivisor),appConfig)
+        printLog("collection statistics | compressionRatio    = {0:14,.4f}".format(compressionRatio),appConfig)
+        printLog("collection statistics | totalIndexSize (GB) = {0:14,.4f}".format(collStats['totalIndexSize']/gbDivisor),appConfig)
+    
+    client.close()
+
+
+def reportDatabaseInfo(appConfig):
+    client = pymongo.MongoClient(appConfig['uri'])
+    db = client[appConfig['databaseName']]
+
+    dbStats = db.command("dbstats")
+
+    gbDivisor = 1024*1024*1024
+
+    printLog("{} ----------------------------------------------------------".format(appConfig['databaseName']),appConfig)
+    printLog("database statistics | numDocs           = {0:14,d}".format(dbStats['objects']),appConfig)
+    printLog("database statistics | numCollections    = {0:14,d}".format(dbStats['collections']),appConfig)
+    printLog("database statistics | numIndexes        = {0:14,d}".format(dbStats['indexes']),appConfig)
+    printLog("database statistics | dataSize (GB)     = {0:14,.4f}".format(dbStats['storageSize']/gbDivisor),appConfig)
+    printLog("database statistics | indexSize (GB)    = {0:14,.4f} ".format(dbStats['indexSize']/gbDivisor),appConfig)
+    printLog("database statistics | totalSize (GB)    = {0:14,.4f}".format(dbStats['fileSize']/gbDivisor),appConfig)
     
     client.close()
 
@@ -840,6 +859,7 @@ def main():
     t.join()
     
     reportCollectionInfo(appConfig)
+    reportDatabaseInfo(appConfig)
 
     cleanup(appConfig)
     
