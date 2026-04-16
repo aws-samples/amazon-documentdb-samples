@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Media Asset Workbench</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <div id="app">
+
+    <!-- ── Top bar ─────────────────────────────────────────────────── -->
+    <header class="topbar">
+      <div class="topbar-brand">
+        <span class="brand-icon">&#9707;</span>
+        <span class="brand-name">Media Asset Workbench</span>
+        <span class="brand-sub">S3 Files &amp; Amazon DocumentDB</span>
+      </div>
+      <div class="topbar-status" id="job-status-bar">
+        <span id="job-status-text">Ready</span>
+      </div>
+    </header>
+
+    <div class="layout">
+
+      <!-- ── Left sidebar ──────────────────────────────────────────── -->
+      <aside class="sidebar">
+
+        <section class="sidebar-section">
+          <h3>Sample Packs</h3>
+          <select id="sample-pack-select" class="filter-select" style="width:100%;margin-bottom:8px">
+            <option value="">Choose a sample pack...</option>
+          </select>
+          <div id="sample-pack-detail" style="display:none">
+            <div class="pack-card" id="sample-pack-card">
+              <div class="pack-name" id="sp-name"></div>
+              <div class="pack-meta" id="sp-meta"></div>
+              <div class="pack-desc" id="sp-desc"></div>
+              <button class="btn btn-primary btn-sm" id="sp-load-btn">Load</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="sidebar-section">
+          <h3>Your Datasets</h3>
+          <div id="datasets-list" class="dataset-list">
+            <div class="loading-sm">Loading...</div>
+          </div>
+          <button class="btn btn-sm" id="refresh-datasets-btn">Refresh</button>
+        </section>
+
+      </aside>
+
+      <!-- ── Main content ───────────────────────────────────────────── -->
+      <main class="main">
+
+        <!-- Empty state -->
+        <div id="empty-state" class="empty-state">
+          <h2>Select a sample pack to upload from the left menu, then select 'Load'.</h2>
+          <p>The EC2 worker will process the assets via a high-performance S3 shared file system and store metadata results in Amazon DocumentDB.</p>
+        </div>
+
+        <!-- Dataset view -->
+        <div id="dataset-view" style="display:none">
+
+          <!-- Dataset header + progress -->
+          <div class="dataset-header">
+            <div>
+              <h2 id="dv-name"></h2>
+              <div id="dv-status-badge" class="status-badge"></div>
+            </div>
+            <div class="dataset-actions">
+              <button class="btn btn-primary" id="process-btn">Reprocess</button>
+              <button class="btn btn-danger-sm" id="delete-dataset-btn">Delete</button>
+            </div>
+          </div>
+
+          <!-- Progress bar -->
+          <div id="progress-section" class="progress-section" style="display:none">
+            <div class="progress-meta">
+              <span id="progress-label">Processing...</span>
+              <span id="progress-fraction"></span>
+            </div>
+            <div class="progress-bar-track">
+              <div class="progress-bar-fill" id="progress-bar"></div>
+            </div>
+            <div id="progress-stage" class="progress-stage"></div>
+          </div>
+
+          <!-- Data flow with real paths -->
+          <div class="data-flow" id="data-flow" style="display:none">
+            <div class="flow-step" id="flow-s3">
+              <div class="flow-icon">&#129699;</div>
+              <div class="flow-label">S3 Bucket</div>
+              <code class="flow-path" id="flow-s3-path"></code>
+            </div>
+            <div class="flow-arrow" id="flow-arrow-1">&#8594;</div>
+            <div class="flow-step" id="flow-s3files">
+              <div class="flow-icon">&#128193;</div>
+              <div class="flow-label">S3 Files Mounted on EC2</div>
+              <code class="flow-path" id="flow-mount-path"></code>
+            </div>
+            <div class="flow-arrow" id="flow-arrow-2">&#8594;</div>
+            <div class="flow-step" id="flow-worker">
+              <div class="flow-icon">&#9881;</div>
+              <div class="flow-label">EC2 Worker</div>
+              <div class="flow-sub">Process files, create metadata and thumbnails</div>
+            </div>
+            <div class="flow-arrow" id="flow-arrow-3">&#8594;</div>
+            <div class="flow-step" id="flow-docdb">
+              <div class="flow-icon">&#128451;</div>
+              <div class="flow-label">Amazon DocumentDB</div>
+              <div class="flow-sub">Store and retrieve metadata</div>
+            </div>
+          </div>
+
+          <!-- Filters -->
+          <div class="filters-bar">
+            <input type="text" id="filter-search" placeholder="Search filenames..." class="filter-input" />
+            <select id="filter-type" class="filter-select">
+              <option value="">All types</option>
+              <option value="image">Images</option>
+              <option value="video">Videos</option>
+              <option value="other">Other</option>
+            </select>
+            <select id="filter-status" class="filter-select">
+              <option value="">All status</option>
+              <option value="processed">Processed</option>
+              <option value="processing">Processing</option>
+              <option value="error">Error</option>
+            </select>
+            <div class="filter-stats" id="filter-stats"></div>
+          </div>
+
+          <!-- Asset grid -->
+          <div id="asset-grid" class="asset-grid"></div>
+
+          <!-- Load more -->
+          <div class="load-more-row">
+            <button class="btn btn-sm" id="load-more-btn" style="display:none">Load more</button>
+          </div>
+
+        </div>
+      </main>
+
+      <!-- ── Asset detail panel ─────────────────────────────────────── -->
+      <aside class="detail-panel" id="detail-panel" style="display:none">
+        <button class="detail-close" id="detail-close-btn">&times;</button>
+
+        <!-- DocumentDB section at top -->
+        <div class="detail-json-wrap">
+          <h4><span class="service-badge badge-docdb">Amazon DocumentDB</span> Query</h4>
+          <div class="query-indicator" id="query-indicator">
+            <span class="qi-icon">&#10145;</span>
+            <code id="query-text">db.assets.find({})</code>
+          </div>
+        </div>
+        <div class="detail-json-wrap">
+          <h4><span class="service-badge badge-docdb">Amazon DocumentDB</span> Asset Record</h4>
+          <pre id="detail-json" class="detail-json"></pre>
+        </div>
+
+        <!-- Asset thumbnail -->
+        <div class="detail-source-wrap">
+          <h4><span class="service-badge badge-s3files">S3 Files</span> Thumbnail</h4>
+          <div id="detail-thumbnail-wrap">
+            <img id="detail-thumbnail" src="" alt="" />
+          </div>
+        </div>
+
+        <!-- S3 Files terminal -->
+        <div class="detail-source-wrap">
+          <h4><span class="service-badge badge-s3files">S3 Files</span> File Access</h4>
+          <div class="detail-source" id="detail-source"></div>
+        </div>
+      </aside>
+
+    </div><!-- .layout -->
+  <!-- Confirm modal -->
+  <div id="confirm-modal" class="modal-overlay" style="display:none">
+    <div class="modal">
+      <p class="modal-message" id="confirm-modal-message"></p>
+      <div class="modal-actions">
+        <button class="btn btn-sm" id="confirm-modal-cancel">Cancel</button>
+        <button class="btn btn-danger-sm" id="confirm-modal-ok">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  </div><!-- #app -->
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
