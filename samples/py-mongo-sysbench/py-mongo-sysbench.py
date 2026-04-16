@@ -64,12 +64,31 @@ def reportCollectionInfo(appConfig):
         gbDivisor = 1024*1024*1024
         
         printLog("{} ----------------------------------------------------------".format(thisCollectionName),appConfig)
-        printLog("collection statistics | numDocs             = {0:12,d}".format(collStats['count']),appConfig)
-        printLog("collection statistics | avgObjSize          = {0:12,d}".format(int(collStats['avgObjSize'])),appConfig)
-        printLog("collection statistics | size (GB)           = {0:12,.4f}".format(collStats['size']/gbDivisor),appConfig)
-        printLog("collection statistics | storageSize (GB)    = {0:12,.4f} ".format(collStats['storageSize']/gbDivisor),appConfig)
-        printLog("collection statistics | compressionRatio    = {0:12,.4f}".format(compressionRatio),appConfig)
-        printLog("collection statistics | totalIndexSize (GB) = {0:12,.4f}".format(collStats['totalIndexSize']/gbDivisor),appConfig)
+        printLog("collection statistics | numDocs             = {0:14,d}".format(collStats['count']),appConfig)
+        printLog("collection statistics | avgObjSize          = {0:14,d}".format(int(collStats['avgObjSize'])),appConfig)
+        printLog("collection statistics | size (GB)           = {0:14,.4f}".format(collStats['size']/gbDivisor),appConfig)
+        printLog("collection statistics | storageSize (GB)    = {0:14,.4f} ".format(collStats['storageSize']/gbDivisor),appConfig)
+        printLog("collection statistics | compressionRatio    = {0:14,.4f}".format(compressionRatio),appConfig)
+        printLog("collection statistics | totalIndexSize (GB) = {0:14,.4f}".format(collStats['totalIndexSize']/gbDivisor),appConfig)
+    
+    client.close()
+
+
+def reportDatabaseInfo(appConfig):
+    client = pymongo.MongoClient(appConfig['uri'])
+    db = client[appConfig['databaseName']]
+
+    dbStats = db.command("dbstats")
+
+    gbDivisor = 1024*1024*1024
+
+    printLog("{} ----------------------------------------------------------".format(appConfig['databaseName']),appConfig)
+    printLog("database statistics | numDocs           = {0:14,d}".format(dbStats['objects']),appConfig)
+    printLog("database statistics | numCollections    = {0:14,d}".format(dbStats['collections']),appConfig)
+    printLog("database statistics | numIndexes        = {0:14,d}".format(dbStats['indexes']),appConfig)
+    printLog("database statistics | dataSize (GB)     = {0:14,.4f}".format(dbStats['storageSize']/gbDivisor),appConfig)
+    printLog("database statistics | indexSize (GB)    = {0:14,.4f} ".format(dbStats['indexSize']/gbDivisor),appConfig)
+    printLog("database statistics | totalSize (GB)    = {0:14,.4f}".format(dbStats['fileSize']/gbDivisor),appConfig)
     
     client.close()
 
@@ -208,7 +227,7 @@ def reporter(perfQ,appConfig):
     lastNumTotalInserts = 0
     nextReportTime = startTime + numSecondsFeedback
     intervalLatencyMs = 0
-    
+
     numProcessesCompleted = 0
     recentTps = []
     recentLatency = []
@@ -225,6 +244,15 @@ def reporter(perfQ,appConfig):
         
         numLatencyBatches = 0
         numLatencyMs = 0.0
+
+        op1Ms = 0.0
+        op2Ms = 0.0
+        op3Ms = 0.0
+        op4Ms = 0.0
+        op5Ms = 0.0
+        op6Ms = 0.0
+        op7Ms = 0.0
+        op8Ms = 0.0
         
         while not perfQ.empty():
             qMessage = perfQ.get_nowait()
@@ -233,6 +261,15 @@ def reporter(perfQ,appConfig):
                 numLatencyMs += qMessage['latency']
                 numTotalInserts += qMessage['inserts']
                 numTotalExceptions += qMessage['exceptions']
+            elif qMessage['name'] == "batchDetails":
+                op1Ms += qMessage['op1Ms']
+                op2Ms += qMessage['op2Ms']
+                op3Ms += qMessage['op3Ms']
+                op4Ms += qMessage['op4Ms']
+                op5Ms += qMessage['op5Ms']
+                op6Ms += qMessage['op6Ms']
+                op7Ms += qMessage['op7Ms']
+                op8Ms += qMessage['op8Ms']
             elif qMessage['name'] == "processCompleted":
                 numProcessesCompleted += 1
 
@@ -251,8 +288,24 @@ def reporter(perfQ,appConfig):
         intervalInsertsPerSecond = intervalInserts / intervalElapsedSeconds
         if numLatencyBatches > 0:
             intervalLatencyMs = numLatencyMs / numLatencyBatches
+            intervalOp1LatencyMs = op1Ms / numLatencyBatches
+            intervalOp2LatencyMs = op2Ms / numLatencyBatches
+            intervalOp3LatencyMs = op3Ms / numLatencyBatches
+            intervalOp4LatencyMs = op4Ms / numLatencyBatches
+            intervalOp5LatencyMs = op5Ms / numLatencyBatches
+            intervalOp6LatencyMs = op6Ms / numLatencyBatches
+            intervalOp7LatencyMs = op7Ms / numLatencyBatches
+            intervalOp8LatencyMs = op8Ms / numLatencyBatches
         else:
             intervalLatencyMs = 0.0
+            intervalOp1LatencyMs = 0.0
+            intervalOp2LatencyMs = 0.0
+            intervalOp3LatencyMs = 0.0
+            intervalOp4LatencyMs = 0.0
+            intervalOp5LatencyMs = 0.0
+            intervalOp6LatencyMs = 0.0
+            intervalOp7LatencyMs = 0.0
+            intervalOp8LatencyMs = 0.0
         
         # recent intervals - tps
         if len(recentTps) == numIntervalsTps:
@@ -289,6 +342,8 @@ def reporter(perfQ,appConfig):
             csvData = "{},{},{:.2f},{},{:.2f},{:.2f},{:.2f},{:.2f},{:.2f},{}".format(logTimeStamp,thisHMS,elapsedSeconds,numTotalInserts,insertsPerSecond,intervalInsertsPerSecond,intervalLatencyMs,avgRecentTps,avgRecentLatency,numTotalExceptions)
         else:
             printLog("[{}] elapsed {} | total txn {:12,d} at {:10,.2f} p/s | interval {:10,.2f} p/s @ {:8,.2f} ms | last {} {:10,.2f} p/s @ {:8,.2f} ms | {:6,d} exceptions | ETA {}".format(logTimeStamp,thisHMS,numTotalInserts,insertsPerSecond,intervalInsertsPerSecond,intervalLatencyMs,numIntervalsTps,avgRecentTps,avgRecentLatency,numTotalExceptions,remainHMS),appConfig)
+            if appConfig['showDetailedLatencies']:
+                printLog("[1] {:10,.2f} [2] {:10,.2f} [3] {:10,.2f} [4] {:10,.2f} [5] {:10,.2f} [6] {:10,.2f} [7] {:10,.2f} [8] {:10,.2f} ".format(intervalOp1LatencyMs,intervalOp2LatencyMs,intervalOp3LatencyMs,intervalOp4LatencyMs,intervalOp5LatencyMs,intervalOp6LatencyMs,intervalOp7LatencyMs,intervalOp8LatencyMs),appConfig)
             csvData = "{},{},{:.2f},{},{:.2f},{:.2f},{:.2f},{:.2f},{:.2f},{}".format(logTimeStamp,thisHMS,elapsedSeconds,numTotalInserts,insertsPerSecond,intervalInsertsPerSecond,intervalLatencyMs,avgRecentTps,avgRecentLatency,numTotalExceptions)
             
         printCsv(csvData,appConfig)
@@ -469,6 +524,15 @@ def run_worker(threadNum,perfQ,appConfig):
 
     batchElapsedMs = 0.0
 
+    op1Ms = 0.0
+    op2Ms = 0.0
+    op3Ms = 0.0
+    op4Ms = 0.0
+    op5Ms = 0.0
+    op6Ms = 0.0
+    op7Ms = 0.0
+    op8Ms = 0.0
+
     allDone = False
 
     while not allDone:
@@ -494,6 +558,7 @@ def run_worker(threadNum,perfQ,appConfig):
         batchStartTime = time.time()
 
         # point queries
+        opStartTime = time.time()
         for loop in range(sysbenchPointQueries):
             numTotalOperations += 1
             numIntervalOperations += 1
@@ -504,8 +569,10 @@ def run_worker(threadNum,perfQ,appConfig):
             except TypeError as e:
                 numTotalExceptions += 1
                 numIntervalExceptions += 1
+        op1Ms += (time.time() - opStartTime) * 1000
     
         # simple ranges
+        opStartTime = time.time()
         for loop in range(sysbenchSimpleRangeQueries):
             numTotalOperations += 1
             numIntervalOperations += 1
@@ -513,8 +580,10 @@ def run_worker(threadNum,perfQ,appConfig):
             endId = startId + sysbenchRangeSize
             for thisDoc in col.find(filter={lookupField:{"$gte":startId,"$lte":endId}},projection={"_id":0,"c":1}):
                 pass
+        op2Ms += (time.time() - opStartTime) * 1000
         
         # summed ranges
+        opStartTime = time.time()
         for loop in range(sysbenchSumRangeQueries):
             numTotalOperations += 1
             numIntervalOperations += 1
@@ -522,8 +591,10 @@ def run_worker(threadNum,perfQ,appConfig):
             endId = startId + sysbenchRangeSize
             for thisDoc in col.aggregate([{"$match":{lookupField:{"$gte":startId,"$lte":endId}}},{"$project":{"_id":0,"numUpdates":1}},{"$group":{"_id":None,"sum":{"$sum":"$numUpdates"}}}]):
                 pass
+        op3Ms += (time.time() - opStartTime) * 1000
         
         # ordered ranges
+        opStartTime = time.time()
         for loop in range(sysbenchOrderedRangeQueries):
             numTotalOperations += 1
             numIntervalOperations += 1
@@ -531,8 +602,10 @@ def run_worker(threadNum,perfQ,appConfig):
             endId = startId + sysbenchRangeSize
             for thisDoc in col.find(filter={lookupField:{"$gte":startId,"$lte":endId}},projection={"_id":0,"c":1},sort=[("c",pymongo.ASCENDING)]):
                 pass
+        op4Ms += (time.time() - opStartTime) * 1000
         
         # distinct ranges
+        opStartTime = time.time()
         for loop in range(sysbenchDistinctRangeQueries):
             numTotalOperations += 1
             numIntervalOperations += 1
@@ -540,24 +613,30 @@ def run_worker(threadNum,perfQ,appConfig):
             endId = startId + sysbenchRangeSize
             for thisDoc in col.distinct("c",filter={lookupField:{"$gte":startId,"$lte":endId}}):
                 pass
+        op5Ms += (time.time() - opStartTime) * 1000
         
         # indexed updates
+        opStartTime = time.time()
         for loop in range(sysbenchIndexedUpdates):
             numTotalOperations += 1
             numIntervalOperations += 1
             startId = random.randint(1,numExistingDocuments)
             newStartId = random.randint(1,numExistingDocuments)
             thisResult = col.update_one({lookupField:startId},{"$set":{"k":newStartId},"$inc":{"numUpdates":1}})
+        op6Ms += (time.time() - opStartTime) * 1000
         
         # non-indexed updates
+        opStartTime = time.time()
         for loop in range(sysbenchNonIndexedUpdates):
             numTotalOperations += 1
             numIntervalOperations += 1
             startId = random.randint(1,numExistingDocuments)
             randomStringStart = round(random.randint(1,textBufferMaxStart)/13)*13
             thisResult = col.update_one({lookupField:startId},{"$set":{"c":sysbenchString[randomStringStart:randomStringStart+cFieldSize]},"$inc":{"numUpdates":1}})
+        op7Ms += (time.time() - opStartTime) * 1000
         
         # deletes then inserts
+        opStartTime = time.time()
         for loop in range(sysbenchDeletesThenInserts):
             # increment by two, performing a delete and an insert
             numTotalOperations += 2
@@ -583,6 +662,7 @@ def run_worker(threadNum,perfQ,appConfig):
                 # race condition - two processes on the same document
                 numTotalExceptions += 1
                 numIntervalExceptions += 1
+        op8Ms += (time.time() - opStartTime) * 1000
 
         numTotalTransactions += 1
         numIntervalTransactions += 1
@@ -595,6 +675,15 @@ def run_worker(threadNum,perfQ,appConfig):
             batchElapsedMs = 0.0
             numIntervalTransactions = 0
             numIntervalExceptions = 0
+            perfQ.put({"name":"batchDetails","batches":numIntervalTransactions,"op1Ms":op1Ms,"op2Ms":op2Ms,"op3Ms":op3Ms,"op4Ms":op4Ms,"op5Ms":op5Ms,"op6Ms":op6Ms,"op7Ms":op7Ms,"op8Ms":op8Ms})
+            op1Ms = 0.0
+            op2Ms = 0.0
+            op3Ms = 0.0
+            op4Ms = 0.0
+            op5Ms = 0.0
+            op6Ms = 0.0
+            op7Ms = 0.0
+            op8Ms = 0.0
             
         if ((time.time() - startTime) >= runSeconds) and (runSeconds > 0):
             allDone = True
@@ -642,6 +731,7 @@ def main():
     parser.add_argument('--sysbench-non-indexed-updates',required=False,type=int,default=1,help='Number of single document non-indexed update operations per sysbench transaction')
     parser.add_argument('--sysbench-deletes-then-inserts',required=False,type=int,default=1,help='Number of single document delete then insert operations per sysbench transaction')
     parser.add_argument('--index-for-queries',required=False,type=str,default='id',choices=['id','k'],help='Index to use for queries, id or k')
+    parser.add_argument('--show-detailed-latencies',required=False,action='store_true',help='Show individual latencies for each step in the Sysbench transaction')
 
     args = parser.parse_args()
 
@@ -689,6 +779,7 @@ def main():
     appConfig['sysbenchNonIndexedUpdates'] = int(args.sysbench_non_indexed_updates)
     appConfig['sysbenchDeletesThenInserts'] = int(args.sysbench_deletes_then_inserts)
     appConfig['indexForQueries'] = args.index_for_queries
+    appConfig['showDetailedLatencies'] = args.show_detailed_latencies
 
     # parameterized but not user facing
     appConfig['cFieldSize'] = 120
@@ -768,6 +859,7 @@ def main():
     t.join()
     
     reportCollectionInfo(appConfig)
+    reportDatabaseInfo(appConfig)
 
     cleanup(appConfig)
     
