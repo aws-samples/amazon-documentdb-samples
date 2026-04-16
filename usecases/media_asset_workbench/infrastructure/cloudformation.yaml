@@ -1,0 +1,509 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Media Asset Workbench - showcases S3 Files (filesystem access to S3) and
+  Amazon DocumentDB (metadata, job state, catalog). Single-stack, dev-sized,
+  stop-able DocumentDB cluster to keep costs low.
+
+Parameters:
+  DBUsername:
+    Type: String
+    Default: mawadmin
+  KeyPairName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: EC2 key pair for SSH access to the worker
+  MyIP:
+    Type: String
+    Description: Your public IP in CIDR notation (e.g. 1.2.3.4/32) for SSH
+    AllowedPattern: '^\d+\.\d+\.\d+\.\d+/\d+$'
+  WorkerInstanceType:
+    Type: String
+    Default: t3.small
+    AllowedValues: [t3.micro, t3.small, t3.medium]
+
+Mappings:
+  # Amazon Linux 2023 AMI per region
+  RegionAMI:
+    us-east-1:
+      AMI: ami-0ea87431b78a82070
+    us-east-2:
+      AMI: ami-051de6a4e7ae45f77
+    us-west-2:
+      AMI: ami-0a914de4dc1f18727
+
+Resources:
+
+  # ── VPC & Networking ─────────────────────────────────────────────────────────
+
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-vpc
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+
+  IGWAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.1.0/24
+      AvailabilityZone: !Select [0, !GetAZs '']
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-public-1
+
+  PublicSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.2.0/24
+      AvailabilityZone: !Select [1, !GetAZs '']
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-public-2
+
+  RouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+
+  DefaultRoute:
+    Type: AWS::EC2::Route
+    DependsOn: IGWAttachment
+    Properties:
+      RouteTableId: !Ref RouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  Subnet1RTA:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet1
+      RouteTableId: !Ref RouteTable
+
+  Subnet2RTA:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet2
+      RouteTableId: !Ref RouteTable
+
+  # ── VPC Endpoints ────────────────────────────────────────────────────────────
+
+  S3VpcEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref VPC
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.s3
+      VpcEndpointType: Gateway
+      RouteTableIds:
+        - !Ref RouteTable
+
+  # ── Security Groups ──────────────────────────────────────────────────────────
+
+  WorkerSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Worker EC2 instance
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: !Ref MyIP
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-worker-sg
+
+  DocumentDBSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: DocumentDB cluster
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 27017
+          ToPort: 27017
+          SourceSecurityGroupId: !Ref WorkerSG
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-docdb-sg
+
+  MountTargetSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: S3 Files mount targets (NFS port 2049)
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 2049
+          ToPort: 2049
+          SourceSecurityGroupId: !Ref WorkerSG
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-mounttarget-sg
+
+  # ── S3 Bucket (asset storage) ────────────────────────────────────────────────
+
+  AssetBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      CorsConfiguration:
+        CorsRules:
+          - AllowedOrigins:
+              - 'http://localhost:8080'
+            AllowedMethods: [GET, PUT, POST, HEAD]
+            AllowedHeaders: ['*']
+            MaxAge: 3600
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      VersioningConfiguration:
+        Status: Enabled
+      LifecycleConfiguration:
+        Rules:
+          - Id: delete-uploads-after-7-days
+            Status: Enabled
+            Prefix: uploads/
+            ExpirationInDays: 7
+
+  AssetBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref AssetBucket
+      PolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !GetAtt WorkerRole.Arn
+            Action: ['s3:GetObject', 's3:PutObject', 's3:ListBucket', 's3:DeleteObject', 's3:GetBucketLocation', 's3:GetBucketNotification', 's3:PutBucketNotification']
+            Resource:
+              - !GetAtt AssetBucket.Arn
+              - !Sub ${AssetBucket.Arn}/*
+
+  # ── Secrets Manager ───────────────────────────────────────────────────────────
+
+  DocDBSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub ${AWS::StackName}/docdb-credentials
+      Description: DocumentDB master credentials for Media Asset Workbench
+      GenerateSecretString:
+        SecretStringTemplate: !Sub '{"username": "${DBUsername}"}'
+        GenerateStringKey: password
+        PasswordLength: 32
+        ExcludePunctuation: true
+
+  # ── Amazon DocumentDB ────────────────────────────────────────────────────────
+  # Single-instance dev cluster. Stop it when not demoing to save cost.
+  # aws docdb stop-db-cluster --db-cluster-identifier <ClusterIdentifier>
+
+  DBSubnetGroup:
+    Type: AWS::DocDB::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: Media Asset Workbench DocumentDB subnets
+      SubnetIds:
+        - !Ref PublicSubnet1
+        - !Ref PublicSubnet2
+
+  DBCluster:
+    Type: AWS::DocDB::DBCluster
+    DeletionPolicy: Delete
+    Properties:
+      DBClusterIdentifier: !Sub ${AWS::StackName}-docdb
+      EngineVersion: '8.0.0'
+      MasterUsername: !Sub '{{resolve:secretsmanager:${DocDBSecret}:SecretString:username}}'
+      MasterUserPassword: !Sub '{{resolve:secretsmanager:${DocDBSecret}:SecretString:password}}'
+      DBSubnetGroupName: !Ref DBSubnetGroup
+      VpcSecurityGroupIds:
+        - !Ref DocumentDBSG
+      StorageEncrypted: true
+      # TLS is on by default - the worker/lambda use the RDS CA bundle
+
+  SecretDocDBAttachment:
+    Type: AWS::SecretsManager::SecretTargetAttachment
+    Properties:
+      SecretId: !Ref DocDBSecret
+      TargetId: !Ref DBCluster
+      TargetType: AWS::DocDB::DBCluster
+
+  DBInstance:
+    Type: AWS::DocDB::DBInstance
+    Properties:
+      DBClusterIdentifier: !Ref DBCluster
+      DBInstanceClass: db.t3.medium
+      AutoMinorVersionUpgrade: true
+
+  # ── IAM ──────────────────────────────────────────────────────────────────────
+
+  S3FilesRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${AWS::StackName}-s3files-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AllowS3FilesAssumeRole
+            Effect: Allow
+            Principal:
+              Service: elasticfilesystem.amazonaws.com
+            Action: sts:AssumeRole
+            Condition:
+              StringEquals:
+                aws:SourceAccount: !Ref AWS::AccountId
+              ArnLike:
+                aws:SourceArn: !Sub arn:aws:s3files:${AWS::Region}:${AWS::AccountId}:file-system/*
+      Policies:
+        - PolicyName: s3files-bucket-access
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Sid: S3BucketPermissions
+                Effect: Allow
+                Action:
+                  - s3:ListBucket
+                  - s3:ListBucketVersions
+                Resource: !GetAtt AssetBucket.Arn
+                Condition:
+                  StringEquals:
+                    aws:ResourceAccount: !Ref AWS::AccountId
+              - Sid: S3ObjectPermissions
+                Effect: Allow
+                Action:
+                  - s3:AbortMultipartUpload
+                  - s3:DeleteObject*
+                  - s3:GetObject*
+                  - s3:List*
+                  - s3:PutObject*
+                Resource: !Sub ${AssetBucket.Arn}/*
+                Condition:
+                  StringEquals:
+                    aws:ResourceAccount: !Ref AWS::AccountId
+              - Sid: EventBridgeManage
+                Effect: Allow
+                Action:
+                  - events:DeleteRule
+                  - events:DisableRule
+                  - events:EnableRule
+                  - events:PutRule
+                  - events:PutTargets
+                  - events:RemoveTargets
+                Condition:
+                  StringEquals:
+                    events:ManagedBy: elasticfilesystem.amazonaws.com
+                Resource:
+                  - arn:aws:events:*:*:rule/DO-NOT-DELETE-S3-Files*
+              - Sid: EventBridgeRead
+                Effect: Allow
+                Action:
+                  - events:DescribeRule
+                  - events:ListRuleNamesByTarget
+                  - events:ListRules
+                  - events:ListTargetsByRule
+                Resource:
+                  - arn:aws:events:*:*:rule/*
+
+  WorkerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${AWS::StackName}-worker-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+        - arn:aws:iam::aws:policy/AmazonS3FilesFullAccess
+        - arn:aws:iam::aws:policy/AmazonS3FilesClientFullAccess
+      Policies:
+        - PolicyName: worker-policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:GetObjectVersion
+                  - s3:PutObject
+                  - s3:ListBucket
+                  - s3:DeleteObject
+                  - s3:GetBucketLocation
+                Resource:
+                  - !GetAtt AssetBucket.Arn
+                  - !Sub ${AssetBucket.Arn}/*
+              - Effect: Allow
+                Action:
+                  - rds:DescribeDBClusters
+                Resource: !Sub 'arn:aws:rds:${AWS::Region}:${AWS::AccountId}:cluster:${DBCluster}'
+              - Effect: Allow
+                Action:
+                  - secretsmanager:GetSecretValue
+                Resource: !Ref DocDBSecret
+
+  WorkerInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+        - !Ref WorkerRole
+
+  # ── EC2 Worker ───────────────────────────────────────────────────────────────
+
+  WorkerEIP:
+    Type: AWS::EC2::EIP
+    DependsOn: IGWAttachment
+    Properties:
+      Domain: vpc
+
+  WorkerInstance:
+    Type: AWS::EC2::Instance
+    DependsOn: DBInstance
+    Properties:
+      InstanceType: !Ref WorkerInstanceType
+      ImageId: !FindInMap [RegionAMI, !Ref AWS::Region, AMI]
+      KeyName: !Ref KeyPairName
+      IamInstanceProfile: !Ref WorkerInstanceProfile
+      SubnetId: !Ref PublicSubnet1
+      SecurityGroupIds:
+        - !Ref WorkerSG
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeSize: 20
+            VolumeType: gp3
+            Encrypted: true
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          set -euo pipefail
+          exec > >(tee /var/log/userdata.log) 2>&1
+
+          # System deps
+          dnf update -y
+          dnf install -y python3.11 python3.11-pip git nfs-utils jq unzip
+
+          # Install/update AWS CLI v2 (s3files requires a recent version)
+          curl -sL "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o /tmp/awscliv2.zip
+          unzip -qo /tmp/awscliv2.zip -d /tmp
+          /tmp/aws/install --update
+          ln -sf /usr/local/bin/aws /usr/bin/aws
+          rm -rf /tmp/aws /tmp/awscliv2.zip
+
+          # Install amazon-efs-utils (required for mount -t s3files)
+          dnf install -y amazon-efs-utils 2>/dev/null || \
+            { curl -s https://amazon-efs-utils.aws.com/efs-utils-installer.sh | sh -s -- --install; }
+
+          # ffmpeg (not in AL2023 default repos)
+          curl -sL https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz -o /tmp/ffmpeg.tar.xz
+          tar -xf /tmp/ffmpeg.tar.xz -C /tmp
+          cp /tmp/ffmpeg-*-amd64-static/ffmpeg /usr/local/bin/
+          cp /tmp/ffmpeg-*-amd64-static/ffprobe /usr/local/bin/
+          rm -rf /tmp/ffmpeg*
+
+          # Python deps for worker
+          pip3.11 install pymongo Pillow boto3
+
+          # Download RDS CA bundle for DocumentDB TLS
+          mkdir -p /etc/ssl/certs
+          curl -sL https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem \
+            -o /etc/ssl/certs/rds-combined-ca-bundle.pem
+
+          # S3 Files mount is configured by userdata.sh after stack deployment.
+          # See README Step 4 and worker/userdata.sh for setup instructions.
+          mkdir -p /mnt/assets
+
+          # Deploy worker code (best-effort — may not be uploaded yet during first boot)
+          mkdir -p /opt/worker
+          if aws s3 cp s3://${AssetBucket}/worker.tar.gz /tmp/worker.tar.gz --region ${AWS::Region} 2>/dev/null; then
+            tar -xzf /tmp/worker.tar.gz -C /opt/worker
+            echo "Worker code deployed from S3"
+          else
+            echo "Worker tar not yet available — will be deployed via userdata.sh"
+          fi
+
+          # Write environment config
+          printf '%s\n' \
+            "DOCDB_SECRET_ARN=${DocDBSecret}" \
+            "BUCKET_NAME=${AssetBucket}" \
+            "MOUNT_PATH=/mnt/assets" \
+            "AWS_REGION=${AWS::Region}" \
+            > /opt/worker/.env
+
+          # Create systemd service
+          cat > /etc/systemd/system/maw-worker.service << 'SVC'
+          [Unit]
+          Description=Media Asset Workbench Worker
+          After=network.target
+
+          [Service]
+          Type=simple
+          WorkingDirectory=/opt/worker
+          EnvironmentFile=/opt/worker/.env
+          ExecStart=/usr/bin/python3.11 /opt/worker/worker.py
+          Restart=on-failure
+          RestartSec=10
+
+          [Install]
+          WantedBy=multi-user.target
+          SVC
+          sed -i 's/^          //' /etc/systemd/system/maw-worker.service
+
+          systemctl daemon-reload
+          echo "Userdata complete. Mount S3 Files and start maw-worker service."
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-worker
+
+  EIPAssociation:
+    Type: AWS::EC2::EIPAssociation
+    Properties:
+      InstanceId: !Ref WorkerInstance
+      AllocationId: !GetAtt WorkerEIP.AllocationId
+
+Outputs:
+  BucketName:
+    Value: !Ref AssetBucket
+  DocDBEndpoint:
+    Value: !GetAtt DBCluster.Endpoint
+  WorkerInstanceId:
+    Value: !Ref WorkerInstance
+    Description: EC2 instance ID for SSM port forwarding to DocumentDB
+  WorkerPublicIP:
+    Value: !Ref WorkerEIP
+  DocDBClusterIdentifier:
+    Value: !Ref DBCluster
+    Description: Use this ID to stop/start the cluster to save cost
+  DocDBSecretArn:
+    Value: !Ref DocDBSecret
+    Description: Secrets Manager ARN for DocumentDB credentials
+  SubnetId:
+    Value: !Ref PublicSubnet1
+    Description: Subnet ID for S3 Files mount target setup
+  SecurityGroupId:
+    Value: !Ref WorkerSG
+    Description: Worker security group ID
+  MountTargetSGId:
+    Value: !Ref MountTargetSG
+    Description: Mount target security group ID for S3 Files setup
+  S3FilesRoleArn:
+    Value: !GetAtt S3FilesRole.Arn
+    Description: IAM role ARN for S3 Files filesystem creation
