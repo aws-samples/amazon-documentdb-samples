@@ -1,0 +1,23 @@
+# Local configuration — contains live endpoints, never commit
+config.env
+!config.env.example
+
+# SSH keys
+*.pem
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# macOS
+.DS_Store
+
+# Build artefacts
+worker.tar.gz
+rds-combined-ca-bundle.pem
+
+# Generated sample data
+sample-data/
