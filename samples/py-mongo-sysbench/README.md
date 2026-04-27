@@ -3,6 +3,8 @@ Python implementation of [Sysbench](https://github.com/akopytov/sysbench) for Mo
 
 Sysbench is a mixed workload containing point queries, range queries/aggregations, insert, update, and delete operations.
 
+Note - this is a sample application for reference purposes and is not intended to be used in production environments.
+
 A single Sysbench transaction (by default) consists of the following operations -
 * All range queries are 100 documents
 * 10 point queries
