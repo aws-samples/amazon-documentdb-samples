@@ -1,7 +1,17 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash
+from urllib.parse import urlparse
 from models import post as post_model
 
 bp = Blueprint('posts', __name__)
+
+def _is_safe_local_redirect_target(target):
+    """Allow only local relative redirect targets."""
+    if not target:
+        return False
+
+    normalized_target = target.replace('\\', '')
+    parsed = urlparse(normalized_target)
+    return not parsed.scheme and not parsed.netloc
 
 def login_required(f):
     """Decorator to require login for a route."""
@@ -46,4 +56,7 @@ def delete_post(post_id):
     else:
         flash('Could not delete post', 'error')
 
-    return redirect(request.referrer or url_for('posts.timeline'))
+    referrer = request.referrer
+    if _is_safe_local_redirect_target(referrer):
+        return redirect(referrer)
+    return redirect(url_for('posts.timeline'))
