@@ -1,0 +1,57 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ user.display_name }} - Social Network{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+    <div class="profile-header">
+        <h1>{{ user.display_name }}</h1>
+        <p class="username">@{{ user.username }}</p>
+        {% if user.bio %}
+        <p class="bio">{{ user.bio }}</p>
+        {% endif %}
+        <div class="profile-stats">
+            <span><strong>{{ follower_count }}</strong> followers</span>
+            <span><strong>{{ following_count }}</strong> following</span>
+        </div>
+        <div class="profile-actions">
+            {% if is_own_profile %}
+            <a href="{{ url_for('auth.change_password') }}" class="btn btn-secondary">Change Password</a>
+            {% else %}
+                {% if is_following %}
+                <form method="POST" action="{{ url_for('users.unfollow', username=user.username) }}">
+                    <button type="submit" class="btn btn-secondary">Unfollow</button>
+                </form>
+                {% else %}
+                <form method="POST" action="{{ url_for('users.follow', username=user.username) }}">
+                    <button type="submit" class="btn btn-primary">Follow</button>
+                </form>
+                {% endif %}
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="profile-posts">
+        <h2>Posts</h2>
+        {% if posts %}
+            {% for post in posts %}
+            <div class="post-card">
+                <div class="post-header">
+                    <span class="post-date">{{ post.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                </div>
+                <div class="post-content">{{ post.content }}</div>
+                {% if is_own_profile %}
+                <div class="post-actions">
+                    <form method="POST" action="{{ url_for('posts.delete_post', post_id=post._id) }}" style="display: inline;">
+                        <button type="submit" class="btn btn-small btn-danger" onclick="return confirm('Delete this post?')">Delete</button>
+                    </form>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        {% else %}
+            <p class="no-posts">No posts yet.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

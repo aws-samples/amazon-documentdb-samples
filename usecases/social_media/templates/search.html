@@ -1,0 +1,38 @@
+{% extends "layout.html" %}
+
+{% block title %}Search - Social Network{% endblock %}
+
+{% block content %}
+<div class="search-container">
+    <h1>Search Users</h1>
+
+    <form method="GET" action="{{ url_for('search.search') }}" class="search-form">
+        <div class="form-group">
+            <input type="text" name="q" placeholder="Search by username..." value="{{ query }}" required>
+            <button type="submit" class="btn btn-primary">Search</button>
+        </div>
+    </form>
+
+    {% if query %}
+    <div class="search-results">
+        <h2>Results for "{{ query }}"</h2>
+        {% if results %}
+        <div class="user-list">
+            {% for user in results %}
+            <div class="user-card">
+                <a href="{{ url_for('users.profile', username=user.username) }}" class="user-link">
+                    <strong>{{ user.display_name }}</strong> (@{{ user.username }})
+                </a>
+                {% if user.bio %}
+                <p class="user-bio">{{ user.bio }}</p>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="no-results">No users found matching "{{ query }}"</p>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

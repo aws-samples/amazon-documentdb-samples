@@ -1,0 +1,21 @@
+# Environment variables
+.env
+.env.swp
+
+# CA certificate
+global-bundle.pem
+*.pem
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+venv/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Other
+CLAUDE.md
