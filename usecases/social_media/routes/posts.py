@@ -5,11 +5,19 @@ from models import post as post_model
 bp = Blueprint('posts', __name__)
 
 def _is_safe_local_redirect_target(target):
-    """Allow only local relative redirect targets."""
+    """Allow only local in-app redirect targets (path-only)."""
     if not target:
         return False
 
     normalized_target = target.replace('\\', '')
+
+    # Only allow absolute local paths (e.g. "/timeline"), never external URLs.
+    if not normalized_target.startswith('/'):
+        return False
+    # Reject protocol-relative targets like "//evil.example".
+    if normalized_target.startswith('//'):
+        return False
+
     parsed = urlparse(normalized_target)
     return not parsed.scheme and not parsed.netloc
 
