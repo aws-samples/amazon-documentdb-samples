@@ -24,4 +24,5 @@ def server_error(e):
 
 if __name__ == '__main__':
     port = int(os.getenv('FLASK_PORT', 3000))
-    app.run(host='0.0.0.0', port=port, debug=True)
+    debug = os.getenv('FLASK_DEBUG', 'false').strip().lower() in ('1', 'true', 'yes', 'on')
+    app.run(host='0.0.0.0', port=port, debug=debug)
