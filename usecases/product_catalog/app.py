@@ -15,6 +15,13 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
+
+def _sanitize_error(e: Exception) -> str:
+    """Return a generic message for unexpected errors to avoid leaking internals."""
+    if isinstance(e, (ValueError, KeyError)):
+        return str(e)
+    return "An internal error occurred. Check the server logs for details."
+
 _client = None
 
 def get_config() -> dict:
@@ -151,7 +158,7 @@ def get_products():
         })
     except Exception as e:
         logger.error("Error in get_products: %s", e)
-        return jsonify({"success": False, "message": str(e)}), 500
+        return jsonify({"success": False, "message": _sanitize_error(e)}), 500
 
 @app.route('/api/products', methods=['POST'])
 def add_product():
@@ -185,10 +192,10 @@ def add_product():
     except DuplicateKeyError:
         return jsonify({"success": False, "message": "Product with this SKU already exists"}), 400
     except (ValueError, KeyError) as e:
-        return jsonify({"success": False, "message": f"Invalid input: {str(e)}"}), 400
+        return jsonify({"success": False, "message": f"Invalid input: {_sanitize_error(e)}"}), 400
     except Exception as e:
         logger.error("Error adding product: %s", e)
-        return jsonify({"success": False, "message": str(e)}), 500
+        return jsonify({"success": False, "message": _sanitize_error(e)}), 500
 
 @app.route('/api/products/<sku>', methods=['PUT'])
 def update_product(sku):
@@ -226,10 +233,10 @@ def update_product(sku):
         logger.info("Updated product: %s", sku)
         return jsonify({"success": True, "message": "Product updated successfully"})
     except (ValueError, KeyError) as e:
-        return jsonify({"success": False, "message": f"Invalid input: {str(e)}"}), 400
+        return jsonify({"success": False, "message": f"Invalid input: {_sanitize_error(e)}"}), 400
     except Exception as e:
         logger.error("Error updating product: %s", e)
-        return jsonify({"success": False, "message": str(e)}), 500
+        return jsonify({"success": False, "message": _sanitize_error(e)}), 500
 
 @app.route('/api/products/<sku>/stock', methods=['PUT'])
 def update_stock(sku):
@@ -256,10 +263,10 @@ def update_stock(sku):
         logger.info("Updated stock for SKU %s by %d", sku, quantity_change)
         return jsonify({"success": True, "message": "Stock updated successfully"})
     except (ValueError, KeyError) as e:
-        return jsonify({"success": False, "message": f"Invalid input: {str(e)}"}), 400
+        return jsonify({"success": False, "message": f"Invalid input: {_sanitize_error(e)}"}), 400
     except Exception as e:
         logger.error("Error updating stock: %s", e)
-        return jsonify({"success": False, "message": str(e)}), 500
+        return jsonify({"success": False, "message": _sanitize_error(e)}), 500
 
 @app.route('/api/products/<sku>/description', methods=['PUT'])
 def update_description(sku):
@@ -281,7 +288,7 @@ def update_description(sku):
         return jsonify({"success": True, "message": "Description updated successfully"})
     except Exception as e:
         logger.error("Error updating description: %s", e)
-        return jsonify({"success": False, "message": str(e)}), 500
+        return jsonify({"success": False, "message": _sanitize_error(e)}), 500
 
 @app.route('/api/products/<sku>', methods=['DELETE'])
 def delete_product(sku):
@@ -297,7 +304,7 @@ def delete_product(sku):
         return jsonify({"success": True, "message": "Product deleted successfully"})
     except Exception as e:
         logger.error("Error deleting product: %s", e)
-        return jsonify({"success": False, "message": str(e)}), 500
+        return jsonify({"success": False, "message": _sanitize_error(e)}), 500
 
 @app.route('/api/analytics', methods=['GET'])
 def get_analytics():
@@ -341,7 +348,7 @@ def get_analytics():
         })
     except Exception as e:
         logger.error("Error getting analytics: %s", e)
-        return jsonify({"success": False, "message": str(e)}), 500
+        return jsonify({"success": False, "message": _sanitize_error(e)}), 500
 
 if __name__ == "__main__":
     # Initialize indexes on startup
@@ -373,4 +380,6 @@ if __name__ == "__main__":
     
     # Run app
     logger.info("Starting web interface on http://localhost:5000")
+    # debug=True is intentional for this demo/sample application.
+    # Disable debug mode when adapting this code for production use.
     app.run(debug=True, host='0.0.0.0', port=5000)
