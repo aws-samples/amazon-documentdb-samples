@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash
 from urllib.parse import urlparse
 from models import post as post_model
+from utils.decorators import login_required
 
 bp = Blueprint('posts', __name__)
 
@@ -20,16 +21,6 @@ def _is_safe_local_redirect_target(target):
 
     parsed = urlparse(normalized_target)
     return not parsed.scheme and not parsed.netloc
-
-def login_required(f):
-    """Decorator to require login for a route."""
-    def decorated_function(*args, **kwargs):
-        if 'user_id' not in session:
-            flash('Please login to access this page', 'error')
-            return redirect(url_for('auth.login'))
-        return f(*args, **kwargs)
-    decorated_function.__name__ = f.__name__
-    return decorated_function
 
 @bp.route('/')
 @bp.route('/timeline')

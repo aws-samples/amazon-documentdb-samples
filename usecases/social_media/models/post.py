@@ -70,8 +70,11 @@ def get_timeline_posts(user_id, limit=50):
         {'author_id': {'$in': following_ids}}
     ).sort('created_at', -1).limit(limit))
 
+    author_ids = list(set(post['author_id'] for post in posts))
+    authors = list(db.users.find({'_id': {'$in': author_ids}}))
+    authors_dict = {author['_id']: author for author in authors}
+
     for post in posts:
-        author = db.users.find_one({'_id': post['author_id']})
-        post['author'] = author
+        post['author'] = authors_dict.get(post['author_id'])
 
     return posts

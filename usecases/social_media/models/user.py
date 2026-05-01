@@ -119,11 +119,19 @@ def get_following(user_id):
     return list(db.users.find({'_id': {'$in': following_ids}}))
 
 def search_users(query):
-    """Search for users by username."""
+    """Search for users by username (exact match only)."""
     db = get_db()
-    return list(db.users.find({
-        'username': {'$regex': query, '$options': 'i'}
-    }).limit(20))
+
+    if not query or not isinstance(query, str):
+        return []
+
+    sanitized_query = query.strip()
+
+    if not sanitized_query:
+        return []
+
+    user = db.users.find_one({'username': sanitized_query})
+    return [user] if user else []
 
 def is_following(follower_id, followee_id):
     """Check if a user is following another user."""
