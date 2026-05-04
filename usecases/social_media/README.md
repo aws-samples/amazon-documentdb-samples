@@ -41,7 +41,7 @@ Edit `.env` and set your DocumentDB connection string and session secret:
 DOCDB_URI=mongodb://<user>:<pass>@<endpoint>:27017/?tls=true&tlsCAFile=global-bundle.pem&replicaSet=rs0&readPreference=secondaryPreferred&retryWrites=false
 SESSION_SECRET=<random-string-change-this-in-production>
 FLASK_APP=app.py
-FLASK_PORT=3000
+FLASK_PORT=5000
 ```
 
 **Important**: If you need to use TLS with a CA bundle, download the Amazon RDS CA certificate:
@@ -72,7 +72,7 @@ Or directly:
 python app.py
 ```
 
-The application will be available at `http://localhost:3000`
+The application will be available at `http://localhost:5000`
 
 ## Sample Users
 
@@ -115,7 +115,9 @@ social/
 
 ## Development
 
-The application runs in debug mode by default when using `python app.py`. For production deployment:
+The application runs in debug mode if FLASK_DEBUG is set to 1 when using `python app.py`.
+
+For production deployment:
 
 1. Set a strong `SESSION_SECRET` value
 2. Disable debug mode

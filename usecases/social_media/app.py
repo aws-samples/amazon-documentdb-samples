@@ -23,6 +23,6 @@ def server_error(e):
     return 'Internal server error', 500
 
 if __name__ == '__main__':
-    port = int(os.getenv('FLASK_PORT', 3000))
+    port = int(os.getenv('FLASK_PORT', 5000))
     debug = os.getenv('FLASK_DEBUG', 'false').strip().lower() in ('1', 'true', 'yes', 'on')
     app.run(host='0.0.0.0', port=port, debug=debug)
