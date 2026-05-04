@@ -24,7 +24,12 @@ def get_db():
     return _db
 
 def close_db():
-    """Close database connection."""
+    """Close database connection, reset connection pool.
+    
+    Not called during normal app lifecycle — connection cleanup is
+    handled automatically on process shutdown. Available for use
+    in tests that need to reset state between runs.
+    """
     global _client, _db
     if _client is not None:
         _client.close()
