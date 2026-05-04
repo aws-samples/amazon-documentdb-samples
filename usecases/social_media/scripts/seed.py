@@ -19,7 +19,6 @@ def create_indexes():
     db.users.create_index('email', unique=True)
 
     db.posts.create_index([('author_id', 1), ('created_at', -1)])
-    db.posts.create_index([('created_at', -1)])
 
     print("Indexes created successfully")
 
