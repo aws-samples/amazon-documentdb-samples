@@ -10,3 +10,4 @@ cdk.out
 !lib/functions/**/*.js
 
 .DS_Store
+package-lock.json
