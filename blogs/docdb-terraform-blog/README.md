@@ -1,10 +1,10 @@
-# Provision a Secure Amazon DocumentDB 8.0 Cluster with Terraform
+# Provision a Secure Amazon DocumentDB Cluster with Terraform
 
-This repository contains Terraform configuration to deploy a secure [Amazon DocumentDB 8.0](https://aws.amazon.com/documentdb/) cluster with MongoDB compatibility, implementing comprehensive security controls.
+This repository contains Terraform configuration to deploy a secure [Amazon DocumentDB](https://aws.amazon.com/documentdb/) cluster with MongoDB compatibility, implementing comprehensive security controls.
 
 ## Features
 
-- **DocumentDB 8.0**: Latest version with MongoDB 8.0 API compatibility
+- **Amazon DocumentDB**: Support for drivers compatible with MongoDB API versions 6.0, 7.0, and 8.0
 - **Network isolation**: Private subnets with no internet access, restrictive security groups
 - **Encryption at rest**: Customer-managed AWS KMS keys for cluster data, logs, and parameters
 - **Encryption in transit**: TLS enforced via cluster parameter group
@@ -40,6 +40,10 @@ This repository contains Terraform configuration to deploy a secure [Amazon Docu
      --db-cluster-identifier docdb-terraform-demo \
      --query 'DBClusters[0].{Status:Status,EngineVersion:EngineVersion,StorageEncrypted:StorageEncrypted}'
    ```
+
+4. Connect to your cluster:
+
+   For detailed instructions on connecting to your Amazon DocumentDB cluster, including driver configuration, TLS certificate setup, and connection string options, see [Connecting to Amazon DocumentDB](https://docs.aws.amazon.com/documentdb/latest/devguide/connect-docdb.html).
 
 ## Project Structure
 
@@ -101,8 +105,8 @@ This code accompanies the AWS Database Blog post: *Provision a secure Amazon Doc
 
 ## Security
 
-See [CONTRIBUTING](../../../CONTRIBUTING.md) for more information.
+See [CONTRIBUTING](../../CONTRIBUTING.md) for more information.
 
 ## License
 
-This library is licensed under the MIT-0 License. See the [LICENSE](../../../LICENSE) file.
+This library is licensed under the MIT-0 License. See the [LICENSE](../../LICENSE) file.
