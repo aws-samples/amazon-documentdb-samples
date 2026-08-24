@@ -12,9 +12,11 @@ resource "aws_docdb_cluster_parameter_group" "this" {
   name        = "${var.name}-params"
   description = "DocumentDB 8.0 cluster parameter group with security settings"
 
+  # Allowed values: disabled, enabled, fips-140-3, tls1.2+, tls1.3+
+  # "enabled" permits TLS 1.0-1.3; "tls1.2+" enforces TLS 1.2 or higher.
   parameter {
     name  = "tls"
-    value = "enabled"
+    value = "tls1.2+"
   }
 
   parameter {
