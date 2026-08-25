@@ -19,9 +19,13 @@ resource "aws_docdb_cluster_parameter_group" "this" {
     value = "tls1.2+"
   }
 
+  # Allowed values: enabled, disabled, ddl, dml_read, dml_write, all, none
+  # "enabled" is a legacy alias that audits DDL only. "ddl,dml_write" also
+  # captures data modifications for compliance without the volume of "dml_read"
+  # (every read). Use "all" for maximum fidelity at higher log volume and cost.
   parameter {
     name  = "audit_logs"
-    value = "enabled"
+    value = "ddl,dml_write"
   }
 
   parameter {
