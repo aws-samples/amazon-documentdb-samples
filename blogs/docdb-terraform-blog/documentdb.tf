@@ -33,6 +33,20 @@ resource "aws_docdb_cluster_parameter_group" "this" {
     value = "enabled"
   }
 
+  # Log operations slower than this threshold (allowed: 50-2147483646 ms).
+  parameter {
+    name  = "profiler_threshold_ms"
+    value = "100"
+  }
+
+  # Fraction of qualifying operations to log (allowed: 0.0-1.0). Set explicitly
+  # so the volume is intentional. Profiler logs capture query content, so lower
+  # this in sensitive or high-traffic environments to reduce exposure and cost.
+  parameter {
+    name  = "profiler_sampling_rate"
+    value = "1.0"
+  }
+
   tags = merge(var.tags, { "Name" = "${var.name}-params" })
 }
 
