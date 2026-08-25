@@ -45,7 +45,7 @@ variable "subnet_cidr_private" {
 variable "engine_version" {
   description = "DocumentDB engine version"
   type        = string
-  default     = "8.0.0"
+  default     = "8.0.1"
 }
 
 variable "instance_class" {
