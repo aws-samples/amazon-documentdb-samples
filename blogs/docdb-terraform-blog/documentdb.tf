@@ -119,5 +119,10 @@ resource "aws_docdb_cluster_instance" "this" {
   # Apply minor engine patches automatically during the maintenance window.
   auto_minor_version_upgrade = true
 
+  # Pin the server CA certificate explicitly. RSA 2048 (rds-ca-rsa2048-g1) has
+  # the broadest client/driver compatibility. Alternatives: rds-ca-rsa4096-g1,
+  # rds-ca-ecc384-g1.
+  ca_cert_identifier = "rds-ca-rsa2048-g1"
+
   tags = merge(var.tags, { "Name" = "${var.name}-instance-${count.index}" })
 }
