@@ -61,6 +61,7 @@ This repository contains Terraform configuration to deploy a secure [Amazon Docu
 └── network/               # Reusable network module
     ├── network.tf         # VPC, private subnets, route table
     ├── security_group.tf  # Default SG disabled, custom SG for DocumentDB
+    ├── endpoints.tf       # Interface VPC endpoints (Secrets Manager, SSM, CloudWatch Logs)
     ├── output.tf          # Module outputs
     ├── provider.tf        # Module provider requirements
     └── variables.tf       # Module input variables
@@ -72,9 +73,9 @@ This repository contains Terraform configuration to deploy a secure [Amazon Docu
 |-------|---------------|
 | Network | Private subnets, no IGW/NAT, default SG disabled, egress restricted to VPC CIDR |
 | Encryption at rest | Customer-managed KMS key with explicit key policy and rotation enabled |
-| Encryption in transit | TLS enforced via `tls = enabled` parameter |
+| Encryption in transit | TLS 1.2+ enforced via `tls = tls1.2+` parameter |
 | Authentication | `manage_master_user_password = true` — AWS manages password in Secrets Manager |
-| Logging | Audit + profiler logs to KMS-encrypted CloudWatch log groups (365-day retention) |
+| Logging | Audit + profiler logs to KMS-encrypted CloudWatch log groups (audit 365-day, profiler 30-day retention) |
 | Monitoring | Performance Insights enabled with KMS encryption |
 | Outputs | Infrastructure values stored as encrypted SecureString in SSM Parameter Store |
 
