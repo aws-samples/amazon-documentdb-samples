@@ -77,6 +77,13 @@ resource "aws_docdb_cluster" "this" {
     aws_cloudwatch_log_group.audit,
     aws_cloudwatch_log_group.profiler
   ]
+
+  # Instances have auto_minor_version_upgrade enabled, so DocumentDB may apply
+  # minor patches during the maintenance window. Ignore engine_version drift so
+  # those auto-applied upgrades do not cause plan churn or get reverted on apply.
+  lifecycle {
+    ignore_changes = [engine_version]
+  }
 }
 
 #https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/docdb_cluster_instance
@@ -89,6 +96,9 @@ resource "aws_docdb_cluster_instance" "this" {
   # Performance Insights
   enable_performance_insights     = var.enable_performance_insights
   performance_insights_kms_key_id = var.enable_performance_insights ? aws_kms_key.docdb.arn : null
+
+  # Apply minor engine patches automatically during the maintenance window.
+  auto_minor_version_upgrade = true
 
   tags = merge(var.tags, { "Name" = "${var.name}-instance-${count.index}" })
 }
