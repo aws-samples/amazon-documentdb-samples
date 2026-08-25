@@ -69,9 +69,11 @@ resource "aws_cloudwatch_log_group" "audit" {
 }
 
 #https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_group
+# Profiler logs capture query content, so they use a shorter retention than the
+# audit logs (which stay at 365 days for compliance). Adjust to your needs.
 resource "aws_cloudwatch_log_group" "profiler" {
   name              = "/aws/docdb/${var.name}/profiler"
-  retention_in_days = 365
+  retention_in_days = 30
   kms_key_id        = aws_kms_key.logs.arn
 
   tags = merge(var.tags, { "Name" = "${var.name}-profiler-logs" })
