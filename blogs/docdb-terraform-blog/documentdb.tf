@@ -23,28 +23,33 @@ resource "aws_docdb_cluster_parameter_group" "this" {
   # "enabled" is a legacy alias that audits DDL only. "ddl,dml_write" also
   # captures data modifications for compliance without the volume of "dml_read"
   # (every read). Use "all" for maximum fidelity at higher log volume and cost.
+  # audit_logs is a dynamic parameter, so apply changes without a reboot.
   parameter {
-    name  = "audit_logs"
-    value = "ddl,dml_write"
+    name         = "audit_logs"
+    value        = "ddl,dml_write"
+    apply_method = "immediate"
   }
 
   parameter {
-    name  = "profiler"
-    value = "enabled"
+    name         = "profiler"
+    value        = "enabled"
+    apply_method = "immediate"
   }
 
   # Log operations slower than this threshold (allowed: 50-2147483646 ms).
   parameter {
-    name  = "profiler_threshold_ms"
-    value = "100"
+    name         = "profiler_threshold_ms"
+    value        = "100"
+    apply_method = "immediate"
   }
 
   # Fraction of qualifying operations to log (allowed: 0.0-1.0). Set explicitly
   # so the volume is intentional. Profiler logs capture query content, so lower
   # this in sensitive or high-traffic environments to reduce exposure and cost.
   parameter {
-    name  = "profiler_sampling_rate"
-    value = "1.0"
+    name         = "profiler_sampling_rate"
+    value        = "1.0"
+    apply_method = "immediate"
   }
 
   tags = merge(var.tags, { "Name" = "${var.name}-params" })
