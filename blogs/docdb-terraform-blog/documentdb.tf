@@ -37,19 +37,20 @@ resource "aws_docdb_cluster_parameter_group" "this" {
   }
 
   # Log operations slower than this threshold (allowed: 50-2147483646 ms).
+  # 100 is the docdb8.0 engine default; no apply_method is set because the
+  # value equals the default, so the write is not recorded as a user override.
   parameter {
-    name         = "profiler_threshold_ms"
-    value        = "100"
-    apply_method = "immediate"
+    name  = "profiler_threshold_ms"
+    value = "100"
   }
 
-  # Fraction of qualifying operations to log (allowed: 0.0-1.0). Set explicitly
-  # so the volume is intentional. Profiler logs capture query content, so lower
-  # this in sensitive or high-traffic environments to reduce exposure and cost.
+  # Fraction of qualifying operations to log (allowed: 0.0-1.0). Profiler logs
+  # capture query content, so lower this in sensitive or high-traffic
+  # environments to reduce exposure and cost. 1.0 is the docdb8.0 engine
+  # default; no apply_method is set for the same reason as above.
   parameter {
-    name         = "profiler_sampling_rate"
-    value        = "1.0"
-    apply_method = "immediate"
+    name  = "profiler_sampling_rate"
+    value = "1.0"
   }
 
   tags = merge(var.tags, { "Name" = "${var.name}-params" })
@@ -96,13 +97,6 @@ resource "aws_docdb_cluster" "this" {
     aws_cloudwatch_log_group.audit,
     aws_cloudwatch_log_group.profiler
   ]
-
-  # Instances have auto_minor_version_upgrade enabled, so DocumentDB may apply
-  # minor patches during the maintenance window. Ignore engine_version drift so
-  # those auto-applied upgrades do not cause plan churn or get reverted on apply.
-  lifecycle {
-    ignore_changes = [engine_version]
-  }
 }
 
 #https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/docdb_cluster_instance
@@ -115,9 +109,6 @@ resource "aws_docdb_cluster_instance" "this" {
   # Performance Insights
   enable_performance_insights     = var.enable_performance_insights
   performance_insights_kms_key_id = var.enable_performance_insights ? aws_kms_key.docdb.arn : null
-
-  # Apply minor engine patches automatically during the maintenance window.
-  auto_minor_version_upgrade = true
 
   # Pin the server CA certificate explicitly. RSA 2048 (rds-ca-rsa2048-g1) has
   # the broadest client/driver compatibility. Alternatives: rds-ca-rsa4096-g1,
