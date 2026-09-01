@@ -102,7 +102,7 @@ terraform destroy
 
 ## Related Blog Post
 
-This code accompanies the AWS Database Blog post: *Provision a secure Amazon DocumentDB cluster with Terraform*.
+This code accompanies the AWS Database Blog post: [Provision a secure Amazon DocumentDB cluster with Terraform](https://aws.amazon.com/blogs/database/provision-a-secure-amazon-documentdb-cluster-with-terraform/).
 
 ## Security
 
