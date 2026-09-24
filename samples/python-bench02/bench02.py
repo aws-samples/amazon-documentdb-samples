@@ -267,6 +267,9 @@ def task_worker(threadNum,perfQ,appConfig):
     numOperations = appConfig['numOperations']
     numOperationsThisWorker = math.ceil(numOperations/numInsertProcesses)
 
+    useCustomId = appConfig['useCustomId']
+    customId = numOperationsThisWorker * threadNum
+
     perfReportInterval = 1
 
     rateLimitPerThread = rateLimit//numInsertProcesses
@@ -322,6 +325,9 @@ def task_worker(threadNum,perfQ,appConfig):
         
         for batchLoop in range(numInsertsPerBatch):
             thisInsert = {}
+
+            if useCustomId:
+                thisInsert["_id"] = customId
             
             thisTimestamp = dt.datetime.now(dt.timezone.utc)
             thisInsert["customerId"] = random.randint(1,numCustomers)
@@ -337,6 +343,7 @@ def task_worker(threadNum,perfQ,appConfig):
             thisBatchInserts += 1
             thisIntervalOps += 1
             thisWorkerOps += 1
+            customId += 1
         
         batchStartTime = time.time()
         result = col.bulk_write(insList, ordered=orderedBatches)
@@ -388,6 +395,7 @@ def main():
     parser.add_argument('--file-name',required=False,type=str,default='benchmark',help='Starting name of the created CSV and log files')
     parser.add_argument('--change-stream',required=False,action='store_true',help='Enable change streams')
     parser.add_argument('--num-intervals-average',required=False,type=int,default=10,help='Number of intervals for averaging')
+    parser.add_argument('--use-custom-id',required=False,action='store_true',help='Generate integer based _id values, not ObjectIds')
 
     args = parser.parse_args()
     
@@ -427,6 +435,7 @@ def main():
     appConfig['csvFileName'] = "{}.csv".format(args.file_name)
     appConfig['changeStream'] = args.change_stream
     appConfig['numIntervalsAverage'] = int(args.num_intervals_average)
+    appConfig['useCustomId'] = args.use_custom_id
 
     if (appConfig['runSeconds'] == 0 and appConfig['numOperations'] == 0):
         printLog("Must supply non-zero for one of --run-seconds or --num-operations",appConfig)
@@ -434,6 +443,10 @@ def main():
 
     if (appConfig['runSeconds'] > 0 and appConfig['numOperations'] > 0):
         printLog("Cannot supply non-zero for both --run-seconds and --num-operations",appConfig)
+        sys.exit(1)
+    
+    if (appConfig['numOperations'] == 0 and appConfig['useCustomId']):
+        printLog("--use-custom-id only supported in --num-operations mode",appConfig)
         sys.exit(1)
     
     numExistingDocuments = 0
