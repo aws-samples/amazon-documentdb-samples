@@ -11,6 +11,7 @@ import argparse
 import string
 import math
 import warnings
+import queue
 
 
 def deleteLog(appConfig):
@@ -164,11 +165,10 @@ def reporter(perfQ,appConfig):
     runSeconds = appConfig['runSeconds']
 
     startTime = time.time()
-    lastTime = time.time()
+    lastTime = startTime
     numTotalInserts = 0
     lastNumTotalInserts = 0
     nextReportTime = startTime + numSecondsFeedback
-    intervalLatencyMs = 0
     
     numThreadsCompleted = 0
     recentTps = []
@@ -178,20 +178,26 @@ def reporter(perfQ,appConfig):
     printCsv(csvHeader,appConfig)
     
     while (numThreadsCompleted < numInsertProcesses):
-        time.sleep(numSecondsFeedback)
-        nowTime = time.time()
-        
         numLatencyBatches = 0
         numLatencyMs = 0.0
         
-        while not perfQ.empty():
-            qMessage = perfQ.get_nowait()
+        # consume messages until the next report is due or all workers have finished
+        while (numThreadsCompleted < numInsertProcesses):
+            waitSeconds = nextReportTime - time.time()
+            if waitSeconds <= 0:
+                break
+            try:
+                qMessage = perfQ.get(timeout=waitSeconds)
+            except queue.Empty:
+                break
             if qMessage['name'] == "batchCompleted":
                 numLatencyBatches += qMessage['batches']
                 numLatencyMs += qMessage['latency']
                 numTotalInserts += qMessage['inserts']
             elif qMessage['name'] == "processCompleted":
                 numThreadsCompleted += 1
+
+        nowTime = time.time()
 
         # total total
         elapsedSeconds = nowTime - startTime
@@ -205,7 +211,7 @@ def reporter(perfQ,appConfig):
         # this interval
         intervalElapsedSeconds = nowTime - lastTime
         intervalInserts = numTotalInserts - lastNumTotalInserts
-        intervalInsertsPerSecond = intervalInserts / intervalElapsedSeconds
+        intervalInsertsPerSecond = intervalInserts / max(intervalElapsedSeconds,0.001)
         if numLatencyBatches > 0:
             intervalLatencyMs = numLatencyMs / numLatencyBatches
         else:
@@ -243,10 +249,25 @@ def reporter(perfQ,appConfig):
         printLog("[{}] elapsed {} | total ins {:16,d} at {:12,.2f} p/s | tot docs {:16,d} | interval {:12,.2f} p/s @ {:8,.2f} ms | last {} is {:12,.2f} p/s @ {:8,.2f} ms  | done in {}".format(logTimeStamp,thisHMS,numTotalInserts,insertsPerSecond,numTotalInserts+numExistingDocuments,intervalInsertsPerSecond,intervalLatencyMs,numIntervalsTps,avgRecentTps,avgRecentLatency,remainHMS),appConfig)
         csvData = "{},{},{:.2f},{},{:.2f},{},{:.2f},{:.2f},{:.2f},{:.2f}".format(logTimeStamp,thisHMS,elapsedSeconds,numTotalInserts,insertsPerSecond,numTotalInserts+numExistingDocuments,intervalInsertsPerSecond,intervalLatencyMs,avgRecentTps,avgRecentLatency)
         printCsv(csvData,appConfig)
-        nextReportTime = nowTime + numSecondsFeedback
+        nextReportTime += numSecondsFeedback
         
         lastTime = nowTime
         lastNumTotalInserts = numTotalInserts
+
+
+def randomLetters(numChars):
+    # map random bytes to letters, discarding bytes >= 208 (4 * 52) so every letter is equally likely
+    # built from small chunks to avoid large temporary buffers that would remain in the process heap
+    letters = (string.ascii_uppercase+string.ascii_lowercase).encode()
+    translateTable = bytes(letters[i % len(letters)] for i in range(256))
+    discardBytes = bytes(range(4 * len(letters), 256))
+    chunkList = []
+    numCharsRemaining = numChars
+    while numCharsRemaining > 0:
+        thisChunk = os.urandom(65536).translate(translateTable, discardBytes)[:numCharsRemaining].decode('ascii')
+        chunkList.append(thisChunk)
+        numCharsRemaining -= len(thisChunk)
+    return ''.join(chunkList)
 
 
 def task_worker(threadNum,perfQ,appConfig):
@@ -282,17 +303,18 @@ def task_worker(threadNum,perfQ,appConfig):
     myCollectionName = appConfig['collectionName']
     col = db[myCollectionName]
 
-    start = dt.datetime(1980, 1, 1, 1, 1, 1)
-    end = dt.datetime(2023, 9, 7, 1, 1, 1)
-    
-    textValue = "0123456789" * 100
     randomChars = int(textSize * (1 - (pctCompressed / 100)))
     fixedChars = textSize - randomChars
     randomTextBufferSize = 4*1024*1024
     randomTextBufferMaxStart = randomTextBufferSize - randomChars
-    # generate a 4MB random string
-    randomString = ''.join(random.choices(string.ascii_uppercase+string.ascii_lowercase,k=4*1024*1024))
+    randomString = randomLetters(randomTextBufferSize)
     fixedString = "a" * fixedChars
+
+    # local references for the document generation loop
+    rand = random.random
+    utcNow = dt.datetime.now
+    utc = dt.timezone.utc
+    orderDateOffset = dt.timedelta(seconds=numSecondsDateRange)
 
     startTime = time.time()
     nextPerfReportTime = time.time() + perfReportInterval
@@ -315,38 +337,44 @@ def task_worker(threadNum,perfQ,appConfig):
             thisIntervalOps = 0
         elif thisIntervalOps >= maxPerInterval:
             # slow down
-            sleepTimeSeconds = nextReportTime - time.time()
+            sleepTimeSeconds = max(nextReportTime - time.time(),0)
             #printLog("RATE LIMITING : sleeping for {:8,.3f} seconds".format(sleepTimeSeconds),appConfig)
             time.sleep(sleepTimeSeconds)
             nextReportTime = time.time() + intervalSeconds
             thisIntervalOps = 0
 
+        # in --num-operations mode don't exceed this worker's share (keeps custom _id ranges from overlapping)
+        if numOperationsThisWorker > 0:
+            thisBatchSize = min(numInsertsPerBatch, numOperationsThisWorker - thisWorkerOps)
+        else:
+            thisBatchSize = numInsertsPerBatch
+
         insList = []
         
-        for batchLoop in range(numInsertsPerBatch):
-            thisInsert = {}
+        for batchLoop in range(thisBatchSize):
+            # int(random() * n) + 1 is equivalent to random.randint(1,n) here and much cheaper
+            randomStringStart = int(rand() * randomTextBufferMaxStart)
+            thisInsert = {
+                "customerId": int(rand() * numCustomers) + 1,
+                "productId": int(rand() * numProducts) + 1,
+                "quantity": int(rand() * maxQuantity) + 1,
+                "orderDate": utcNow(utc) - orderDateOffset,
+                "textField": randomString[randomStringStart:randomStringStart+randomChars] + fixedString,
+            }
 
+            # BSON encoding always places a top-level _id first
             if useCustomId:
                 thisInsert["_id"] = customId
+                customId += 1
             
-            thisTimestamp = dt.datetime.now(dt.timezone.utc)
-            thisInsert["customerId"] = random.randint(1,numCustomers)
-            thisInsert["productId"] = random.randint(1,numProducts)
-            thisInsert["quantity"] = random.randint(1,maxQuantity)
-            thisInsert["orderDate"] = thisTimestamp-dt.timedelta(seconds=numSecondsDateRange)
-
-            randomStringStart = random.randint(1,randomTextBufferMaxStart)-1
-            thisInsert["textField"] = randomString[randomStringStart:randomStringStart+randomChars]+fixedString
-            
-            insList.append(pymongo.InsertOne(thisInsert))
-            
-            thisBatchInserts += 1
-            thisIntervalOps += 1
-            thisWorkerOps += 1
-            customId += 1
+            insList.append(thisInsert)
+        
+        thisBatchInserts += thisBatchSize
+        thisIntervalOps += thisBatchSize
+        thisWorkerOps += thisBatchSize
         
         batchStartTime = time.time()
-        result = col.bulk_write(insList, ordered=orderedBatches)
+        col.insert_many(insList, ordered=orderedBatches)
         batchElapsedMs += (time.time() - batchStartTime) * 1000
         numBatchesCompleted += 1
         
@@ -365,6 +393,10 @@ def task_worker(threadNum,perfQ,appConfig):
         
     client.close()
     
+    # report any batches since the last update
+    if numBatchesCompleted > 0:
+        perfQ.put({"name":"batchCompleted","batches":numBatchesCompleted,"latency":batchElapsedMs,"inserts":thisBatchInserts})
+
     perfQ.put({"name":"processCompleted","processNum":threadNum})
 
 
@@ -399,18 +431,6 @@ def main():
 
     args = parser.parse_args()
     
-    if args.compression in ['lz4','zstd'] and not args.drop_collection:
-        printLog("Collection must be dropped to enable compression, add --drop-collection",appConfig)
-        sys.exit(1)
-
-    if args.shard and not args.drop_collection:
-        printLog("Collection must be dropped to enable sharding, add --drop-collection",appConfig)
-        sys.exit(1)
-
-    if args.shard and args.change_stream:
-        printLog("Change streams are not currently supported on sharded collections",appConfig)
-        sys.exit(1)
-
     appConfig = {}
     appConfig['uri'] = args.uri
     appConfig['numInsertProcesses'] = int(args.processes)
@@ -436,6 +456,18 @@ def main():
     appConfig['changeStream'] = args.change_stream
     appConfig['numIntervalsAverage'] = int(args.num_intervals_average)
     appConfig['useCustomId'] = args.use_custom_id
+
+    if args.compression in ['lz4','zstd'] and not args.drop_collection:
+        printLog("Collection must be dropped to enable compression, add --drop-collection",appConfig)
+        sys.exit(1)
+
+    if args.shard and not args.drop_collection:
+        printLog("Collection must be dropped to enable sharding, add --drop-collection",appConfig)
+        sys.exit(1)
+
+    if args.shard and args.change_stream:
+        printLog("Change streams are not currently supported on sharded collections",appConfig)
+        sys.exit(1)
 
     if (appConfig['runSeconds'] == 0 and appConfig['numOperations'] == 0):
         printLog("Must supply non-zero for one of --run-seconds or --num-operations",appConfig)
@@ -466,8 +498,10 @@ def main():
             thisParsedUri = pymongo.uri_parser.parse_uri(thisUri)
             thisUsername = thisParsedUri['username']
             thisPassword = thisParsedUri['password']
-            thisUri = thisUri.replace(thisUsername,'<USERNAME>')
-            thisUri = thisUri.replace(thisPassword,'<PASSWORD>')
+            if thisUsername:
+                thisUri = thisUri.replace(thisUsername,'<USERNAME>')
+            if thisPassword:
+                thisUri = thisUri.replace(thisPassword,'<PASSWORD>')
             printLog("  config | {} | {}".format(thisKey,thisUri),appConfig)
         else:
             if type(appConfig[thisKey]) == int:
@@ -477,7 +511,7 @@ def main():
     printLog('---------------------------------------------------------------------------------------',appConfig)
     
     mp.set_start_method('spawn')
-    q = mp.Manager().Queue()
+    q = mp.Queue()
     t = threading.Thread(target=reporter,args=(q,appConfig,))
     t.start()
     
