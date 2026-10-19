@@ -156,6 +156,14 @@ def setup(appConfig):
     return numExistingDocuments
 
 
+def percentile(sortedValues,pct):
+    # nearest-rank percentile of an already sorted list, integer math avoids float rounding of the rank
+    if not sortedValues:
+        return 0.0
+    rank = max((pct * len(sortedValues) + 99) // 100, 1)
+    return sortedValues[rank-1]
+
+
 def reporter(perfQ,appConfig):
     numSecondsFeedback = 10
     numIntervalsTps = appConfig['numIntervalsAverage'] 
@@ -173,13 +181,17 @@ def reporter(perfQ,appConfig):
     numThreadsCompleted = 0
     recentTps = []
     recentLatency = []
+    latencyPercentiles = [50,90,95,99,100]
     
     csvHeader = "timestamp,elapsed-time,elapsed-seconds,inserts,overall-ips,total-documents,this-interval-ips,this-interval-latency-ms,last-{}-intervals-ips,last-{}-intervals-latency-ms".format(numIntervalsTps,numIntervalsTps)
+    for thisPct in latencyPercentiles:
+        csvHeader += ",this-interval-p{}-latency-ms".format(thisPct)
     printCsv(csvHeader,appConfig)
     
     while (numThreadsCompleted < numInsertProcesses):
         numLatencyBatches = 0
         numLatencyMs = 0.0
+        intervalBatchLatencies = []
         
         # consume messages until the next report is due or all workers have finished
         while (numThreadsCompleted < numInsertProcesses):
@@ -193,6 +205,7 @@ def reporter(perfQ,appConfig):
             if qMessage['name'] == "batchCompleted":
                 numLatencyBatches += qMessage['batches']
                 numLatencyMs += qMessage['latency']
+                intervalBatchLatencies.extend(qMessage['latencies'])
                 numTotalInserts += qMessage['inserts']
             elif qMessage['name'] == "processCompleted":
                 numThreadsCompleted += 1
@@ -216,6 +229,12 @@ def reporter(perfQ,appConfig):
             intervalLatencyMs = numLatencyMs / numLatencyBatches
         else:
             intervalLatencyMs = 0.0
+
+        # this interval - individual batch latency percentiles
+        intervalBatchLatencies.sort()
+        intervalPercentilesMs = [percentile(intervalBatchLatencies,thisPct) for thisPct in latencyPercentiles]
+        intervalPercentilesLog = " ".join("| p{} {:8,.2f}".format(thisPct,thisMs) for thisPct,thisMs in zip(latencyPercentiles,intervalPercentilesMs))
+        intervalPercentilesCsv = "".join(",{:.2f}".format(thisMs) for thisMs in intervalPercentilesMs)
         
         # recent intervals - tps
         if len(recentTps) == numIntervalsTps:
@@ -246,8 +265,8 @@ def reporter(perfQ,appConfig):
         remainHMS = "{:0>2}:{:0>2}:{:0>2}".format(int(thisHours),int(thisMinutes),int(thisSeconds))
         
         logTimeStamp = dt.datetime.now(dt.timezone.utc).isoformat()[:-3] + 'Z'
-        printLog("[{}] elapsed {} | total ins {:16,d} at {:12,.2f} p/s | tot docs {:16,d} | interval {:12,.2f} p/s @ {:8,.2f} ms | last {} is {:12,.2f} p/s @ {:8,.2f} ms  | done in {}".format(logTimeStamp,thisHMS,numTotalInserts,insertsPerSecond,numTotalInserts+numExistingDocuments,intervalInsertsPerSecond,intervalLatencyMs,numIntervalsTps,avgRecentTps,avgRecentLatency,remainHMS),appConfig)
-        csvData = "{},{},{:.2f},{},{:.2f},{},{:.2f},{:.2f},{:.2f},{:.2f}".format(logTimeStamp,thisHMS,elapsedSeconds,numTotalInserts,insertsPerSecond,numTotalInserts+numExistingDocuments,intervalInsertsPerSecond,intervalLatencyMs,avgRecentTps,avgRecentLatency)
+        printLog("[{}] elapsed {} | total ins {:16,d} at {:12,.2f} p/s | tot docs {:16,d} | interval {:12,.2f} p/s @ {:8,.2f} ms | last {} is {:12,.2f} p/s @ {:8,.2f} ms  | done in {} {}".format(logTimeStamp,thisHMS,numTotalInserts,insertsPerSecond,numTotalInserts+numExistingDocuments,intervalInsertsPerSecond,intervalLatencyMs,numIntervalsTps,avgRecentTps,avgRecentLatency,remainHMS,intervalPercentilesLog),appConfig)
+        csvData = "{},{},{:.2f},{},{:.2f},{},{:.2f},{:.2f},{:.2f},{:.2f}".format(logTimeStamp,thisHMS,elapsedSeconds,numTotalInserts,insertsPerSecond,numTotalInserts+numExistingDocuments,intervalInsertsPerSecond,intervalLatencyMs,avgRecentTps,avgRecentLatency) + intervalPercentilesCsv
         printCsv(csvData,appConfig)
         nextReportTime += numSecondsFeedback
         
@@ -326,6 +345,7 @@ def task_worker(threadNum,perfQ,appConfig):
     thisIntervalOps = 0
     thisBatchInserts = 0
     batchElapsedMs = 0.0
+    batchLatenciesMs = []
     
     allDone = False
 
@@ -375,14 +395,17 @@ def task_worker(threadNum,perfQ,appConfig):
         
         batchStartTime = time.time()
         col.insert_many(insList, ordered=orderedBatches)
-        batchElapsedMs += (time.time() - batchStartTime) * 1000
+        thisBatchElapsedMs = (time.time() - batchStartTime) * 1000
+        batchElapsedMs += thisBatchElapsedMs
+        batchLatenciesMs.append(thisBatchElapsedMs)
         numBatchesCompleted += 1
         
         if time.time() > nextPerfReportTime:
             nextPerfReportTime = time.time() + perfReportInterval
-            perfQ.put({"name":"batchCompleted","batches":numBatchesCompleted,"latency":batchElapsedMs,"inserts":thisBatchInserts})
+            perfQ.put({"name":"batchCompleted","batches":numBatchesCompleted,"latency":batchElapsedMs,"latencies":batchLatenciesMs,"inserts":thisBatchInserts})
             numBatchesCompleted = 0
             batchElapsedMs = 0.0
+            batchLatenciesMs = []
             thisBatchInserts = 0
             
         if ((time.time() - startTime) >= runSeconds) and (runSeconds > 0):
@@ -395,7 +418,7 @@ def task_worker(threadNum,perfQ,appConfig):
     
     # report any batches since the last update
     if numBatchesCompleted > 0:
-        perfQ.put({"name":"batchCompleted","batches":numBatchesCompleted,"latency":batchElapsedMs,"inserts":thisBatchInserts})
+        perfQ.put({"name":"batchCompleted","batches":numBatchesCompleted,"latency":batchElapsedMs,"latencies":batchLatenciesMs,"inserts":thisBatchInserts})
 
     perfQ.put({"name":"processCompleted","processNum":threadNum})
 
