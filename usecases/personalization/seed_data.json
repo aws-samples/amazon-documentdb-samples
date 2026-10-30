@@ -1,0 +1,43 @@
+[
+  {
+    "shopperId": "s-9087",
+    "recentViews": [
+      "sku-11",
+      "sku-42"
+    ],
+    "cart": [
+      {
+        "sku": "sku-11",
+        "qty": 1
+      }
+    ],
+    "affinities": {
+      "shoes": 12,
+      "outerwear": 5
+    },
+    "preferences": {
+      "size": "M",
+      "brand": "Acme"
+    },
+    "segments": [
+      "frequent",
+      "mobile"
+    ]
+  },
+  {
+    "shopperId": "s-9120",
+    "recentViews": [
+      "sku-77"
+    ],
+    "cart": [],
+    "affinities": {
+      "electronics": 8
+    },
+    "preferences": {
+      "brand": "Volt"
+    },
+    "segments": [
+      "new"
+    ]
+  }
+]

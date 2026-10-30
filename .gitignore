@@ -7,3 +7,4 @@ blogs/docdb-springboot/.mvn/wrapper/maven-wrapper.jar
 *.jar
 samples/.DS_Store
 *.sln
+.agents/
