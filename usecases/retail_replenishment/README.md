@@ -30,7 +30,6 @@ flowchart LR
 ├── main.py            # Pipeline: connect, seed, detect, recommend, report
 ├── api.py             # REST API for consuming recommendations
 ├── requirements.txt
-├── LICENSE
 ├── .gitignore
 └── README.md
 ```

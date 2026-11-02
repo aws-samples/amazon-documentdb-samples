@@ -161,7 +161,6 @@ Drops the `customers` and `customer_interactions` collections.
 ├── seed_data.json      # Hand-written sample documents (more are generated on first run)
 ├── requirements.txt    # Python dependencies
 ├── .gitignore          # Ignored files
-├── LICENSE             # License
 └── README.md           # This file
 ```
 
