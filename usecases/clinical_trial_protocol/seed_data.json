@@ -1,0 +1,169 @@
+[
+  {
+    "protocol_id": "ct-2031",
+    "title": "A Phase II Study of Compound XJ-14 in Moderate Persistent Asthma",
+    "phase": "II",
+    "therapeutic_area": "respiratory",
+    "sponsor": "Example Therapeutics",
+    "status": "recruiting",
+    "treatment_arms": [
+      {
+        "arm_name": "Arm A - Active",
+        "intervention": "XJ-14 200mg",
+        "dosing_schedule": "Once daily, oral, 12 weeks"
+      },
+      {
+        "arm_name": "Arm B - Placebo",
+        "intervention": "Placebo",
+        "dosing_schedule": "Once daily, oral, 12 weeks"
+      }
+    ],
+    "visit_schedule": [
+      {
+        "visit_name": "Screening",
+        "study_day": -14,
+        "window_days": 7,
+        "procedures": [
+          "informed consent",
+          "spirometry",
+          "blood draw"
+        ]
+      },
+      {
+        "visit_name": "Baseline",
+        "study_day": 0,
+        "window_days": 1,
+        "procedures": [
+          "randomization",
+          "spirometry"
+        ]
+      }
+    ],
+    "inclusion_criteria": [
+      "Age 18-65 years",
+      "Confirmed diagnosis of moderate persistent asthma"
+    ],
+    "exclusion_criteria": [
+      "Current smoker or history of smoking within 1 year",
+      "Participation in another interventional trial within 30 days"
+    ],
+    "primary_endpoints": [
+      "Change in FEV1 from baseline at week 12"
+    ],
+    "secondary_endpoints": [
+      "Rate of asthma exacerbations during treatment period",
+      "Change in Asthma Control Questionnaire (ACQ) score"
+    ]
+  },
+  {
+    "protocol_id": "ct-2048",
+    "title": "A Phase III Trial of Agent KL-9 for Stage III Non-Small Cell Lung Cancer",
+    "phase": "III",
+    "therapeutic_area": "oncology",
+    "sponsor": "Example Oncology Group",
+    "status": "active_not_recruiting",
+    "treatment_arms": [
+      {
+        "arm_name": "Arm A - Investigational",
+        "intervention": "KL-9 450mg + standard of care",
+        "dosing_schedule": "Every 3 weeks, IV infusion, up to 12 cycles"
+      },
+      {
+        "arm_name": "Arm B - Standard of Care",
+        "intervention": "Standard of care alone",
+        "dosing_schedule": "Every 3 weeks, up to 12 cycles"
+      }
+    ],
+    "visit_schedule": [
+      {
+        "visit_name": "Screening",
+        "study_day": -21,
+        "window_days": 10,
+        "procedures": [
+          "informed consent",
+          "CT scan",
+          "ECOG assessment"
+        ]
+      },
+      {
+        "visit_name": "Cycle 1 Day 1",
+        "study_day": 0,
+        "window_days": 2,
+        "procedures": [
+          "infusion",
+          "vital signs",
+          "labs"
+        ]
+      }
+    ],
+    "inclusion_criteria": [
+      "Histologically confirmed stage III NSCLC",
+      "ECOG performance status 0-1"
+    ],
+    "exclusion_criteria": [
+      "Prior systemic therapy for metastatic disease",
+      "Untreated central nervous system metastases"
+    ],
+    "primary_endpoints": [
+      "Progression-free survival"
+    ],
+    "secondary_endpoints": [
+      "Overall survival",
+      "Objective response rate"
+    ]
+  },
+  {
+    "protocol_id": "ct-2059",
+    "title": "A Phase I Dose-Escalation Study of Biologic RV-3 in Rheumatoid Arthritis",
+    "phase": "I",
+    "therapeutic_area": "immunology",
+    "sponsor": "Example Biosciences",
+    "status": "completed",
+    "treatment_arms": [
+      {
+        "arm_name": "Cohort 1 - Low Dose",
+        "intervention": "RV-3 50mg",
+        "dosing_schedule": "Single subcutaneous injection, Day 1"
+      },
+      {
+        "arm_name": "Cohort 2 - High Dose",
+        "intervention": "RV-3 150mg",
+        "dosing_schedule": "Single subcutaneous injection, Day 1"
+      }
+    ],
+    "visit_schedule": [
+      {
+        "visit_name": "Screening",
+        "study_day": -28,
+        "window_days": 14,
+        "procedures": [
+          "informed consent",
+          "joint assessment",
+          "blood draw"
+        ]
+      },
+      {
+        "visit_name": "Follow-up Week 4",
+        "study_day": 28,
+        "window_days": 3,
+        "procedures": [
+          "safety labs",
+          "joint assessment"
+        ]
+      }
+    ],
+    "inclusion_criteria": [
+      "Age 18-70 years",
+      "Diagnosis of moderate to severe rheumatoid arthritis"
+    ],
+    "exclusion_criteria": [
+      "Active infection within 30 days of dosing"
+    ],
+    "primary_endpoints": [
+      "Incidence of dose-limiting toxicities"
+    ],
+    "secondary_endpoints": [
+      "Change in DAS28 score at week 4"
+    ]
+  }
+]

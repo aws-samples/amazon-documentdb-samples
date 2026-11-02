@@ -1,0 +1,27 @@
+[
+  {
+    "customerId": "c-5523",
+    "displayName": "Sample Customer A",
+    "accounts": [
+      { "type": "checking", "id": "chk-01" },
+      { "type": "credit", "id": "cc-09" }
+    ],
+    "recentInteractions": [
+      { "channel": "app", "action": "login", "ts": "2026-10-01T09:30:00" }
+    ],
+    "preferences": { "channel": "app", "language": "en" },
+    "segments": ["wealth", "mobile_first"],
+    "kyc": { "status": "verified", "level": 2 }
+  },
+  {
+    "customerId": "c-6610",
+    "displayName": "Sample Customer B",
+    "accounts": [
+      { "type": "savings", "id": "sav-22" }
+    ],
+    "recentInteractions": [],
+    "preferences": { "channel": "email", "language": "en" },
+    "segments": ["retail"],
+    "kyc": { "status": "pending", "level": 1 }
+  }
+]

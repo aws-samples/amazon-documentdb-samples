@@ -1,0 +1,37 @@
+[
+  {
+    "playerId": "p-1042",
+    "displayName": "NovaStrike",
+    "xp": 36400,
+    "level": 37,
+    "inventory": [
+      { "item": "plasma_rifle", "rarity": "epic", "qty": 1 },
+      { "item": "med_kit", "rarity": "common", "qty": 5 }
+    ],
+    "achievements": ["first_blood", "survivor_100"],
+    "settings": { "region": "us-east", "crossplay": true }
+  },
+  {
+    "playerId": "p-2087",
+    "displayName": "ByteKnight",
+    "xp": 11800,
+    "level": 12,
+    "inventory": [
+      { "item": "wood_sword", "rarity": "common", "qty": 1 }
+    ],
+    "achievements": ["tutorial_done"],
+    "settings": { "region": "eu-west", "crossplay": false }
+  },
+  {
+    "playerId": "p-3310",
+    "displayName": "QuasarQueen",
+    "xp": 57200,
+    "level": 58,
+    "inventory": [
+      { "item": "dragon_blade", "rarity": "legendary", "qty": 1 },
+      { "item": "shield", "rarity": "rare", "qty": 2 }
+    ],
+    "achievements": ["raid_boss", "top_100_season5"],
+    "settings": { "region": "ap-south", "crossplay": true }
+  }
+]
