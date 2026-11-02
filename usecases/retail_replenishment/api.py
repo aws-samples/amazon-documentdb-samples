@@ -55,8 +55,8 @@ def health():
     try:
         get_db().client.admin.command("ping")
         return jsonify({"status": "ok"}), 200
-    except Exception as exc:
-        return jsonify({"status": "error", "detail": str(exc)}), 503
+    except Exception:
+        return jsonify({"status": "error", "detail": "Service unavailable"}), 503
 
 
 @app.route("/recommendations")
