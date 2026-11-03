@@ -16,11 +16,29 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 
 
-def _sanitize_error(e: Exception) -> str:
-    """Return a generic message for unexpected errors to avoid leaking internals."""
-    if isinstance(e, (ValueError, KeyError)):
-        return str(e)
-    return "An internal error occurred. Check the server logs for details."
+# Returned for unexpected server errors; details go to the server log only.
+INTERNAL_ERROR = "An internal error occurred. Check the server logs for details."
+
+
+def _product_fields(data, required):
+    """Validate a product request body.
+
+    Returns (fields, None) with price and stock converted, or (None, error_message).
+    """
+    if not isinstance(data, dict):
+        return None, "Request body must be a JSON object"
+    missing = [k for k in required if k not in data]
+    if missing:
+        return None, f"Missing required fields: {', '.join(missing)}"
+    try:
+        price = float(data["price"])
+    except (TypeError, ValueError):
+        return None, "price must be a number"
+    try:
+        stock = int(data["stock"])
+    except (TypeError, ValueError):
+        return None, "stock must be an integer"
+    return {**{k: data[k] for k in required}, "price": price, "stock": stock}, None
 
 _client = None
 
@@ -156,33 +174,24 @@ def get_products():
                 "has_more": has_more
             }
         })
-    except Exception as e:
-        logger.error("Error in get_products: %s", e)
-        return jsonify({"success": False, "message": _sanitize_error(e)}), 500
+    except Exception:
+        logger.exception("Error in get_products")
+        return jsonify({"success": False, "message": INTERNAL_ERROR}), 500
 
 @app.route('/api/products', methods=['POST'])
 def add_product():
     """API endpoint to add a new product."""
     data = request.json
+    product, error = _product_fields(data, ("sku", "name", "category", "price", "stock"))
+    if error:
+        return jsonify({"success": False, "message": f"Invalid input: {error}"}), 400
+    if product["price"] < 0:
+        return jsonify({"success": False, "message": "Price cannot be negative"}), 400
+    if product["stock"] < 0:
+        return jsonify({"success": False, "message": "Stock cannot be negative"}), 400
     collection = get_collection()
-    
+
     try:
-        price = float(data['price'])
-        stock = int(data['stock'])
-        
-        if price < 0:
-            return jsonify({"success": False, "message": "Price cannot be negative"}), 400
-        if stock < 0:
-            return jsonify({"success": False, "message": "Stock cannot be negative"}), 400
-        
-        product = {
-            "sku": data['sku'],
-            "name": data['name'],
-            "category": data['category'],
-            "price": price,
-            "stock": stock,
-        }
-        
         if 'description' in data and data['description']:
             product['description'] = data['description']
         
@@ -191,34 +200,24 @@ def add_product():
         return jsonify({"success": True, "message": "Product added successfully"})
     except DuplicateKeyError:
         return jsonify({"success": False, "message": "Product with this SKU already exists"}), 400
-    except (ValueError, KeyError) as e:
-        return jsonify({"success": False, "message": f"Invalid input: {_sanitize_error(e)}"}), 400
-    except Exception as e:
-        logger.error("Error adding product: %s", e)
-        return jsonify({"success": False, "message": _sanitize_error(e)}), 500
+    except Exception:
+        logger.exception("Error adding product")
+        return jsonify({"success": False, "message": INTERNAL_ERROR}), 500
 
 @app.route('/api/products/<sku>', methods=['PUT'])
 def update_product(sku):
     """API endpoint to update a product."""
     data = request.json
+    update_fields, error = _product_fields(data, ("name", "category", "price", "stock"))
+    if error:
+        return jsonify({"success": False, "message": f"Invalid input: {error}"}), 400
+    if update_fields["price"] < 0:
+        return jsonify({"success": False, "message": "Price cannot be negative"}), 400
+    if update_fields["stock"] < 0:
+        return jsonify({"success": False, "message": "Stock cannot be negative"}), 400
     collection = get_collection()
-    
+
     try:
-        price = float(data['price'])
-        stock = int(data['stock'])
-        
-        if price < 0:
-            return jsonify({"success": False, "message": "Price cannot be negative"}), 400
-        if stock < 0:
-            return jsonify({"success": False, "message": "Stock cannot be negative"}), 400
-        
-        update_fields = {
-            "name": data['name'],
-            "category": data['category'],
-            "price": price,
-            "stock": stock,
-        }
-        
         if 'description' in data:
             update_fields['description'] = data['description']
         
@@ -232,21 +231,23 @@ def update_product(sku):
         
         logger.info("Updated product: %s", sku)
         return jsonify({"success": True, "message": "Product updated successfully"})
-    except (ValueError, KeyError) as e:
-        return jsonify({"success": False, "message": f"Invalid input: {_sanitize_error(e)}"}), 400
-    except Exception as e:
-        logger.error("Error updating product: %s", e)
-        return jsonify({"success": False, "message": _sanitize_error(e)}), 500
+    except Exception:
+        logger.exception("Error updating product")
+        return jsonify({"success": False, "message": INTERNAL_ERROR}), 500
 
 @app.route('/api/products/<sku>/stock', methods=['PUT'])
 def update_stock(sku):
     """API endpoint to update product stock."""
     data = request.json
-    collection = get_collection()
-    
+    if not isinstance(data, dict) or "change" not in data:
+        return jsonify({"success": False, "message": "Invalid input: change is required"}), 400
     try:
-        quantity_change = int(data['change'])
-        
+        quantity_change = int(data["change"])
+    except (TypeError, ValueError):
+        return jsonify({"success": False, "message": "Invalid input: change must be an integer"}), 400
+    collection = get_collection()
+
+    try:
         product = collection.find_one({"sku": sku}, {"stock": 1})
         if product is None:
             return jsonify({"success": False, "message": "Product not found"}), 404
@@ -262,11 +263,9 @@ def update_stock(sku):
         
         logger.info("Updated stock for SKU %s by %d", sku, quantity_change)
         return jsonify({"success": True, "message": "Stock updated successfully"})
-    except (ValueError, KeyError) as e:
-        return jsonify({"success": False, "message": f"Invalid input: {_sanitize_error(e)}"}), 400
-    except Exception as e:
-        logger.error("Error updating stock: %s", e)
-        return jsonify({"success": False, "message": _sanitize_error(e)}), 500
+    except Exception:
+        logger.exception("Error updating stock")
+        return jsonify({"success": False, "message": INTERNAL_ERROR}), 500
 
 @app.route('/api/products/<sku>/description', methods=['PUT'])
 def update_description(sku):
@@ -286,9 +285,9 @@ def update_description(sku):
         
         logger.info("Updated description for SKU %s", sku)
         return jsonify({"success": True, "message": "Description updated successfully"})
-    except Exception as e:
-        logger.error("Error updating description: %s", e)
-        return jsonify({"success": False, "message": _sanitize_error(e)}), 500
+    except Exception:
+        logger.exception("Error updating description")
+        return jsonify({"success": False, "message": INTERNAL_ERROR}), 500
 
 @app.route('/api/products/<sku>', methods=['DELETE'])
 def delete_product(sku):
@@ -302,9 +301,9 @@ def delete_product(sku):
         
         logger.info("Deleted product with SKU: %s", sku)
         return jsonify({"success": True, "message": "Product deleted successfully"})
-    except Exception as e:
-        logger.error("Error deleting product: %s", e)
-        return jsonify({"success": False, "message": _sanitize_error(e)}), 500
+    except Exception:
+        logger.exception("Error deleting product")
+        return jsonify({"success": False, "message": INTERNAL_ERROR}), 500
 
 @app.route('/api/analytics', methods=['GET'])
 def get_analytics():
@@ -346,9 +345,9 @@ def get_analytics():
             "total_products": total_products,
             "low_stock_count": low_stock_count
         })
-    except Exception as e:
-        logger.error("Error getting analytics: %s", e)
-        return jsonify({"success": False, "message": _sanitize_error(e)}), 500
+    except Exception:
+        logger.exception("Error getting analytics")
+        return jsonify({"success": False, "message": INTERNAL_ERROR}), 500
 
 if __name__ == "__main__":
     # Initialize indexes on startup
