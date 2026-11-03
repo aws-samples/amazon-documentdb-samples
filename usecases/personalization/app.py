@@ -43,10 +43,8 @@ SEED_BATCH = 500
 _client = None
 
 
-def _sanitize_error(e: Exception) -> str:
-    if isinstance(e, (ValueError, KeyError)):
-        return str(e)
-    return "An internal error occurred. Check the server logs for details."
+# Returned for unexpected server errors; details go to the server log only.
+INTERNAL_ERROR = "An internal error occurred. Check the server logs for details."
 
 
 def get_config() -> dict:
@@ -114,35 +112,41 @@ def _json_body():
     return data if isinstance(data, dict) else None
 
 
-def _parse_limit(default: int, maximum: int) -> int:
-    """Parse ?limit= as an integer clamped to [1, maximum]; raises ValueError (-> 400) if not an integer."""
+def _parse_limit(default: int, maximum: int):
+    """Parse ?limit= as an integer clamped to [1, maximum].
+
+    Returns (limit, None) on success or (None, error_message) if it is not an integer.
+    """
     raw = request.args.get("limit")
     if raw is None:
-        return default
+        return default, None
     try:
         value = int(raw)
     except ValueError:
-        raise ValueError("limit must be an integer") from None
-    return max(1, min(value, maximum))
+        return None, "limit must be an integer"
+    return max(1, min(value, maximum)), None
 
 
 def _is_short_str(v, maximum=MAX_STR_LEN) -> bool:
     return isinstance(v, str) and 0 < len(v) <= maximum
 
 
-def _validate_profile_fields(data: dict) -> None:
-    """Light type and size checks for the allowlisted writable fields. Raises ValueError."""
+def _validate_profile_fields(data: dict):
+    """Light type and size checks for the allowlisted writable fields.
+
+    Returns an error message, or None if the fields are valid.
+    """
     if "segments" in data:
         seg = data["segments"]
         if not isinstance(seg, list) or len(seg) > MAX_SEGMENTS or not all(_is_short_str(x, 40) for x in seg):
-            raise ValueError(f"segments must be a list of at most {MAX_SEGMENTS} strings (1-40 characters)")
+            return f"segments must be a list of at most {MAX_SEGMENTS} strings (1-40 characters)"
     if "preferences" in data:
         pref = data["preferences"]
         if (not isinstance(pref, dict) or len(pref) > MAX_PREFERENCES or not all(
                 _is_short_str(k, 40) and not k.startswith("$") and "." not in k
                 and (isinstance(v, (int, float, bool)) or (isinstance(v, str) and len(v) <= MAX_STR_LEN))
                 for k, v in pref.items())):
-            raise ValueError(
+            return (
                 f"preferences must be an object of at most {MAX_PREFERENCES} scalar values "
                 f"(strings up to {MAX_STR_LEN} characters)")
     if "cart" in data:
@@ -151,9 +155,10 @@ def _validate_profile_fields(data: dict) -> None:
                 isinstance(i, dict) and set(i) == {"sku", "qty"} and _is_short_str(i["sku"], 60)
                 and isinstance(i["qty"], int) and not isinstance(i["qty"], bool)
                 and 1 <= i["qty"] <= MAX_CART_QTY for i in cart)):
-            raise ValueError(
+            return (
                 f"cart must be a list of at most {MAX_CART_ITEMS} objects with a string sku and integer qty "
                 f"between 1 and {MAX_CART_QTY}")
+    return None
 
 
 @app.route("/shoppers/<shopper_id>", methods=["GET"])
@@ -164,9 +169,9 @@ def get_shopper(shopper_id):
         if not doc:
             return jsonify({"success": False, "message": "Shopper not found"}), 404
         return jsonify(doc)
-    except Exception as e:
-        logger.error("Error in get_shopper: %s", e)
-        return jsonify({"success": False, "message": _sanitize_error(e)}), 500
+    except Exception:
+        logger.exception("Error in get_shopper")
+        return jsonify({"success": False, "message": INTERNAL_ERROR}), 500
 
 
 @app.route("/shoppers/<shopper_id>", methods=["PUT"])
@@ -178,10 +183,9 @@ def update_shopper(shopper_id):
     unknown = set(data) - WRITABLE_PROFILE_FIELDS
     if unknown:
         return jsonify({"success": False, "message": f"Fields not writable: {sorted(unknown)}"}), 400
-    try:
-        _validate_profile_fields(data)
-    except ValueError as e:
-        return jsonify({"success": False, "message": f"Invalid input: {e}"}), 400
+    error = _validate_profile_fields(data)
+    if error:
+        return jsonify({"success": False, "message": f"Invalid input: {error}"}), 400
     try:
         get_collection().update_one(
             {"shopperId": shopper_id},
@@ -189,9 +193,9 @@ def update_shopper(shopper_id):
             upsert=True,
         )
         return jsonify({"success": True})
-    except Exception as e:
-        logger.error("Error in update_shopper: %s", e)
-        return jsonify({"success": False, "message": _sanitize_error(e)}), 500
+    except Exception:
+        logger.exception("Error in update_shopper")
+        return jsonify({"success": False, "message": INTERNAL_ERROR}), 500
 
 
 @app.route("/shoppers/<shopper_id>", methods=["DELETE"])
@@ -202,9 +206,9 @@ def delete_shopper(shopper_id):
         if result.deleted_count == 0:
             return jsonify({"success": False, "message": "Shopper not found"}), 404
         return jsonify({"success": True})
-    except Exception as e:
-        logger.error("Error in delete_shopper: %s", e)
-        return jsonify({"success": False, "message": _sanitize_error(e)}), 500
+    except Exception:
+        logger.exception("Error in delete_shopper")
+        return jsonify({"success": False, "message": INTERNAL_ERROR}), 500
 
 
 @app.route("/shoppers", methods=["GET"])
@@ -213,19 +217,18 @@ def list_by_segment():
     segment = request.args.get("segment")
     if not segment:
         return jsonify({"success": False, "message": "segment query parameter is required"}), 400
-    try:
-        limit = _parse_limit(25, 100)
-    except ValueError as e:
-        return jsonify({"success": False, "message": f"Invalid input: {e}"}), 400
+    limit, error = _parse_limit(25, 100)
+    if error:
+        return jsonify({"success": False, "message": f"Invalid input: {error}"}), 400
     try:
         cursor = get_collection().find(
             {"segments": segment}, {"_id": 0, "shopperId": 1, "segments": 1}
         ).limit(limit)
         results = list(cursor)
         return jsonify({"count": len(results), "results": results})
-    except Exception as e:
-        logger.error("Error in list_by_segment: %s", e)
-        return jsonify({"success": False, "message": _sanitize_error(e)}), 500
+    except Exception:
+        logger.exception("Error in list_by_segment")
+        return jsonify({"success": False, "message": INTERNAL_ERROR}), 500
 
 
 @app.route("/shoppers/<shopper_id>/events", methods=["POST"])
@@ -261,9 +264,9 @@ def track_event(shopper_id):
         return jsonify({"success": True})
     except DuplicateKeyError:
         return jsonify({"success": True, "duplicate": True})
-    except Exception as e:
-        logger.error("Error in track_event: %s", e)
-        return jsonify({"success": False, "message": _sanitize_error(e)}), 500
+    except Exception:
+        logger.exception("Error in track_event")
+        return jsonify({"success": False, "message": INTERNAL_ERROR}), 500
 
 
 @app.route("/shoppers/<shopper_id>/recommend", methods=["GET"])
@@ -279,9 +282,9 @@ def recommend(shopper_id):
             return jsonify({"success": False, "message": "Shopper not found"}), 404
         ranked = sorted(doc.get("affinities", {}).items(), key=lambda kv: kv[1], reverse=True)
         return jsonify({"shopperId": shopper_id, "top_categories": [c for c, _ in ranked[:3]]})
-    except Exception as e:
-        logger.error("Error in recommend: %s", e)
-        return jsonify({"success": False, "message": _sanitize_error(e)}), 500
+    except Exception:
+        logger.exception("Error in recommend")
+        return jsonify({"success": False, "message": INTERNAL_ERROR}), 500
 
 
 # ---------------------------------------------------------------------------

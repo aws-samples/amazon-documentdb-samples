@@ -31,10 +31,8 @@ SEED_BATCH = 500
 _client = None
 
 
-def _sanitize_error(e: Exception) -> str:
-    if isinstance(e, (ValueError, KeyError)):
-        return str(e)
-    return "An internal error occurred. Check the server logs for details."
+# Returned for unexpected server errors; details go to the server log only.
+INTERNAL_ERROR = "An internal error occurred. Check the server logs for details."
 
 
 def get_config() -> dict:
@@ -102,22 +100,45 @@ def _json_body():
     return data if isinstance(data, dict) else None
 
 
-def _parse_limit(default: int, maximum: int) -> int:
-    """Parse ?limit= as an integer clamped to [1, maximum]; raises ValueError (-> 400) if not an integer."""
+def _parse_limit(default: int, maximum: int):
+    """Parse ?limit= as an integer clamped to [1, maximum].
+
+    Returns (limit, None) on success or (None, error_message) if it is not an integer.
+    """
     raw = request.args.get("limit")
     if raw is None:
-        return default
+        return default, None
     try:
         value = int(raw)
     except ValueError:
-        raise ValueError("limit must be an integer") from None
-    return max(1, min(value, maximum))
+        return None, "limit must be an integer"
+    return max(1, min(value, maximum)), None
 
 
-def _positive_int(value, name, maximum):
+def _positive_int_error(value, name, maximum):
+    """Return an error message unless value is an integer in [1, maximum]."""
     if isinstance(value, bool) or not isinstance(value, int) or not 1 <= value <= maximum:
-        raise ValueError(f"{name} must be an integer between 1 and {maximum}")
-    return value
+        return f"{name} must be an integer between 1 and {maximum}"
+    return None
+
+
+def _new_player_error(data: dict):
+    """Validate a create-player request body. Returns an error message, or None if it is valid."""
+    if not isinstance(data.get("playerId"), str) or not isinstance(data.get("displayName"), str):
+        return "playerId and displayName are required strings"
+    xp = data.get("xp", 0)
+    if isinstance(xp, bool) or not isinstance(xp, int) or not 0 <= xp <= MAX_XP_PER_EVENT:
+        return f"xp must be an integer between 0 and {MAX_XP_PER_EVENT}"
+    achievements = data.get("achievements", [])
+    if (
+        not isinstance(achievements, list)
+        or len(achievements) > 100
+        or not all(isinstance(a, str) and len(a) <= 64 for a in achievements)
+    ):
+        return "achievements must be a list of up to 100 short strings"
+    if not isinstance(data.get("settings", {}), dict):
+        return "settings must be an object"
+    return None
 
 
 @app.route("/players", methods=["POST"])
@@ -126,39 +147,27 @@ def create_player():
     data = _json_body()
     if data is None:
         return jsonify({"success": False, "message": "Request body must be a JSON object"}), 400
+    error = _new_player_error(data)
+    if error:
+        return jsonify({"success": False, "message": f"Invalid input: {error}"}), 400
+    xp = data.get("xp", 0)
+    doc = {
+        "playerId": data["playerId"],
+        "displayName": data["displayName"],
+        "xp": xp,
+        "level": level_for_xp(xp),
+        "inventory": [],
+        "achievements": data.get("achievements", []),
+        "settings": data.get("settings", {}),
+    }
     try:
-        xp = data.get("xp", 0)
-        if isinstance(xp, bool) or not isinstance(xp, int) or not 0 <= xp <= MAX_XP_PER_EVENT:
-            raise ValueError(f"xp must be an integer between 0 and {MAX_XP_PER_EVENT}")
-        achievements, settings = data.get("achievements", []), data.get("settings", {})
-        if (
-            not isinstance(achievements, list)
-            or len(achievements) > 100
-            or not all(isinstance(a, str) and len(a) <= 64 for a in achievements)
-        ):
-            raise ValueError("achievements must be a list of up to 100 short strings")
-        if not isinstance(settings, dict):
-            raise ValueError("settings must be an object")
-        doc = {
-            "playerId": data["playerId"],
-            "displayName": data["displayName"],
-            "xp": xp,
-            "level": level_for_xp(xp),
-            "inventory": [],
-            "achievements": achievements,
-            "settings": settings,
-        }
-        if not isinstance(doc["playerId"], str) or not isinstance(doc["displayName"], str):
-            raise ValueError("playerId and displayName must be strings")
         get_collection().insert_one(doc)
         return jsonify({"success": True})
     except DuplicateKeyError:
         return jsonify({"success": False, "message": "playerId or displayName already exists"}), 400
-    except (ValueError, KeyError, TypeError) as e:
-        return jsonify({"success": False, "message": f"Invalid input: {_sanitize_error(e)}"}), 400
-    except Exception as e:
-        logger.error("Error in create_player: %s", e)
-        return jsonify({"success": False, "message": _sanitize_error(e)}), 500
+    except Exception:
+        logger.exception("Error in create_player")
+        return jsonify({"success": False, "message": INTERNAL_ERROR}), 500
 
 
 @app.route("/players/<player_id>", methods=["GET"])
@@ -169,9 +178,9 @@ def get_player(player_id):
         if not doc:
             return jsonify({"success": False, "message": "Player not found"}), 404
         return jsonify(doc)
-    except Exception as e:
-        logger.error("Error in get_player: %s", e)
-        return jsonify({"success": False, "message": _sanitize_error(e)}), 500
+    except Exception:
+        logger.exception("Error in get_player")
+        return jsonify({"success": False, "message": INTERNAL_ERROR}), 500
 
 
 @app.route("/players", methods=["GET"])
@@ -187,18 +196,17 @@ def find_player_by_name():
         if not doc:
             return jsonify({"success": False, "message": "Player not found"}), 404
         return jsonify(doc)
-    except Exception as e:
-        logger.error("Error in find_player_by_name: %s", e)
-        return jsonify({"success": False, "message": _sanitize_error(e)}), 500
+    except Exception:
+        logger.exception("Error in find_player_by_name")
+        return jsonify({"success": False, "message": INTERNAL_ERROR}), 500
 
 
 @app.route("/leaderboard", methods=["GET"])
 def leaderboard():
     """Top-N players by xp (bounded to 100, served by the xp index)."""
-    try:
-        limit = _parse_limit(10, 100)
-    except ValueError as e:
-        return jsonify({"success": False, "message": f"Invalid input: {e}"}), 400
+    limit, error = _parse_limit(10, 100)
+    if error:
+        return jsonify({"success": False, "message": f"Invalid input: {error}"}), 400
     try:
         cursor = (
             get_collection()
@@ -207,9 +215,9 @@ def leaderboard():
             .limit(limit)
         )
         return jsonify({"results": list(cursor)})
-    except Exception as e:
-        logger.error("Error in leaderboard: %s", e)
-        return jsonify({"success": False, "message": _sanitize_error(e)}), 500
+    except Exception:
+        logger.exception("Error in leaderboard")
+        return jsonify({"success": False, "message": INTERNAL_ERROR}), 500
 
 
 @app.route("/players/<player_id>/inventory", methods=["POST"])
@@ -222,18 +230,18 @@ def grant_item(player_id):
     the player is under the stack cap.
     """
     body = _json_body()
-    try:
-        if body is None:
-            raise ValueError("Request body must be a JSON object")
-        item, grant_id = body.get("item"), body.get("grantId")
-        if not isinstance(item, str) or not item or not isinstance(grant_id, str) or not grant_id:
-            raise ValueError("item and grantId are required strings")
-        qty = _positive_int(body.get("qty", 1), "qty", 1000)
-        rarity = body.get("rarity", "common")
-        if not isinstance(rarity, str):
-            raise ValueError("rarity must be a string")
-    except ValueError as e:
-        return jsonify({"success": False, "message": f"Invalid input: {e}"}), 400
+    if body is None:
+        return jsonify({"success": False, "message": "Invalid input: Request body must be a JSON object"}), 400
+    item, grant_id = body.get("item"), body.get("grantId")
+    qty, rarity = body.get("qty", 1), body.get("rarity", "common")
+    if not isinstance(item, str) or not item or not isinstance(grant_id, str) or not grant_id:
+        error = "item and grantId are required strings"
+    elif not isinstance(rarity, str):
+        error = "rarity must be a string"
+    else:
+        error = _positive_int_error(qty, "qty", 1000)
+    if error:
+        return jsonify({"success": False, "message": f"Invalid input: {error}"}), 400
 
     remember = {"recentGrantIds": {"$each": [grant_id], "$slice": -RECENT_GRANT_IDS}}
     not_applied = {"recentGrantIds": {"$ne": grant_id}}
@@ -266,9 +274,9 @@ def grant_item(player_id):
         if players.count_documents({"playerId": player_id}, limit=1) == 0:
             return jsonify({"success": False, "message": "Player not found"}), 404
         return jsonify({"success": False, "message": "Inventory is full or grant already applied"}), 409
-    except Exception as e:
-        logger.error("Error in grant_item: %s", e)
-        return jsonify({"success": False, "message": _sanitize_error(e)}), 500
+    except Exception:
+        logger.exception("Error in grant_item")
+        return jsonify({"success": False, "message": INTERNAL_ERROR}), 500
 
 
 @app.route("/players/<player_id>/inventory/consume", methods=["POST"])
@@ -276,12 +284,12 @@ def consume_item(player_id):
     """Consume items atomically. The `qty >= requested` check is part of the update filter,
     so concurrent requests cannot drive a stack negative."""
     body = _json_body()
-    try:
-        if body is None or not isinstance(body.get("item"), str):
-            raise ValueError("item is a required string")
-        qty = _positive_int(body.get("qty", 1), "qty", 1000)
-    except ValueError as e:
-        return jsonify({"success": False, "message": f"Invalid input: {e}"}), 400
+    if body is None or not isinstance(body.get("item"), str):
+        return jsonify({"success": False, "message": "Invalid input: item is a required string"}), 400
+    qty = body.get("qty", 1)
+    error = _positive_int_error(qty, "qty", 1000)
+    if error:
+        return jsonify({"success": False, "message": f"Invalid input: {error}"}), 400
     try:
         players = get_collection()
         result = players.update_one(
@@ -292,9 +300,9 @@ def consume_item(player_id):
             return jsonify({"success": False, "message": "Player not found or insufficient quantity"}), 409
         players.update_one({"playerId": player_id}, {"$pull": {"inventory": {"qty": {"$lte": 0}}}})
         return jsonify({"success": True})
-    except Exception as e:
-        logger.error("Error in consume_item: %s", e)
-        return jsonify({"success": False, "message": _sanitize_error(e)}), 500
+    except Exception:
+        logger.exception("Error in consume_item")
+        return jsonify({"success": False, "message": INTERNAL_ERROR}), 500
 
 
 @app.route("/players/<player_id>/progress", methods=["PUT"])
@@ -305,12 +313,12 @@ def add_progress(player_id):
     `$max` makes the level update monotonic and safe under concurrent awards.
     """
     body = _json_body()
-    try:
-        if body is None:
-            raise ValueError("Request body must be a JSON object")
-        xp = _positive_int(body.get("xp"), "xp", MAX_XP_PER_EVENT)
-    except ValueError as e:
-        return jsonify({"success": False, "message": f"Invalid input: {e}"}), 400
+    if body is None:
+        return jsonify({"success": False, "message": "Invalid input: Request body must be a JSON object"}), 400
+    xp = body.get("xp")
+    error = _positive_int_error(xp, "xp", MAX_XP_PER_EVENT)
+    if error:
+        return jsonify({"success": False, "message": f"Invalid input: {error}"}), 400
     try:
         players = get_collection()
         updated = players.find_one_and_update(
@@ -324,9 +332,9 @@ def add_progress(player_id):
         level = level_for_xp(updated["xp"])
         players.update_one({"playerId": player_id}, {"$max": {"level": level}})
         return jsonify({"success": True, "xp": updated["xp"], "level": level})
-    except Exception as e:
-        logger.error("Error in add_progress: %s", e)
-        return jsonify({"success": False, "message": _sanitize_error(e)}), 500
+    except Exception:
+        logger.exception("Error in add_progress")
+        return jsonify({"success": False, "message": INTERNAL_ERROR}), 500
 
 
 # ---------------------------------------------------------------------------

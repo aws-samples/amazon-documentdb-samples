@@ -38,15 +38,8 @@ SEED_BATCH = 250
 _client = None
 
 
-class ValidationError(ValueError):
-    """Raised by this app's own validators; its message is authored here and safe to return."""
-
-
-def _sanitize_error(e: Exception) -> str:
-    """Return the message only for errors this app authored; hide everything else."""
-    if isinstance(e, ValidationError):
-        return str(e)
-    return "An internal error occurred. Check the server logs for details."
+# Returned for unexpected server errors; details go to the server log only.
+INTERNAL_ERROR = "An internal error occurred. Check the server logs for details."
 
 
 def get_config() -> dict:
@@ -123,16 +116,19 @@ def _json_body():
     return data if isinstance(data, dict) else None
 
 
-def _parse_limit(default: int, maximum: int) -> int:
-    """Parse ?limit= as an integer clamped to [1, maximum]; raises ValidationError (-> 400) otherwise."""
+def _parse_limit(default: int, maximum: int):
+    """Parse ?limit= as an integer clamped to [1, maximum].
+
+    Returns (limit, None) on success or (None, error_message) if it is not an integer.
+    """
     raw = request.args.get("limit")
     if raw is None:
-        return default
+        return default, None
     try:
         value = int(raw)
     except ValueError:
-        raise ValidationError("limit must be an integer") from None
-    return max(1, min(value, maximum))
+        return None, "limit must be an integer"
+    return max(1, min(value, maximum)), None
 
 
 def _is_str(v):
@@ -143,55 +139,64 @@ def _is_int(v):
     return isinstance(v, int) and not isinstance(v, bool)
 
 
-def _valid_arm(arm):
+def _arm_error(arm):
+    """Return an error message for an invalid treatment arm, or None if it is valid."""
     if not isinstance(arm, dict) or set(arm) != {"arm_name", "intervention", "dosing_schedule"}:
-        raise ValidationError("arm must have exactly: arm_name, intervention, dosing_schedule")
+        return "arm must have exactly: arm_name, intervention, dosing_schedule"
     if not all(_is_str(v) for v in arm.values()):
-        raise ValidationError("arm fields must be non-empty strings")
-    return arm
+        return "arm fields must be non-empty strings"
+    return None
 
 
-def _valid_visit(visit):
+def _visit_error(visit):
+    """Return an error message for an invalid visit definition, or None if it is valid."""
     if not isinstance(visit, dict) or set(visit) != {"visit_name", "study_day", "window_days", "procedures"}:
-        raise ValidationError("visit must have exactly: visit_name, study_day, window_days, procedures")
+        return "visit must have exactly: visit_name, study_day, window_days, procedures"
     if not _is_str(visit["visit_name"]) or not _is_int(visit["study_day"]):
-        raise ValidationError("visit_name must be a string and study_day an integer")
+        return "visit_name must be a string and study_day an integer"
     if not _is_int(visit["window_days"]) or visit["window_days"] < 0:
-        raise ValidationError("window_days must be an integer >= 0")
+        return "window_days must be an integer >= 0"
     if not isinstance(visit["procedures"], list) or not all(_is_str(p) for p in visit["procedures"]):
-        raise ValidationError("procedures must be a list of strings")
-    return visit
+        return "procedures must be a list of strings"
+    return None
 
 
-def _validate_protocol_fields(data: dict) -> dict:
-    """Allowlist and validate the design fields a caller may write."""
+def _protocol_fields_error(data: dict):
+    """Allowlist and validate the design fields a caller may write.
+
+    Returns an error message, or None if the fields are valid.
+    """
     allowed = STRING_FIELDS | STRING_LIST_FIELDS | {"treatment_arms", "visit_schedule"}
     unknown = set(data) - allowed
     if unknown:
-        raise ValidationError(f"Fields not writable: {sorted(unknown)}")
+        return f"Fields not writable: {sorted(unknown)}"
     for f in STRING_FIELDS & set(data):
         if not _is_str(data[f]):
-            raise ValidationError(f"{f} must be a non-empty string")
+            return f"{f} must be a non-empty string"
     if "phase" in data and data["phase"] not in PHASES:
-        raise ValidationError(f"phase must be one of {sorted(PHASES)}")
+        return f"phase must be one of {sorted(PHASES)}"
     if "status" in data and data["status"] not in STATUSES:
-        raise ValidationError(f"status must be one of {sorted(STATUSES)}")
+        return f"status must be one of {sorted(STATUSES)}"
     for f in STRING_LIST_FIELDS & set(data):
         if not isinstance(data[f], list) or not all(_is_str(x) for x in data[f]):
-            raise ValidationError(f"{f} must be a list of strings")
+            return f"{f} must be a list of strings"
     if "treatment_arms" in data:
         arms = data["treatment_arms"]
         if not isinstance(arms, list) or len(arms) > MAX_ARMS:
-            raise ValidationError(f"treatment_arms must be a list of at most {MAX_ARMS}")
+            return f"treatment_arms must be a list of at most {MAX_ARMS}"
         for a in arms:
-            _valid_arm(a)
+            error = _arm_error(a)
+            if error:
+                return error
     if "visit_schedule" in data:
         visits = data["visit_schedule"]
         if not isinstance(visits, list) or len(visits) > MAX_VISITS:
-            raise ValidationError(f"visit_schedule must be a list of at most {MAX_VISITS}")
+            return f"visit_schedule must be a list of at most {MAX_VISITS}"
         for v in visits:
-            _valid_visit(v)
-    return data
+            error = _visit_error(v)
+            if error:
+                return error
+    return None
 
 
 # ---------------------------------------------------------------------------
@@ -232,15 +237,15 @@ def upsert_protocol(protocol_id):
     data = _json_body()
     if data is None:
         return jsonify({"success": False, "message": "Request body must be a JSON object"}), 400
+    error = _protocol_fields_error(data)
+    if error:
+        return jsonify({"success": False, "message": f"Invalid input: {error}"}), 400
     try:
-        fields = _validate_protocol_fields(data)
-        before = _amend(get_db(), {"protocol_id": protocol_id}, {"$set": dict(fields)}, upsert=True)
+        before = _amend(get_db(), {"protocol_id": protocol_id}, {"$set": dict(data)}, upsert=True)
         return jsonify({"success": True, "created": before is None})
-    except ValidationError as e:
-        return jsonify({"success": False, "message": f"Invalid input: {_sanitize_error(e)}"}), 400
-    except Exception as e:
-        logger.error("Error in upsert_protocol: %s", e)
-        return jsonify({"success": False, "message": _sanitize_error(e)}), 500
+    except Exception:
+        logger.exception("Error in upsert_protocol")
+        return jsonify({"success": False, "message": INTERNAL_ERROR}), 500
 
 
 @app.route("/protocols/<protocol_id>", methods=["GET"])
@@ -252,16 +257,18 @@ def get_protocol(protocol_id):
             return jsonify({"success": False, "message": "Protocol not found"}), 404
         doc["visit_schedule"] = sorted(doc.get("visit_schedule", []), key=lambda v: v["study_day"])
         return jsonify(doc)
-    except Exception as e:
-        logger.error("Error in get_protocol: %s", e)
-        return jsonify({"success": False, "message": _sanitize_error(e)}), 500
+    except Exception:
+        logger.exception("Error in get_protocol")
+        return jsonify({"success": False, "message": INTERNAL_ERROR}), 500
 
 
 @app.route("/protocols/<protocol_id>/versions", methods=["GET"])
 def get_versions(protocol_id):
     """Amendment history, newest first (bounded to 50)."""
+    limit, error = _parse_limit(10, 50)
+    if error:
+        return jsonify({"success": False, "message": f"Invalid input: {error}"}), 400
     try:
-        limit = _parse_limit(10, 50)
         cursor = (
             get_db()[VERSIONS]
             .find({"protocol_id": protocol_id}, {"_id": 0})
@@ -269,16 +276,17 @@ def get_versions(protocol_id):
             .limit(limit)
         )
         return jsonify({"results": list(cursor)})
-    except ValidationError as e:
-        return jsonify({"success": False, "message": f"Invalid input: {_sanitize_error(e)}"}), 400
-    except Exception as e:
-        logger.error("Error in get_versions: %s", e)
-        return jsonify({"success": False, "message": _sanitize_error(e)}), 500
+    except Exception:
+        logger.exception("Error in get_versions")
+        return jsonify({"success": False, "message": INTERNAL_ERROR}), 500
 
 
 @app.route("/protocols", methods=["GET"])
 def search_protocols():
     """Search by allowlisted exact-match filters. Bounded (max 100) and paged with ?after=<protocol_id>."""
+    limit, error = _parse_limit(25, 100)
+    if error:
+        return jsonify({"success": False, "message": f"Invalid input: {error}"}), 400
     try:
         query = {}
         for field in ("therapeutic_area", "phase", "status"):
@@ -286,15 +294,12 @@ def search_protocols():
                 query[field] = request.args[field]
         if "after" in request.args:
             query["protocol_id"] = {"$gt": request.args["after"]}
-        limit = _parse_limit(25, 100)
         projection = {"_id": 0, "protocol_id": 1, "title": 1, "phase": 1, "therapeutic_area": 1, "status": 1}
         results = list(get_db()[PROTOCOLS].find(query, projection).sort("protocol_id", ASCENDING).limit(limit))
         return jsonify({"count": len(results), "results": results})
-    except ValidationError as e:
-        return jsonify({"success": False, "message": f"Invalid input: {_sanitize_error(e)}"}), 400
-    except Exception as e:
-        logger.error("Error in search_protocols: %s", e)
-        return jsonify({"success": False, "message": _sanitize_error(e)}), 500
+    except Exception:
+        logger.exception("Error in search_protocols")
+        return jsonify({"success": False, "message": INTERNAL_ERROR}), 500
 
 
 def _add_nested(protocol_id, array_field, name_field, item, max_items):
@@ -320,29 +325,29 @@ def _add_nested(protocol_id, array_field, name_field, item, max_items):
 @app.route("/protocols/<protocol_id>/arms", methods=["POST"])
 def add_treatment_arm(protocol_id):
     """Add a treatment arm (amendment)."""
-    try:
-        arm = _valid_arm(_json_body())
-    except ValidationError as e:
-        return jsonify({"success": False, "message": f"Invalid input: {_sanitize_error(e)}"}), 400
+    arm = _json_body()
+    error = _arm_error(arm)
+    if error:
+        return jsonify({"success": False, "message": f"Invalid input: {error}"}), 400
     try:
         return _add_nested(protocol_id, "treatment_arms", "arm_name", arm, MAX_ARMS)
-    except Exception as e:
-        logger.error("Error in add_treatment_arm: %s", e)
-        return jsonify({"success": False, "message": _sanitize_error(e)}), 500
+    except Exception:
+        logger.exception("Error in add_treatment_arm")
+        return jsonify({"success": False, "message": INTERNAL_ERROR}), 500
 
 
 @app.route("/protocols/<protocol_id>/visits", methods=["POST"])
 def add_visit(protocol_id):
     """Add a visit definition (amendment)."""
-    try:
-        visit = _valid_visit(_json_body())
-    except ValidationError as e:
-        return jsonify({"success": False, "message": f"Invalid input: {_sanitize_error(e)}"}), 400
+    visit = _json_body()
+    error = _visit_error(visit)
+    if error:
+        return jsonify({"success": False, "message": f"Invalid input: {error}"}), 400
     try:
         return _add_nested(protocol_id, "visit_schedule", "visit_name", visit, MAX_VISITS)
-    except Exception as e:
-        logger.error("Error in add_visit: %s", e)
-        return jsonify({"success": False, "message": _sanitize_error(e)}), 500
+    except Exception:
+        logger.exception("Error in add_visit")
+        return jsonify({"success": False, "message": INTERNAL_ERROR}), 500
 
 
 # ---------------------------------------------------------------------------
