@@ -49,10 +49,8 @@ SEED_BATCH = 500
 _client = None
 
 
-def _sanitize_error(e: Exception) -> str:
-    if isinstance(e, (ValueError, KeyError)):
-        return str(e)
-    return "An internal error occurred. Check the server logs for details."
+# Returned for unexpected server errors; details go to the server log only.
+INTERNAL_ERROR = "An internal error occurred. Check the server logs for details."
 
 
 def get_config() -> dict:
@@ -82,45 +80,52 @@ def get_config() -> dict:
     return {"uri": uri, "tls_ca_file": None if ca_in_uri else ca_from_env}
 
 
-def _parse_limit(default: int, maximum: int) -> int:
-    """Parse ?limit= as an integer clamped to [1, maximum]; raises ValueError (-> 400) if not an integer."""
+def _parse_limit(default: int, maximum: int):
+    """Parse ?limit= as an integer clamped to [1, maximum].
+
+    Returns (limit, None) on success or (None, error_message) if it is not an integer.
+    """
     raw = request.args.get("limit")
     if raw is None:
-        return default
+        return default, None
     try:
         value = int(raw)
     except ValueError:
-        raise ValueError("limit must be an integer") from None
-    return max(1, min(value, maximum))
+        return None, "limit must be an integer"
+    return max(1, min(value, maximum)), None
 
 
 def _is_short_str(v, maximum=MAX_STR_LEN) -> bool:
     return isinstance(v, str) and 0 < len(v) <= maximum
 
 
-def _validate_profile_fields(data: dict) -> None:
-    """Light type and size checks for the allowlisted writable fields. Raises ValueError."""
+def _validate_profile_fields(data: dict):
+    """Light type and size checks for the allowlisted writable fields.
+
+    Returns an error message, or None if the fields are valid.
+    """
     if "displayName" in data and not _is_short_str(data["displayName"]):
-        raise ValueError(f"displayName must be a non-empty string of at most {MAX_STR_LEN} characters")
+        return f"displayName must be a non-empty string of at most {MAX_STR_LEN} characters"
     if "segments" in data:
         seg = data["segments"]
         if not isinstance(seg, list) or len(seg) > MAX_SEGMENTS or not all(_is_short_str(x, 40) for x in seg):
-            raise ValueError(f"segments must be a list of at most {MAX_SEGMENTS} strings (1-40 characters)")
+            return f"segments must be a list of at most {MAX_SEGMENTS} strings (1-40 characters)"
     if "accounts" in data:
         acc = data["accounts"]
         if (not isinstance(acc, list) or len(acc) > MAX_ACCOUNTS or not all(
                 isinstance(a, dict) and set(a) == {"type", "id"}
                 and _is_short_str(a["type"], 40) and _is_short_str(a["id"], 60) for a in acc)):
-            raise ValueError(f"accounts must be a list of at most {MAX_ACCOUNTS} objects with string type and id")
+            return f"accounts must be a list of at most {MAX_ACCOUNTS} objects with string type and id"
     if "preferences" in data:
         pref = data["preferences"]
         if (not isinstance(pref, dict) or len(pref) > MAX_PREFERENCES or not all(
                 _is_short_str(k, 40) and not k.startswith("$") and "." not in k
                 and (isinstance(v, (int, float, bool)) or (isinstance(v, str) and len(v) <= MAX_STR_LEN))
                 for k, v in pref.items())):
-            raise ValueError(
+            return (
                 f"preferences must be an object of at most {MAX_PREFERENCES} scalar values "
                 f"(strings up to {MAX_STR_LEN} characters)")
+    return None
 
 
 def get_client():
@@ -188,10 +193,9 @@ def upsert_customer(customer_id):
     unknown = set(data) - WRITABLE_PROFILE_FIELDS
     if unknown:
         return jsonify({"success": False, "message": f"Fields not writable: {sorted(unknown)}"}), 400
-    try:
-        _validate_profile_fields(data)
-    except ValueError as e:
-        return jsonify({"success": False, "message": f"Invalid input: {e}"}), 400
+    error = _validate_profile_fields(data)
+    if error:
+        return jsonify({"success": False, "message": f"Invalid input: {error}"}), 400
     try:
         update = {
             "$setOnInsert": {"customerId": customer_id, "recentInteractions": []},
@@ -199,9 +203,9 @@ def upsert_customer(customer_id):
         }
         get_db()[PROFILES].update_one({"customerId": customer_id}, update, upsert=True)
         return jsonify({"success": True})
-    except Exception as e:
-        logger.error("Error in upsert_customer: %s", e)
-        return jsonify({"success": False, "message": _sanitize_error(e)}), 500
+    except Exception:
+        logger.exception("Error in upsert_customer")
+        return jsonify({"success": False, "message": INTERNAL_ERROR}), 500
 
 
 @app.route("/customers/<customer_id>", methods=["GET"])
@@ -221,9 +225,9 @@ def get_customer(customer_id):
         if not doc:
             return jsonify({"success": False, "message": "Customer not found"}), 404
         return jsonify(doc)
-    except Exception as e:
-        logger.error("Error in get_customer: %s", e)
-        return jsonify({"success": False, "message": _sanitize_error(e)}), 500
+    except Exception:
+        logger.exception("Error in get_customer")
+        return jsonify({"success": False, "message": INTERNAL_ERROR}), 500
 
 
 @app.route("/customers", methods=["GET"])
@@ -232,10 +236,9 @@ def list_by_segment():
     segment = request.args.get("segment")
     if not segment:
         return jsonify({"success": False, "message": "segment query parameter is required"}), 400
-    try:
-        limit = _parse_limit(25, 100)
-    except ValueError as e:
-        return jsonify({"success": False, "message": f"Invalid input: {e}"}), 400
+    limit, error = _parse_limit(25, 100)
+    if error:
+        return jsonify({"success": False, "message": f"Invalid input: {error}"}), 400
     try:
         cursor = get_db()[PROFILES].find(
             {"segments": segment},
@@ -243,9 +246,9 @@ def list_by_segment():
         ).limit(limit)
         results = list(cursor)
         return jsonify({"count": len(results), "results": results})
-    except Exception as e:
-        logger.error("Error in list_by_segment: %s", e)
-        return jsonify({"success": False, "message": _sanitize_error(e)}), 500
+    except Exception:
+        logger.exception("Error in list_by_segment")
+        return jsonify({"success": False, "message": INTERNAL_ERROR}), 500
 
 
 @app.route("/customers/<customer_id>/interactions", methods=["POST"])
@@ -273,18 +276,17 @@ def add_interaction(customer_id):
             {"$push": {"recentInteractions": {"$each": [entry], "$slice": -RECENT_INTERACTIONS_MAX}}},
         )
         return jsonify({"success": True})
-    except Exception as e:
-        logger.error("Error in add_interaction: %s", e)
-        return jsonify({"success": False, "message": _sanitize_error(e)}), 500
+    except Exception:
+        logger.exception("Error in add_interaction")
+        return jsonify({"success": False, "message": INTERNAL_ERROR}), 500
 
 
 @app.route("/customers/<customer_id>/interactions", methods=["GET"])
 def get_interactions(customer_id):
     """Page through full interaction history, newest first (bounded to 200)."""
-    try:
-        limit = _parse_limit(50, 200)
-    except ValueError as e:
-        return jsonify({"success": False, "message": f"Invalid input: {e}"}), 400
+    limit, error = _parse_limit(50, 200)
+    if error:
+        return jsonify({"success": False, "message": f"Invalid input: {error}"}), 400
     try:
         cursor = (
             get_db()[HISTORY]
@@ -294,9 +296,9 @@ def get_interactions(customer_id):
         )
         results = list(cursor)
         return jsonify({"count": len(results), "results": results})
-    except Exception as e:
-        logger.error("Error in get_interactions: %s", e)
-        return jsonify({"success": False, "message": _sanitize_error(e)}), 500
+    except Exception:
+        logger.exception("Error in get_interactions")
+        return jsonify({"success": False, "message": INTERNAL_ERROR}), 500
 
 
 def _parse_seed_dates(doc):
